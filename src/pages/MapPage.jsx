@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./MapPage.css";
@@ -6,20 +6,25 @@ import Header from "../components/Header";
 import SidePanel from "../components/SidePanel";
 
 const MapPage = () => {
+  const mapRef = useRef(null);
+  const [isDarkStyle, setIsDarkStyle] = useState(false);
+
   useEffect(() => {
     mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
     const map = new mapboxgl.Map({
       container: "map",
-      style: "mapbox://styles/mapbox/streets-v11", // Default theme
-      center: [121.774, 12.8797], // PH center
+      style: isDarkStyle ? "mapbox://styles/mapbox/dark-v10" : "mapbox://styles/mapbox/streets-v11",
+      center: [121.774, 12.8797],
       zoom: 5,
     });
+    mapRef.current = map;
 
     let startCoords = null,
       endCoords = null,
       startMarker = null,
-      endMarker = null;
+      endMarker = null,
+      currentRouteCoords = null;
 
     const startLabel = document.getElementById("start-label");
     const endLabel = document.getElementById("end-label");
@@ -150,6 +155,16 @@ const MapPage = () => {
 
       const route = j.routes[0];
       const coords = route.geometry.coordinates;
+      currentRouteCoords = coords;
+      if (fuelLayerVisible) {
+        removeFuelLayer();
+        const fb = document.getElementById('fuelBtn');
+        if (fb) {
+          const labelSpan = fb.querySelector('.label');
+          if (labelSpan) labelSpan.textContent = 'Show Gas';
+        }
+        fuelDataCache = null;
+      }
       distanceEl.textContent = (route.distance / 1000).toFixed(2) + " km";
       durationEl.textContent = Math.round(route.duration / 60) + " min";
 
@@ -282,7 +297,247 @@ const MapPage = () => {
     };
     window.addEventListener("resize", handleResize);
 
-    // --- Cleanup on unmount ---
+    // --- Fuel (gasoline) stations toggle logic using Overpass / OpenStreetMap ---
+    let fuelLayerVisible = false;
+    let fuelDataCache = null;
+    let fuelLoading = false;
+    let fuelAbortController = null;
+    const routeFuelCache = new Map();
+
+    function routeKey() {
+      if (!currentRouteCoords || currentRouteCoords.length < 2) return null;
+      const a = currentRouteCoords[0];
+      const b = currentRouteCoords[currentRouteCoords.length - 1];
+      return `${a[0].toFixed(4)},${a[1].toFixed(4)}-${b[0].toFixed(4)},${b[1].toFixed(4)}`;
+    }
+
+    function showFuelError(msg) {
+      const el = document.getElementById('fuelError');
+      if (!el) {
+        alert(msg);
+        return;
+      }
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(el._hideTimer);
+      el._hideTimer = setTimeout(() => {
+        el.classList.add('hidden');
+      }, 3000);
+    }
+
+    function hideFuelError() {
+      const el = document.getElementById('fuelError');
+      if (el) el.classList.add('hidden');
+    }
+
+    async function fetchFuelStations() {
+      if (!currentRouteCoords || currentRouteCoords.length < 2) return null;
+      const key = routeKey();
+      if (key && routeFuelCache.has(key)) {
+        fuelDataCache = routeFuelCache.get(key);
+        return;
+      }
+
+      const totalPts = currentRouteCoords.length;
+      const sampleCount = Math.min(14, Math.max(6, Math.floor(totalPts / 10)));
+      const step = Math.max(1, Math.floor(totalPts / sampleCount));
+      const samples = [];
+      for (let i = 0; i < totalPts; i += step) samples.push(currentRouteCoords[i]);
+      if (samples[samples.length - 1] !== currentRouteCoords[totalPts - 1]) samples.push(currentRouteCoords[totalPts - 1]);
+
+      const routeLengthApproxKm = (() => {
+        let d = 0;
+        for (let i = 1; i < currentRouteCoords.length; i++) {
+          const [x1, y1] = currentRouteCoords[i - 1];
+          const [x2, y2] = currentRouteCoords[i];
+          const dx = (x2 - x1) * 111.32 * Math.cos(((y1 + y2) / 2) * Math.PI / 180);
+          const dy = (y2 - y1) * 110.57;
+          d += Math.sqrt(dx * dx + dy * dy);
+        }
+        return d;
+      })();
+      const baseRadius = routeLengthApproxKm < 30 ? 3000 : routeLengthApproxKm < 120 ? 5000 : 8000; // meters
+
+      const overpassEndpoints = [
+        'https://overpass-api.de/api/interpreter',
+        'https://z.overpass-api.de/api/interpreter',
+        'https://lz4.overpass-api.de/api/interpreter',
+        'https://overpass.kumi.systems/api/interpreter'
+      ];
+
+      const collected = new Map(); // id -> feature
+      fuelAbortController = new AbortController();
+
+      const statusEl = document.getElementById('fuelStatus');
+      const setStatus = (t) => { if (statusEl) { statusEl.textContent = t; statusEl.classList.remove('hidden'); } };
+      setStatus('Fetching stations 0%');
+
+      for (let idx = 0; idx < samples.length; idx++) {
+        if (fuelAbortController.signal.aborted) throw new Error('aborted');
+        const pt = samples[idx];
+        const radius = baseRadius;
+        const body = `[out:json][timeout:20];(node["amenity"="fuel"](around:${radius},${pt[1]},${pt[0]}););out body;`;
+        let success = false;
+        for (const endpoint of overpassEndpoints) {
+          try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 20000);
+            const res = await fetch(`${endpoint}?data=${encodeURIComponent(body)}`, { signal: controller.signal, headers: { 'Accept-Language': 'en' } });
+            clearTimeout(timer);
+            if (!res.ok) continue;
+            const json = await res.json();
+            (json.elements || []).forEach(el => {
+              if (el.type === 'node' && el.tags) {
+                if (!collected.has(el.id)) {
+                  collected.set(el.id, {
+                    type: 'Feature',
+                    geometry: { type: 'Point', coordinates: [el.lon, el.lat] },
+                    properties: {
+                      id: el.id,
+                      name: el.tags.name || 'Fuel Station',
+                      brand: el.tags.brand || '',
+                      operator: el.tags.operator || ''
+                    }
+                  });
+                }
+              }
+            });
+            success = true;
+            break;
+          } catch (e) {
+          }
+        }
+        const pct = Math.round(((idx + 1) / samples.length) * 100);
+        setStatus(`Fetching stations ${pct}%`);
+        if (!success) {
+        }
+      }
+      if (statusEl) setTimeout(() => statusEl.classList.add('hidden'), 1200);
+      fuelDataCache = { type: 'FeatureCollection', features: Array.from(collected.values()) };
+      if (key) routeFuelCache.set(key, fuelDataCache);
+    }
+
+    function addFuelLayer() {
+      if (!fuelDataCache) return;
+      if (map.getSource('fuel-stations')) {
+        map.getSource('fuel-stations').setData(fuelDataCache);
+      } else {
+        map.addSource('fuel-stations', { type: 'geojson', data: fuelDataCache });
+
+        map.addLayer({
+          id: 'fuel-stations-glow',
+          type: 'circle',
+          source: 'fuel-stations',
+          paint: {
+            'circle-radius': ["interpolate", ["linear"], ["zoom"], 5, 6, 10, 10, 14, 14],
+            'circle-color': '#f59e0b',
+            'circle-opacity': 0.9,
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 2,
+            'circle-blur': 0.15
+          }
+        });
+
+        map.addLayer({
+          id: 'fuel-stations-layer',
+          type: 'symbol',
+          source: 'fuel-stations',
+          layout: {
+            'icon-image': 'fuel-15',
+            'icon-size': 1.6,
+            'icon-allow-overlap': true,
+            'text-field': ['get', 'name'],
+            'text-offset': [0, 2.1],
+            'text-anchor': 'top',
+            'text-size': 12,
+            'text-optional': true,
+            'text-allow-overlap': false
+          },
+          paint: {
+            'text-color': '#ffffff',
+            'text-halo-color': '#000000',
+            'text-halo-width': 1.2
+          }
+        });
+
+        map.on('click', 'fuel-stations-layer', (e) => {
+          const f = e.features?.[0];
+          if (!f) return;
+          const { name, brand, operator } = f.properties || {};
+          const html = `<div class=\"text-sm\"><div class=\"font-semibold mb-1\">${name || 'Fuel Station'}</div>${brand ? `<div>Brand: ${brand}</div>` : ''}${operator ? `<div>Operator: ${operator}</div>` : ''}</div>`;
+          new mapboxgl.Popup({ closeButton: true })
+            .setLngLat(f.geometry.coordinates)
+            .setHTML(html)
+            .addTo(map);
+        });
+        map.on('mouseenter', 'fuel-stations-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'fuel-stations-layer', () => { map.getCanvas().style.cursor = ''; });
+      }
+      fuelLayerVisible = true;
+    }
+
+    function removeFuelLayer() {
+      if (map.getLayer('fuel-stations-layer')) map.removeLayer('fuel-stations-layer');
+      if (map.getLayer('fuel-stations-glow')) map.removeLayer('fuel-stations-glow');
+      if (map.getSource('fuel-stations')) map.removeSource('fuel-stations');
+      fuelLayerVisible = false;
+    }
+
+    map.on('style.load', () => {
+      if (fuelLayerVisible && fuelDataCache) {
+        addFuelLayer();
+      }
+    });
+
+    const fuelBtn = document.getElementById('fuelBtn');
+    if (fuelBtn) {
+      fuelBtn.addEventListener('click', async () => {
+        if (fuelLoading) {
+          fuelAbortController?.abort();
+          showFuelError('Cancelled fuel fetch.');
+          fuelLoading = false;
+          fuelBtn.querySelector('.label').textContent = 'Show Gas';
+          return;
+        }
+        if (!fuelLayerVisible) {
+          if (!startCoords || !endCoords || !currentRouteCoords) {
+            showFuelError('Please select your start and end locations first.');
+            return;
+          }
+          hideFuelError();
+          fuelBtn.disabled = true;
+          fuelBtn.querySelector('.label').textContent = 'Loading...';
+          fuelLoading = true;
+          try {
+            await fetchFuelStations();
+            if (!fuelDataCache || !fuelDataCache.features.length) {
+              fuelBtn.querySelector('.label').textContent = 'Show Gas';
+              showFuelError('No fuel stations found (try zooming in or another area).');
+            } else {
+              addFuelLayer();
+              fuelBtn.querySelector('.label').textContent = 'Hide Gas';
+              hideFuelError();
+            }
+          } catch (err) {
+            fuelBtn.querySelector('.label').textContent = 'Show Gas';
+            if (String(err).includes('aborted')) {
+            } else if (String(err).includes('504') || String(err).includes('Failed to fetch')) {
+              showFuelError('Fuel station service timeout. Please click again.');
+            } else {
+              showFuelError('Failed to load fuel stations. Try again.');
+            }
+          } finally {
+            fuelBtn.disabled = false;
+            fuelLoading = false;
+          }
+        } else {
+          removeFuelLayer();
+          fuelBtn.querySelector('.label').textContent = 'Show Gas';
+          hideFuelError();
+        }
+      });
+    }
+
     return () => {
       map.remove();
       cleanups.forEach((fn) => fn && fn());
@@ -293,13 +548,21 @@ const MapPage = () => {
     };
   }, []);
 
-  // Sidebar toggle state for managing the map sidebar
+  // Toggle between light and dark map styles
+  const toggleStyle = () => {
+    const newStyle = isDarkStyle
+      ? "mapbox://styles/mapbox/streets-v11"
+      : "mapbox://styles/mapbox/dark-v10";
+    if (mapRef.current) {
+      mapRef.current.setStyle(newStyle);
+    }
+    setIsDarkStyle(prev => !prev);
+  };
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Sidebar toggle - only for the map sidebar, not the navigation sidebar
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);
-    // Trigger window resize event to ensure map adjusts properly
     setTimeout(() => window.dispatchEvent(new Event('resize')), 350);
   };
 
@@ -325,6 +588,54 @@ const MapPage = () => {
           <line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
       </button>
+
+      {/* Dark theme toggle */}
+      <button
+        onClick={toggleStyle}
+        className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200"
+        aria-label="Toggle map style"
+        style={{ top: '120px' }}
+      >
+        {isDarkStyle ? (
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        )}
+      </button>
+
+      {/* Fuel stations toggle button */}
+      <button
+        id="fuelBtn"
+        className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200"
+        aria-label="Show nearby gas stations"
+        style={{ top: '176px', width: '48px', height: '48px' }}
+      >
+        { }
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none">
+          <path d="M3 3h12v18H3z" />
+          <path d="M16 8h1a4 4 0 0 1 4 4v6a2 2 0 0 1-2 2h-1" />
+          <path d="M16 3v5" />
+          <circle cx="7.5" cy="10.5" r="1.5" />
+        </svg>
+        <span className="label sr-only">Show Gas</span>
+      </button>
+
+      {/* Fuel error toast */}
+      <div id="fuelError" className="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-red-600/90 backdrop-blur px-4 py-2 rounded shadow-lg text-white text-sm font-medium max-w-xs text-center"></div>
+      {/* Fuel status toast (progress) */}
+      <div id="fuelStatus" className="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[70] bg-gray-800/90 backdrop-blur px-4 py-2 rounded shadow-lg text-white text-xs font-medium max-w-xs text-center"></div>
 
       { }
       {isSidebarOpen && (
