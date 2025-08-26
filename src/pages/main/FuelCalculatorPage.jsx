@@ -1,6 +1,6 @@
 import React from 'react';
-import SidePanel from '../components/SidePanel';
-import Header from '../components/Header';
+import SidePanel from '../../components/SidePanel';
+import Header from '../../components/Header';
 
 const FuelCalculatorPage = () => {
   return (
