@@ -16,7 +16,7 @@ const MapPage = () => {
       container: "map",
       style: isDarkStyle ? "mapbox://styles/mapbox/dark-v10" : "mapbox://styles/mapbox/streets-v11",
       center: [121.774, 12.8797],
-      zoom: 5,
+      zoom: 5.5,
     });
     mapRef.current = map;
 
@@ -41,23 +41,30 @@ const MapPage = () => {
       geometry: { type: "LineString", coordinates: [] },
     });
 
+    function truncateLabel(text, max = 60) {
+      if (!text) return '';
+      return text.length > max ? text.slice(0, max - 3) + '...' : text;
+    }
+    
     function setStart(coords, label) {
       startCoords = coords;
       if (startMarker) startMarker.remove();
-      startMarker = new mapboxgl.Marker({ color: "#22c55e" })
+      startMarker = new mapboxgl.Marker({ color: '#22c55e' })
         .setLngLat(coords)
         .addTo(map);
-      startLabel.textContent = "Start: " + label;
+      startLabel.textContent = 'Start: ' + truncateLabel(label);
+      startLabel.setAttribute('title', 'Start: ' + label);
       updateRoute();
     }
 
     function setEnd(coords, label) {
       endCoords = coords;
       if (endMarker) endMarker.remove();
-      endMarker = new mapboxgl.Marker({ color: "#ef4444" })
+      endMarker = new mapboxgl.Marker({ color: '#ef4444' })
         .setLngLat(coords)
         .addTo(map);
-      endLabel.textContent = "End: " + label;
+      endLabel.textContent = 'End: ' + truncateLabel(label);
+      endLabel.setAttribute('title', 'End: ' + label);
       updateRoute();
     }
 
@@ -256,9 +263,12 @@ const MapPage = () => {
     document.getElementById("swapBtn").addEventListener("click", () => {
       [startCoords, endCoords] = [endCoords, startCoords];
       [startMarker, endMarker] = [endMarker, startMarker];
-      const tmp = startLabel.textContent;
+      const tmpText = startLabel.textContent;
+      const tmpTitle = startLabel.getAttribute('title');
       startLabel.textContent = endLabel.textContent;
-      endLabel.textContent = tmp;
+      startLabel.setAttribute('title', endLabel.getAttribute('title'));
+      endLabel.textContent = tmpText;
+      endLabel.setAttribute('title', tmpTitle);
       updateRoute();
     });
 
@@ -579,7 +589,7 @@ const MapPage = () => {
       { }
       <button
         onClick={toggleSidebar}
-        className="fixed top-16 right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200"
+  className="fixed top-16 right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
         aria-label="Toggle route sidebar"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -592,7 +602,7 @@ const MapPage = () => {
       {/* Dark theme toggle */}
       <button
         onClick={toggleStyle}
-        className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200"
+  className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
         aria-label="Toggle map style"
         style={{ top: '120px' }}
       >
@@ -618,7 +628,7 @@ const MapPage = () => {
       {/* Fuel stations toggle button */}
       <button
         id="fuelBtn"
-        className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200"
+  className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
         aria-label="Show nearby gas stations"
         style={{ top: '176px', width: '48px', height: '48px' }}
       >
@@ -641,9 +651,8 @@ const MapPage = () => {
       {isSidebarOpen && (
         <button
           onClick={toggleSidebar}
-          className={`fixed right-4 z-[65] bg-red-600 hover:bg-red-700 p-2 rounded-md shadow-lg flex items-center justify-center text-white transition-opacity duration-200`}
+          className="fixed right-4 z-[65] bg-red-600 hover:bg-red-700 p-2 rounded-md shadow-lg flex items-center justify-center text-white transition-opacity duration-200 top-6 md:top-16 cursor-pointer"
           aria-label="Close sidebar"
-          style={{ top: window.innerWidth >= 768 ? '80px' : '16px' }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -655,12 +664,12 @@ const MapPage = () => {
       { }
       <aside
         id="sidebar"
-        className={`fixed top-0 right-0 h-full bg-gray-900 text-white shadow-lg p-4 overflow-y-auto transition-all duration-300 z-[60] w-full md:w-80 transform ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} pt-16 md:pt-16 closed-${!isSidebarOpen}`}
+        className={`fixed top-0 right-0 h-full bg-gray-900 text-white p-4 overflow-y-auto transition-all duration-300 z-[60] w-full md:w-80 transform ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} pt-12 md:pt-20 closed-${!isSidebarOpen}`}
       >
         { }
         { }
         { }
-        <div className="pt-8 md:pt-12 mb-4"></div>
+        <div className="pt-2 md:pt-5 mb-2"></div>
 
         { }
         <div className="mb-5 relative">
