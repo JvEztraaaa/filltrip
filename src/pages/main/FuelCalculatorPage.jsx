@@ -28,7 +28,7 @@ const initialState = {
 const currencySymbols = { USD: '$', EUR: '€', PHP: '₱', GBP: '£', JPY: '¥' };
 
 const badge = 'inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-medium mr-2 shadow';
-const sectionCard = 'rounded-lg border border-gray-700/70 bg-gray-800/60 backdrop-blur px-6 py-5 flex flex-col gap-3';
+const sectionCard = 'rounded-lg border border-gray-700/70 bg-gray-800/60 backdrop-blur px-5 sm:px-6 py-5 flex flex-col gap-3 w-full';
 const labelCls = 'text-sm font-medium flex items-center gap-2';
 const inputBase = 'w-full rounded-md bg-gray-900/40 border border-gray-700 focus:border-indigo-500 focus:ring-0 outline-none px-3 py-2 text-sm placeholder-gray-500 transition';
 const selectBase = 'rounded-md bg-gray-900/40 border border-gray-700 focus:border-indigo-500 outline-none px-2 py-2 text-sm';
@@ -85,7 +85,8 @@ const FuelCalculatorPage = () => {
     <div key={reloadKey} className="relative min-h-screen w-full bg-gray-900 text-white overflow-x-hidden pb-12">
       <SidePanel />
       <Header />
-      <div className="pt-20 pl-0 md:pl-64 px-4 max-w-7xl mx-auto">
+  <div className="pt-20 pl-0 md:pl-64 w-full">
+        <div className="px-5 xs:px-6 sm:px-8 max-w-5xl mx-auto w-full">
         {/* Header full width */}
         <header className="max-w-3xl mb-6">
           <h1 className="text-3xl font-semibold tracking-tight">Fuel Calculator</h1>
@@ -93,7 +94,7 @@ const FuelCalculatorPage = () => {
         </header>
   <div className="flex flex-col xl:flex-row gap-6 items-start">
           {/* Left column: steps */}
-          <div className="flex-1 space-y-6 xl:pr-4">
+          <div className="flex-1 space-y-6 xl:pr-4 max-w-2xl w-full mx-auto">
 
             {/* Step 1: Trip & Efficiency */}
             <section className={sectionCard} aria-labelledby="step1">
@@ -158,7 +159,7 @@ const FuelCalculatorPage = () => {
           </div>
 
           {/* Right column: combined actions + results + tips */}
-          <aside className="xl:w-[25rem] w-full flex-shrink-0 xl:sticky xl:top-24">
+          <aside className="xl:w-[25rem] w-full flex-shrink-0 xl:sticky xl:top-24 mt-8 xl:mt-0">
             <div className={sectionCard + ' border-indigo-700/40 space-y-5'}>
               <h2 className="text-lg font-semibold flex items-center"><span className="text-indigo-400 mr-2">Result</span>Summary & Actions</h2>
               {/* Actions inline */}
@@ -199,7 +200,8 @@ const FuelCalculatorPage = () => {
               </div>
             </div>
           </aside>
-        </div>
+  </div>
+  </div>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ body {
 }
 
 body {
+  margin: 0; /* Remove default UA margin to control horizontal spacing precisely */
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
