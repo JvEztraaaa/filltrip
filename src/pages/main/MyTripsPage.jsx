@@ -4,7 +4,7 @@ import Header from '../../components/Header';
 
 const MyTripsPage = () => {
     return (
-        <div className="relative h-screen w-screen bg-gray-900 text-white overflow-hidden">
+    <div className="relative h-screen w-full bg-gray-900 text-white overflow-hidden overflow-x-hidden">
             <SidePanel />
             <Header />
             <div className="pt-20 pl-0 md:pl-64 p-4">

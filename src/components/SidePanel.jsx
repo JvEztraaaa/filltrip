@@ -64,22 +64,17 @@ const SidePanel = () => {
             { }
             <div className={`flex-1 overflow-y-auto ${sidebarOpen ? 'block' : 'hidden md:block'}`}>
                 {/* Logo/Brand Section */}
-                <div className="p-4 flex items-center h-16 border-b border-gray-800">
-                    <img src="/images/logo.svg" alt="FillTrip" className="h-8 w-auto flex-shrink-0" />
+                <Link to="/" className="p-4 flex items-center h-16 border-b border-gray-800 group focus:outline-none focus:ring-2 focus:ring-teal-400/40">
+                    <img src="/images/logo.svg" alt="FillTrip" className="h-8 w-auto flex-shrink-0 transition-transform group-hover:scale-105" />
                     <span className={`ml-3 whitespace-nowrap font-bold text-lg bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent ${sidebarOpen ? 'block' : 'hidden md:block'}`}>
                         FillTrip
                     </span>
-                </div>
+                </Link>
 
                 {/* Navigation Section */}
                 <div className="py-4">
                     <nav>
-                        <Link to="/" className={`${linkBase} ${isActive('/') ? active : inactive}`}>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
-                            <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>Home</span>
-                        </Link>
+                        {/* Home link removed; logo now navigates home */}
                         <Link to="/map" className={`${linkBase} ${isActive('/map') ? active : inactive}`}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
