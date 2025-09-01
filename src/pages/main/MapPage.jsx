@@ -593,6 +593,147 @@ const MapPage = () => {
       });
     }
 
+    // --- Saved Places Feature ---
+    const STORAGE_KEY = 'filltrip_saved_places_v1';
+    let savedPlaces = [];
+    const savedBtn = document.getElementById('savedPlacesBtn');
+    const savedPanel = document.getElementById('savedPlacesPanel');
+    const savedList = document.getElementById('savedPlacesList');
+    const saveStartBtn = document.getElementById('saveStartBtn');
+    const saveEndBtn = document.getElementById('saveEndBtn');
+  // Removed center save button per request
+    const savedToast = document.getElementById('savedPlacesToast');
+
+    function toast(msg) {
+      if (!savedToast) return;
+      savedToast.textContent = msg;
+      savedToast.classList.remove('opacity-0', 'translate-y-2');
+      clearTimeout(savedToast._hideTimer);
+      savedToast._hideTimer = setTimeout(() => {
+        savedToast.classList.add('opacity-0', 'translate-y-2');
+      }, 2200);
+    }
+
+    function loadSaved() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) savedPlaces = JSON.parse(raw);
+      } catch {
+        savedPlaces = [];
+      }
+    }
+    function persistSaved() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedPlaces));
+    }
+    function renderSaved() {
+      if (!savedList) return;
+      savedList.innerHTML = '';
+      if (!savedPlaces.length) {
+        const empty = document.createElement('div');
+        empty.className = 'text-xs text-gray-400 py-4 text-center';
+        empty.textContent = 'No saved places yet.';
+        savedList.appendChild(empty);
+        return;
+      }
+      savedPlaces.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'flex items-start gap-2 py-2 border-b border-gray-800 last:border-0';
+        row.innerHTML = `
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium truncate">${p.name}</div>
+            <div class="text-[10px] text-gray-400">${p.coords[1].toFixed(4)}, ${p.coords[0].toFixed(4)}</div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button data-action="use-start" data-id="${p.id}" class="px-2 py-1 rounded bg-teal-600 hover:bg-teal-500 text-[10px] text-white">Start</button>
+            <button data-action="use-end" data-id="${p.id}" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-[10px] text-white">End</button>
+            <button data-action="delete" data-id="${p.id}" class="px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-[10px] text-white">Del</button>
+          </div>`;
+        savedList.appendChild(row);
+      });
+    }
+  function addSaved(name, coords) {
+      if (!coords) return toast('No coordinates to save.');
+      const exists = savedPlaces.some(p => p.name === name || (p.coords[0] === coords[0] && p.coords[1] === coords[1]));
+      if (exists) return toast('Already saved.');
+      savedPlaces.unshift({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,8), name, coords });
+      if (savedPlaces.length > 100) savedPlaces.pop();
+      persistSaved();
+      renderSaved();
+      toast('Place saved');
+    }
+
+    loadSaved();
+    renderSaved();
+
+  // (Removed DOM listener for savedBtn to avoid double toggling because JSX already has onClick)
+
+    if (saveStartBtn) {
+      saveStartBtn.addEventListener('click', () => {
+        if (!startCoords) return toast('No start selected');
+        const raw = (document.getElementById('searchStart').value || '').trim();
+        const name = raw || `${startCoords[1].toFixed(4)}, ${startCoords[0].toFixed(4)}`;
+        addSaved(name, startCoords.slice());
+      });
+    }
+    if (saveEndBtn) {
+      saveEndBtn.addEventListener('click', () => {
+        if (!endCoords) return toast('No end selected');
+        const raw = (document.getElementById('searchEnd').value || '').trim();
+        const name = raw || `${endCoords[1].toFixed(4)}, ${endCoords[0].toFixed(4)}`;
+        addSaved(name, endCoords.slice());
+      });
+    }
+
+    if (savedList) {
+      savedList.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const id = btn.getAttribute('data-id');
+        const place = savedPlaces.find(p => p.id === id);
+        if (!place) return;
+        const action = btn.getAttribute('data-action');
+        if (action === 'delete') {
+            savedPlaces = savedPlaces.filter(p => p.id !== id);
+            persistSaved();
+            renderSaved();
+            toast('Deleted');
+        } else if (action === 'use-start') {
+            setStart(place.coords.slice(), place.name);
+            toast('Set as start');
+        } else if (action === 'use-end') {
+            setEnd(place.coords.slice(), place.name);
+            toast('Set as end');
+        }
+      });
+    }
+
+    // Utility to close panel
+    function closeSavedPanel() {
+      if (savedPanel && !savedPanel.classList.contains('hidden')) savedPanel.classList.add('hidden');
+    }
+
+    // Close panel with ESC
+    const escKeyHandler = (e) => {
+      if (e.key === 'Escape' && savedPanel && !savedPanel.classList.contains('hidden')) {
+        savedPanel.classList.add('hidden');
+      }
+    };
+    document.addEventListener('keydown', escKeyHandler);
+
+    // Outside click (anywhere not the panel or button) closes panel
+    const outsideHandler = (e) => {
+      if (!savedPanel || savedPanel.classList.contains('hidden')) return;
+      if (savedPanel.contains(e.target) || (savedBtn && savedBtn.contains(e.target))) return;
+      savedPanel.classList.add('hidden');
+    };
+    document.addEventListener('mousedown', outsideHandler);
+    document.addEventListener('touchstart', outsideHandler, { passive: true });
+
+    // Close when fuel button used (after logic) & when map style toggled handled outside
+    if (fuelBtn) {
+      fuelBtn.addEventListener('click', () => closeSavedPanel());
+    }
+
     return () => {
       map.remove();
       cleanups.forEach((fn) => fn && fn());
@@ -600,11 +741,17 @@ const MapPage = () => {
       if (locateBtnMobile) {
         locateBtnMobile.removeEventListener("click", handleLocate);
       }
+  document.removeEventListener('keydown', escKeyHandler);
+  document.removeEventListener('mousedown', outsideHandler);
+  document.removeEventListener('touchstart', outsideHandler);
     };
   }, []);
 
   // Toggle between light and dark map styles
   const toggleStyle = () => {
+    // Close saved panel when toggling style
+    const sp = document.getElementById('savedPlacesPanel');
+    if (sp && !sp.classList.contains('hidden')) sp.classList.add('hidden');
     const newStyle = isDarkStyle
       ? "mapbox://styles/mapbox/streets-v11"
       : "mapbox://styles/mapbox/dark-v10";
@@ -617,6 +764,9 @@ const MapPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
+    // Close saved panel when opening/closing sidebar
+    const sp = document.getElementById('savedPlacesPanel');
+    if (sp && !sp.classList.contains('hidden')) sp.classList.add('hidden');
     setIsSidebarOpen(prev => !prev);
     setTimeout(() => window.dispatchEvent(new Event('resize')), 350);
   };
@@ -687,10 +837,42 @@ const MapPage = () => {
         <span className="label sr-only">Show Gas</span>
       </button>
 
+      {/* Saved places toggle button */}
+      <button
+        id="savedPlacesBtn"
+        onClick={() => { const panel = document.getElementById('savedPlacesPanel'); if (panel) panel.classList.toggle('hidden'); }}
+        className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
+        aria-label="Saved places"
+        style={{ top: '232px', width: '48px', height: '48px' }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none">
+          <path d="M12 21s-6-5.686-6-11A6 6 0 0 1 12 4a6 6 0 0 1 6 6c0 5.314-6 11-6 11z" />
+        </svg>
+      </button>
+
       {/* Fuel error toast */}
       <div id="fuelError" className="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-red-600/90 backdrop-blur px-4 py-2 rounded shadow-lg text-white text-sm font-medium max-w-xs text-center"></div>
       {/* Fuel status toast (progress) */}
       <div id="fuelStatus" className="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[70] bg-gray-800/90 backdrop-blur px-4 py-2 rounded shadow-lg text-white text-xs font-medium max-w-xs text-center"></div>
+
+      {/* Saved places panel */}
+      <div
+        id="savedPlacesPanel"
+        className="hidden fixed z-[65] bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-lg shadow-xl text-white w-[280px] max-h-[60vh] overflow-hidden flex flex-col right-4 top-[288px] md:top-[288px]"
+      >
+        <div className="p-3 border-b border-gray-800 flex items-center justify-between">
+          <div className="text-sm font-semibold">Saved Places</div>
+          <div className="flex gap-1">
+            <button id="saveStartBtn" className="px-2 py-1 text-[10px] bg-teal-600 hover:bg-teal-500 rounded cursor-pointer">Save Start</button>
+            <button id="saveEndBtn" className="px-2 py-1 text-[10px] bg-indigo-600 hover:bg-indigo-500 rounded cursor-pointer">Save End</button>
+          </div>
+        </div>
+        <div id="savedPlacesList" className="flex-1 overflow-y-auto px-3 pb-2 text-xs"></div>
+        <div className="p-2 text-[10px] text-gray-400 border-t border-gray-800 bg-gray-900/80">Tap a place to set Start/End.</div>
+      </div>
+
+      {/* Saved places toast */}
+      <div id="savedPlacesToast" className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[70] bg-gray-800/90 text-white text-xs font-medium px-3 py-1 rounded shadow transition transform opacity-0 translate-y-2"></div>
 
       { }
       {isSidebarOpen && (
