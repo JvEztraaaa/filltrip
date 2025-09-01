@@ -48,7 +48,7 @@ const MapPage = () => {
       if (!text) return '';
       return text.length > max ? text.slice(0, max - 3) + '...' : text;
     }
-    
+
     function setStart(coords, label) {
       startCoords = coords;
       if (startMarker) startMarker.remove();
@@ -156,7 +156,7 @@ const MapPage = () => {
       };
     }
 
-  async function updateRoute() {
+    async function updateRoute() {
       if (!startCoords || !endCoords) return;
       const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}?geometries=geojson&steps=true&access_token=${mapboxgl.accessToken}`;
       const r = await fetch(url);
@@ -175,9 +175,9 @@ const MapPage = () => {
         }
         fuelDataCache = null;
       }
-  const distKm = route.distance / 1000;
-  distanceEl.textContent = distKm.toFixed(2) + " km";
-  setRouteDistanceKm(distKm);
+      const distKm = route.distance / 1000;
+      distanceEl.textContent = distKm.toFixed(2) + " km";
+      setRouteDistanceKm(distKm);
       durationEl.textContent = Math.round(route.duration / 60) + " min";
 
       stepsEl.innerHTML = "";
@@ -241,9 +241,6 @@ const MapPage = () => {
       )
     );
 
-    // Map click logic:
-    // 1st click -> start, 2nd click -> end.
-    // Further clicks default to end unless user explicitly chooses "Pick Start" in the drawer.
     map.on("click", (e) => {
       const selectedModeEl = document.querySelector("input[name=pickMode]:checked");
       const selectedMode = selectedModeEl ? selectedModeEl.value : 'end';
@@ -601,7 +598,7 @@ const MapPage = () => {
     const savedList = document.getElementById('savedPlacesList');
     const saveStartBtn = document.getElementById('saveStartBtn');
     const saveEndBtn = document.getElementById('saveEndBtn');
-  // Removed center save button per request
+    // Removed center save button per request
     const savedToast = document.getElementById('savedPlacesToast');
 
     function toast(msg) {
@@ -651,11 +648,11 @@ const MapPage = () => {
         savedList.appendChild(row);
       });
     }
-  function addSaved(name, coords) {
+    function addSaved(name, coords) {
       if (!coords) return toast('No coordinates to save.');
       const exists = savedPlaces.some(p => p.name === name || (p.coords[0] === coords[0] && p.coords[1] === coords[1]));
       if (exists) return toast('Already saved.');
-      savedPlaces.unshift({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,8), name, coords });
+      savedPlaces.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), name, coords });
       if (savedPlaces.length > 100) savedPlaces.pop();
       persistSaved();
       renderSaved();
@@ -665,7 +662,7 @@ const MapPage = () => {
     loadSaved();
     renderSaved();
 
-  // (Removed DOM listener for savedBtn to avoid double toggling because JSX already has onClick)
+    // (Removed DOM listener for savedBtn to avoid double toggling because JSX already has onClick)
 
     if (saveStartBtn) {
       saveStartBtn.addEventListener('click', () => {
@@ -693,26 +690,24 @@ const MapPage = () => {
         if (!place) return;
         const action = btn.getAttribute('data-action');
         if (action === 'delete') {
-            savedPlaces = savedPlaces.filter(p => p.id !== id);
-            persistSaved();
-            renderSaved();
-            toast('Deleted');
+          savedPlaces = savedPlaces.filter(p => p.id !== id);
+          persistSaved();
+          renderSaved();
+          toast('Deleted');
         } else if (action === 'use-start') {
-            setStart(place.coords.slice(), place.name);
-            toast('Set as start');
+          setStart(place.coords.slice(), place.name);
+          toast('Set as start');
         } else if (action === 'use-end') {
-            setEnd(place.coords.slice(), place.name);
-            toast('Set as end');
+          setEnd(place.coords.slice(), place.name);
+          toast('Set as end');
         }
       });
     }
 
-    // Utility to close panel
     function closeSavedPanel() {
       if (savedPanel && !savedPanel.classList.contains('hidden')) savedPanel.classList.add('hidden');
     }
 
-    // Close panel with ESC
     const escKeyHandler = (e) => {
       if (e.key === 'Escape' && savedPanel && !savedPanel.classList.contains('hidden')) {
         savedPanel.classList.add('hidden');
@@ -720,7 +715,6 @@ const MapPage = () => {
     };
     document.addEventListener('keydown', escKeyHandler);
 
-    // Outside click (anywhere not the panel or button) closes panel
     const outsideHandler = (e) => {
       if (!savedPanel || savedPanel.classList.contains('hidden')) return;
       if (savedPanel.contains(e.target) || (savedBtn && savedBtn.contains(e.target))) return;
@@ -729,7 +723,6 @@ const MapPage = () => {
     document.addEventListener('mousedown', outsideHandler);
     document.addEventListener('touchstart', outsideHandler, { passive: true });
 
-    // Close when fuel button used (after logic) & when map style toggled handled outside
     if (fuelBtn) {
       fuelBtn.addEventListener('click', () => closeSavedPanel());
     }
@@ -741,15 +734,14 @@ const MapPage = () => {
       if (locateBtnMobile) {
         locateBtnMobile.removeEventListener("click", handleLocate);
       }
-  document.removeEventListener('keydown', escKeyHandler);
-  document.removeEventListener('mousedown', outsideHandler);
-  document.removeEventListener('touchstart', outsideHandler);
+      document.removeEventListener('keydown', escKeyHandler);
+      document.removeEventListener('mousedown', outsideHandler);
+      document.removeEventListener('touchstart', outsideHandler);
     };
   }, []);
 
   // Toggle between light and dark map styles
   const toggleStyle = () => {
-    // Close saved panel when toggling style
     const sp = document.getElementById('savedPlacesPanel');
     if (sp && !sp.classList.contains('hidden')) sp.classList.add('hidden');
     const newStyle = isDarkStyle
@@ -764,7 +756,6 @@ const MapPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
-    // Close saved panel when opening/closing sidebar
     const sp = document.getElementById('savedPlacesPanel');
     if (sp && !sp.classList.contains('hidden')) sp.classList.add('hidden');
     setIsSidebarOpen(prev => !prev);
@@ -784,7 +775,7 @@ const MapPage = () => {
       { }
       <button
         onClick={toggleSidebar}
-  className="fixed top-16 right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
+        className="fixed top-16 right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
         aria-label="Toggle route sidebar"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -797,7 +788,7 @@ const MapPage = () => {
       {/* Dark theme toggle */}
       <button
         onClick={toggleStyle}
-  className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
+        className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
         aria-label="Toggle map style"
         style={{ top: '120px' }}
       >
@@ -823,7 +814,7 @@ const MapPage = () => {
       {/* Fuel stations toggle button */}
       <button
         id="fuelBtn"
-  className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
+        className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
         aria-label="Show nearby gas stations"
         style={{ top: '176px', width: '48px', height: '48px' }}
       >
@@ -930,7 +921,7 @@ const MapPage = () => {
         </div>
 
         { }
-  <div className="grid grid-cols-2 gap-4 mb-3 bg-gray-800 rounded-lg p-3">
+        <div className="grid grid-cols-2 gap-4 mb-3 bg-gray-800 rounded-lg p-3">
           <div className="text-center">
             <div id="distance" className="text-xl font-bold gradient-text">--</div>
             <div className="text-xs text-gray-400">Distance</div>
