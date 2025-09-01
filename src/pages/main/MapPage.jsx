@@ -9,7 +9,7 @@ import SidePanel from "../../components/SidePanel";
 const MapPage = () => {
   const mapRef = useRef(null);
   const navigate = useNavigate();
-  const [routeDistanceKm, setRouteDistanceKm] = useState(null); // numeric km distance when route selected
+  const [routeDistanceKm, setRouteDistanceKm] = useState(null);
   const [isDarkStyle, setIsDarkStyle] = useState(false);
 
   useEffect(() => {
