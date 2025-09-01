@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from 'react-router-dom';
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./MapPage.css";
@@ -7,6 +8,8 @@ import SidePanel from "../../components/SidePanel";
 
 const MapPage = () => {
   const mapRef = useRef(null);
+  const navigate = useNavigate();
+  const [routeDistanceKm, setRouteDistanceKm] = useState(null); // numeric km distance when route selected
   const [isDarkStyle, setIsDarkStyle] = useState(false);
 
   useEffect(() => {
@@ -153,7 +156,7 @@ const MapPage = () => {
       };
     }
 
-    async function updateRoute() {
+  async function updateRoute() {
       if (!startCoords || !endCoords) return;
       const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}?geometries=geojson&steps=true&access_token=${mapboxgl.accessToken}`;
       const r = await fetch(url);
@@ -172,7 +175,9 @@ const MapPage = () => {
         }
         fuelDataCache = null;
       }
-      distanceEl.textContent = (route.distance / 1000).toFixed(2) + " km";
+  const distKm = route.distance / 1000;
+  distanceEl.textContent = distKm.toFixed(2) + " km";
+  setRouteDistanceKm(distKm);
       durationEl.textContent = Math.round(route.duration / 60) + " min";
 
       stepsEl.innerHTML = "";
@@ -270,6 +275,7 @@ const MapPage = () => {
       document.getElementById("searchStart").value = "";
       document.getElementById("searchEnd").value = "";
       if (map.getSource("route")) map.getSource("route").setData(emptyLine());
+      setRouteDistanceKm(null);
     });
 
     document.getElementById("swapBtn").addEventListener("click", () => {
@@ -742,7 +748,7 @@ const MapPage = () => {
         </div>
 
         { }
-        <div className="grid grid-cols-2 gap-4 mb-5 bg-gray-800 rounded-lg p-3">
+  <div className="grid grid-cols-2 gap-4 mb-3 bg-gray-800 rounded-lg p-3">
           <div className="text-center">
             <div id="distance" className="text-xl font-bold gradient-text">--</div>
             <div className="text-xs text-gray-400">Distance</div>
@@ -795,6 +801,20 @@ const MapPage = () => {
           </div>
         </div>
       </aside>
+
+      {/* Proceed button overlay on map (appears after both points chosen) */}
+      {routeDistanceKm !== null && (
+        <button
+          onClick={() => navigate('/fuel-calculator', { state: { distanceKm: parseFloat(routeDistanceKm.toFixed(2)) } })}
+          className="fixed z-[58] md:z-[65] bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 hover:brightness-110 text-white font-medium shadow-lg shadow-indigo-900/40 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-[13px] sm:text-sm flex items-center gap-2 transition cursor-pointer bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 ring-1 ring-white/10 whitespace-nowrap"
+          aria-label="Proceed to Fuel Calculator"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          <span className="sm:hidden">Calculator</span>
+          <span className="hidden sm:inline">Fuel Calculator</span>
+          <span className="text-indigo-100/80 font-normal text-xs sm:text-sm ml-1 sm:ml-2">{routeDistanceKm.toFixed(1)} km</span>
+        </button>
+      )}
 
       { }
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-gray-900 border-t border-gray-800 p-3 flex justify-between z-[55]">

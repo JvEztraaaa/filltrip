@@ -1,2 +1,27 @@
-/* App-specific styles can be added here if needed */
-/* Currently using Tailwind CSS for all styling */
+/* App-specific styles */
+/* Result animation keyframes */
+@keyframes popFadeIn {
+	0% { opacity: 0; transform: scale(.85) translateY(6px); filter: blur(2px); }
+	55% { opacity: 1; transform: scale(1.03) translateY(0); filter: blur(0); }
+	80% { transform: scale(.995); }
+	100% { transform: scale(1); }
+}
+
+.result-animate {
+	animation: popFadeIn .65s cubic-bezier(.25,1.2,.3,1) both;
+}
+
+/* Subtle shimmer underline for animated numbers */
+.result-number-wrapper {
+	position: relative;
+}
+.result-number-wrapper:after {
+	content: "";
+	position: absolute;
+	left: 0; bottom: -2px; height: 2px; width: 100%;
+	background: linear-gradient(90deg, rgba(99,102,241,.15), rgba(168,85,247,.35), rgba(99,102,241,.15));
+	border-radius: 2px;
+	animation: shimmerWidth 1.2s ease-out 0.15s both;
+}
+@keyframes shimmerWidth { from { width: 0; } to { width: 100%; } }
+

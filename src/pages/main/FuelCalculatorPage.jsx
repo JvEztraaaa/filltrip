@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motorcycleModelsPH, carModelsPH } from '../../data/fuelEfficiency';
 import SidePanel from '../../components/SidePanel';
 import Header from '../../components/Header';
@@ -39,6 +40,7 @@ const mpgToKmL = (mpg) => mpg * 0.425143707; // US mpg to km/L
 
 const FuelCalculatorPage = () => {
   const [form, setForm] = useState(initialState);
+  const location = useLocation();
   const [results, setResults] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [attempted, setAttempted] = useState(false);
@@ -58,6 +60,7 @@ const FuelCalculatorPage = () => {
   const distanceUnitRef = useRef(null);
   const efficiencyUnitRef = useRef(null);
   const currencyRef = useRef(null);
+  const distanceInputRef = useRef(null);
 
   const pristine = useMemo(() => JSON.stringify(form) === JSON.stringify(initialState) && !results, [form, results]);
   const symbol = currencySymbols[form.currency] || '';
@@ -80,6 +83,18 @@ const FuelCalculatorPage = () => {
     if (showFuelTypeDropdown || openDropdown) document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
   }, [showFuelTypeDropdown, openDropdown]);
+
+  // Prefill distance if coming from MapPage route state
+  useEffect(() => {
+    const state = location.state;
+    if (state && typeof state.distanceKm === 'number' && !isNaN(state.distanceKm)) {
+      setForm(f => ({ ...f, distance: state.distanceKm.toString(), distanceUnit: 'km' }));
+      setTimeout(() => {
+        distanceInputRef.current?.focus();
+        distanceInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+    }
+  }, []);
 
   // Local dataset + remote fallback search
   useEffect(() => {
@@ -178,6 +193,27 @@ const FuelCalculatorPage = () => {
     return form.distance && form.efficiency && form.fuelPrice;
   }, [form]);
 
+  // Animated counter values
+  const animatedFuelRef = useRef(null);
+  const animatedCostRef = useRef(null);
+
+  useEffect(() => {
+    if (!results) return;
+    const dur = 650; // ms
+    const easeOut = t => 1 - Math.pow(1 - t, 3);
+    const start = performance.now();
+    const targetFuel = results.litersNeeded;
+    const targetCost = results.cost;
+    function frame(now) {
+      const p = Math.min(1, (now - start) / dur);
+      const e = easeOut(p);
+      if (animatedFuelRef.current) animatedFuelRef.current.textContent = (targetFuel * e).toFixed(2);
+      if (animatedCostRef.current) animatedCostRef.current.textContent = (targetCost * e).toFixed(2);
+      if (p < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }, [results]);
+
   const performCalculation = () => {
     setAttempted(true);
     if (!canCalculate) return;
@@ -194,11 +230,12 @@ const FuelCalculatorPage = () => {
       litersNeeded = (distanceKm / 100) * l100;
     }
     const cost = litersNeeded * (price || 0);
-    setResults({ litersNeeded, cost, currency: form.currency, timestamp: new Date().toISOString() });
+  setResults({ litersNeeded, cost, currency: form.currency, timestamp: new Date().toISOString() });
     setForm((f) => ({ ...f, lastCalculated: Date.now() }));
   };
   const clearAll = () => { setForm(initialState); setResults(null); setAttempted(false); };
   const reloadCalculator = () => { clearAll(); setReloadKey(k => k + 1); };
+
 
   // Validation hints
   const showErrors = attempted && !canCalculate;
@@ -289,21 +326,21 @@ const FuelCalculatorPage = () => {
                   <div className="flex flex-col gap-1">
                     <label className={labelCls}>Distance {showErrors && distanceMissing && <span className="text-rose-400 text-xs font-normal">required</span>}</label>
                     <div className="flex gap-2">
-                        <input type="number" min="0" step="1" disabled={form.useManualFuel} value={form.distance} onChange={handleChange('distance')} placeholder="150" className={inputBase + (distanceMissing && showErrors ? ' border-rose-500' : '')} />
-                        <div ref={distanceUnitRef} className="relative w-24">
-                          <button type="button" disabled={form.useManualFuel} onClick={() => !form.useManualFuel && setOpenDropdown(d => d === 'distanceUnit' ? null : 'distanceUnit')} className={inputBase + ' flex justify-between items-center text-left !py-2 w-full ' + (openDropdown === 'distanceUnit' ? 'rounded-b-none border-b-0' : '') + (form.useManualFuel ? ' opacity-50 cursor-not-allowed' : '')}>
-                            <span className="truncate capitalize">{form.distanceUnit}</span>
-                            <svg className={`w-4 h-4 ml-1 transition-transform ${openDropdown === 'distanceUnit' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                          </button>
-                          {openDropdown === 'distanceUnit' && (
-                            <div className="absolute z-50 top-full left-0 w-full rounded-md rounded-t-none border border-t-0 border-gray-700 bg-gray-900 text-sm shadow-lg overflow-hidden">
-                              {['km','miles'].map(opt => (
-                                <button key={opt} type="button" onClick={() => { setForm(f => ({ ...f, distanceUnit: opt })); setOpenDropdown(null); }} className={`w-full px-3 py-2 text-left hover:bg-gray-700/60 transition ${form.distanceUnit === opt ? 'bg-gray-700/70 text-indigo-300' : 'text-gray-200'}`}>{opt}</button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                      <input ref={distanceInputRef} type="number" min="0" step="1" disabled={form.useManualFuel} value={form.distance} onChange={handleChange('distance')} placeholder="150" className={inputBase + (distanceMissing && showErrors ? ' border-rose-500' : '')} />
+                      <div ref={distanceUnitRef} className="relative w-24">
+                        <button type="button" disabled={form.useManualFuel} onClick={() => !form.useManualFuel && setOpenDropdown(d => d === 'distanceUnit' ? null : 'distanceUnit')} className={inputBase + ' flex justify-between items-center text-left !py-2 w-full ' + (openDropdown === 'distanceUnit' ? 'rounded-b-none border-b-0' : '') + (form.useManualFuel ? ' opacity-50 cursor-not-allowed' : '')}>
+                          <span className="truncate capitalize">{form.distanceUnit}</span>
+                          <svg className={`w-4 h-4 ml-1 transition-transform ${openDropdown === 'distanceUnit' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        {openDropdown === 'distanceUnit' && (
+                          <div className="absolute z-50 top-full left-0 w-full rounded-md rounded-t-none border border-t-0 border-gray-700 bg-gray-900 text-sm shadow-lg overflow-hidden">
+                            {['km', 'miles'].map(opt => (
+                              <button key={opt} type="button" onClick={() => { setForm(f => ({ ...f, distanceUnit: opt })); setOpenDropdown(null); }} className={`w-full px-3 py-2 text-left hover:bg-gray-700/60 transition ${form.distanceUnit === opt ? 'bg-gray-700/70 text-indigo-300' : 'text-gray-200'}`}>{opt}</button>
+                            ))}
+                          </div>
+                        )}
                       </div>
+                    </div>
                     <p className="text-xs text-gray-500">One-way distance.</p>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -422,14 +459,14 @@ const FuelCalculatorPage = () => {
                 {/* Results */}
                 <div className="space-y-4">
                   {results ? (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
+                    <div className="grid grid-cols-2 gap-4 result-animate">
+                      <div className="result-number-wrapper">
                         <p className="text-[11px] uppercase tracking-wide text-gray-400">Fuel Needed</p>
-                        <p className="text-2xl font-semibold mt-1">{results.litersNeeded.toFixed(2)} <span className="text-sm font-normal text-gray-400">L</span></p>
+                        <p className="text-2xl font-semibold mt-1"><span ref={animatedFuelRef}>{results.litersNeeded.toFixed(2)}</span> <span className="text-sm font-normal text-gray-400">L</span></p>
                       </div>
-                      <div>
+                      <div className="result-number-wrapper">
                         <p className="text-[11px] uppercase tracking-wide text-gray-400">Estimated Cost</p>
-                        <p className="text-2xl font-semibold mt-1">{symbol}{results.cost.toFixed(2)} <span className="text-sm font-normal text-gray-400">{results.currency}</span></p>
+                        <p className="text-2xl font-semibold mt-1">{symbol}<span ref={animatedCostRef}>{results.cost.toFixed(2)}</span> <span className="text-sm font-normal text-gray-400">{results.currency}</span></p>
                       </div>
                       <div className="col-span-2">
                         <p className="text-[11px] text-gray-500">Calculated at {new Date(results.timestamp).toLocaleTimeString()}.</p>
