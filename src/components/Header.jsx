@@ -34,7 +34,9 @@ const Header = () => {
                     </button>
                 )}
             </div>
-            <h2 className="flex-1 text-xl font-bold gradient-text text-center">{dynamicTitle}</h2>
+            <h2 className="flex-1 text-xl font-bold text-center">
+                <span className="bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent font-extrabold tracking-wide drop-shadow-sm">{dynamicTitle}</span>
+            </h2>
             { }
             <div className="w-10 md:hidden" />
         </div>
