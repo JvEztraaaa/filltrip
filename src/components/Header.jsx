@@ -19,7 +19,7 @@ const Header = () => {
     const dynamicTitle = pathTitleMap[location.pathname] || 'FillTrip';
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-40 bg-gray-900 bg-opacity-80 backdrop-blur-sm flex items-center px-2 py-2">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-gray-900 bg-opacity-80 backdrop-blur-sm flex items-center px-2 py-2 shadow-lg">
             { }
             <div className="w-10 md:hidden flex-shrink-0 flex justify-start">
                 {!sidebarOpen && (
