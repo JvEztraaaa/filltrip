@@ -509,6 +509,33 @@ const MapPage = () => {
       if (fuelLayerVisible && fuelDataCache) {
         addFuelLayer();
       }
+      if (currentRouteCoords && currentRouteCoords.length) {
+        if (!map.getSource('route')) {
+          map.addSource('route', {
+            type: 'geojson',
+            data: { type: 'Feature', geometry: { type: 'LineString', coordinates: currentRouteCoords } }
+          });
+          map.addLayer({
+            id: 'route-line',
+            type: 'line',
+            source: 'route',
+            paint: {
+              'line-color': '#4FD1C5',
+              'line-width': 5,
+              'line-opacity': 0.9
+            },
+            layout: {
+              'line-cap': 'round',
+              'line-join': 'round'
+            }
+          });
+        } else {
+          map.getSource('route').setData({
+            type: 'Feature',
+            geometry: { type: 'LineString', coordinates: currentRouteCoords }
+          });
+        }
+      }
     });
 
     const fuelBtn = document.getElementById('fuelBtn');
