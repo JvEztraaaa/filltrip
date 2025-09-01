@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { motorcycleModels } from '../../data/motorcycles';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { motorcycleModelsPH, carModelsPH } from '../../data/fuelEfficiency';
 import SidePanel from '../../components/SidePanel';
 import Header from '../../components/Header';
 
@@ -10,7 +10,7 @@ const toLitersPer100km = (v, unit) => {
   switch (unit) {
     case 'L/100km': return v;
     case 'km/L': return 100 / v;
-    case 'mpg': return 235.214583 / v; 
+    case 'mpg': return 235.214583 / v;
     default: return 0;
   }
 };
@@ -21,7 +21,7 @@ const initialState = {
   efficiency: '',
   efficiencyUnit: 'km/L',
   fuelType: 'Gasoline / Unleaded (91)',
-  fuelPrice: '56',
+  fuelPrice: '',
   currency: 'PHP',
   manualFuelAmount: '',
   useManualFuel: false,
@@ -44,11 +44,20 @@ const FuelCalculatorPage = () => {
   const [attempted, setAttempted] = useState(false);
   // Vehicle lookup state
   const [vehicleQuery, setVehicleQuery] = useState('');
-  const [vehicleOptions, setVehicleOptions] = useState([]); // {id,label,combMpg,year,make,model}
+  const [vehicleOptions, setVehicleOptions] = useState([]);
   const [vehicleLoading, setVehicleLoading] = useState(false);
   const [vehicleError, setVehicleError] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [includeMotorcycles, setIncludeMotorcycles] = useState(false);
+  const [showVehicleDropdown, setShowVehicleDropdown] = useState(false);
+  const lastAppliedQueryRef = useRef('');
+  const [showFuelTypeDropdown, setShowFuelTypeDropdown] = useState(false);
+  const fuelTypeRef = useRef(null);
+  // Unified custom dropdown handling for units & currency
+  const [openDropdown, setOpenDropdown] = useState(null); // 'distanceUnit' | 'efficiencyUnit' | 'currency'
+  const distanceUnitRef = useRef(null);
+  const efficiencyUnitRef = useRef(null);
+  const currencyRef = useRef(null);
 
   const pristine = useMemo(() => JSON.stringify(form) === JSON.stringify(initialState) && !results, [form, results]);
   const symbol = currencySymbols[form.currency] || '';
@@ -58,34 +67,69 @@ const FuelCalculatorPage = () => {
     setForm((f) => ({ ...f, [field]: value }));
   };
 
-  // Vehicle search effect (debounced)
   useEffect(() => {
-    const q = vehicleQuery.trim();
+    const onClick = (e) => {
+      const targets = [
+        { ref: fuelTypeRef, close: () => setShowFuelTypeDropdown(false) },
+        { ref: distanceUnitRef, close: () => openDropdown === 'distanceUnit' && setOpenDropdown(null) },
+        { ref: efficiencyUnitRef, close: () => openDropdown === 'efficiencyUnit' && setOpenDropdown(null) },
+        { ref: currencyRef, close: () => openDropdown === 'currency' && setOpenDropdown(null) },
+      ];
+      targets.forEach(t => { if (t.ref.current && !t.ref.current.contains(e.target)) t.close(); });
+    };
+    if (showFuelTypeDropdown || openDropdown) document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [showFuelTypeDropdown, openDropdown]);
+
+  // Local dataset + remote fallback search
+  useEffect(() => {
+    const qRaw = vehicleQuery.trim();
+    const q = qRaw.toLowerCase();
     if (q.length < 2) {
-      setVehicleOptions(includeMotorcycles && q.length ? filterMotorcycles(q) : []);
+      setVehicleOptions([]);
       setVehicleError('');
+      setVehicleLoading(false);
       return;
     }
+    const tokens = q.split(/\s+/).filter(Boolean);
+    const pool = [
+      ...carModelsPH.map(c => ({ ...c, category: 'Car' })),
+      ...(includeMotorcycles ? motorcycleModelsPH.map(m => ({ ...m, category: 'Moto' })) : [])
+    ];
+    const localMatches = pool.map(item => {
+      const hay = `${item.make} ${item.model}`.toLowerCase();
+      if (!tokens.every(t => hay.includes(t))) return null;
+      let score = 0;
+      tokens.forEach(t => { if (hay.startsWith(t)) score += 15; if (hay.includes(t)) score += 8; });
+      const span = (item.kmPerLiterRange?.[1] || 0) - (item.kmPerLiterRange?.[0] || 0);
+      score += Math.max(0, 10 - span);
+      const baseYear = item.typicalYears?.split('-')[0] || '';
+      const label = `${baseYear} ${item.make} ${item.model}${item.category === 'Moto' ? ' (Moto)' : ''}`;
+      return { id: 'local-' + item.id, label, kmL: item.kmPerLiterAvg, year: item.typicalYears, make: item.make, model: item.model, score: score + 200, source: 'local' }; // Boost local
+    }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 50);
+    setVehicleOptions(localMatches);
+    setVehicleError('');
+
+    if (localMatches.length > 0) { setVehicleLoading(false); return; }
+
     const controller = new AbortController();
+    setVehicleLoading(true);
     const timeout = setTimeout(async () => {
       try {
-        setVehicleLoading(true);
-        setVehicleError('');
-        const tokens = q.toLowerCase().split(/\s+/).filter(Boolean);
+        const base = 'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/all-vehicles-model/records';
         let url;
         if (tokens.length >= 2) {
           const makeTk = tokens[0];
           const modelTk = tokens.slice(1).join(' ');
-          // where with ILIKE for make & model; fallback to search if fails
           const where = encodeURIComponent(`lower(make) LIKE '%${makeTk}%' AND lower(model) LIKE '%${modelTk}%'`);
-          url = `https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/all-vehicles-model/records?limit=60&where=${where}`;
+          url = `${base}?limit=40&where=${where}`;
         } else {
-          url = `https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/all-vehicles-model/records?limit=60&search=${encodeURIComponent(q)}`;
+          url = `${base}?limit=40&search=${encodeURIComponent(qRaw)}`;
         }
         const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error('Network');
+        if (!res.ok) throw new Error('network');
         const data = await res.json();
-        const raw = (data.results || []).map(r => {
+        const remote = (data.results || []).map(r => {
           const make = (r.make || r.make_display || '').trim();
           const model = (r.model || r.basemodel || '').trim();
           const year = r.year || r.year_from || r.year_to || '';
@@ -95,56 +139,35 @@ const FuelCalculatorPage = () => {
           let mpg = comb;
           if (!mpg && city && hwy) mpg = (city * 0.55 + hwy * 0.45).toFixed(1);
           if (!mpg) return null;
-          const label = `${year || 'Year?'} ${make} ${model}`.replace(/\s+/g,' ').trim();
-          const score = scoreVehicle(label, tokens, year);
-          return { id: r.id || `${make}-${model}-${year}`, label, combMpg: mpg, year, make, model, score };
+          const label = `${year || 'Year?'} ${make} ${model}`.replace(/\s+/g, ' ').trim();
+          let score = 0;
+          const lcl = label.toLowerCase();
+          tokens.forEach(t => { if (lcl.startsWith(t)) score += 10; if (lcl.includes(t)) score += 5; });
+          return { id: 'remote-' + (r.id || `${make}-${model}-${year}`), label: label + ' (Global)', combMpg: mpg, kmL: mpgToKmL(parseFloat(mpg)), year, make, model, score: score + 50, source: 'remote' };
         }).filter(Boolean);
-
-        const dedup = new Map();
-        raw.forEach(v => {
-          const key = v.label.toLowerCase();
-            if (!dedup.has(key) || dedup.get(key).score < v.score) dedup.set(key, v);
-        });
-        let list = Array.from(dedup.values()).sort((a,b) => b.score - a.score).slice(0, 25);
-
-        if (includeMotorcycles) {
-          const motos = filterMotorcycles(q).map(m => ({
-            id: 'moto-' + m.id,
-            label: `${m.year} ${m.make} ${m.model} (Moto)` ,
-            combMpg: (m.kmPerLiter / 0.425143707).toFixed(1), // convert km/L to mpg for internal uniformity
-            year: m.year,
-            make: m.make,
-            model: m.model,
-            score: 200 // boost to surface clearly when requested
-          }));
-          list = [...motos, ...list];
-        }
-        setVehicleOptions(list);
+        const merged = [...localMatches, ...remote].sort((a, b) => b.score - a.score).slice(0, 50);
+        if (!merged.length) setVehicleError('No matches found');
+        setVehicleOptions(merged);
       } catch (e) {
-        if (e.name !== 'AbortError') setVehicleError('Failed to load vehicles');
+        if (e.name !== 'AbortError') setVehicleError('Lookup failed');
       } finally {
         setVehicleLoading(false);
       }
-    }, 400);
+    }, 450);
     return () => { clearTimeout(timeout); controller.abort(); };
   }, [vehicleQuery, includeMotorcycles]);
 
-  const scoreVehicle = (label, tokens, year) => {
-    const l = label.toLowerCase();
-    let score = 0;
-    tokens.forEach(t => { if (l.includes(t)) score += 10; if (l.startsWith(t)) score += 5; });
-    if (/\b\d{4}\b/.test(String(year))) score += Math.min( (parseInt(year,10)-1990), 30 );
-    return score;
-  };
-
-  const filterMotorcycles = (q) => {
-    const tks = q.toLowerCase().split(/\s+/).filter(Boolean);
-    return motorcycleModels.filter(m => tks.every(t => `${m.make} ${m.model}`.toLowerCase().includes(t)));
-  };
-
   const applyVehicle = (veh) => {
     setSelectedVehicle(veh);
-    if (veh && veh.combMpg) {
+    if (!veh) return;
+    const cleanLabel = veh.label.replace(/ \((Moto|Global)\)$/, '');
+    lastAppliedQueryRef.current = cleanLabel;
+    setVehicleQuery(cleanLabel);
+    setShowVehicleDropdown(false);
+    setVehicleError('');
+    if (veh.kmL) {
+      setForm(f => ({ ...f, efficiencyUnit: 'km/L', efficiency: parseFloat(veh.kmL).toFixed(2) }));
+    } else if (veh.combMpg) {
       const kmL = mpgToKmL(parseFloat(veh.combMpg));
       setForm(f => ({ ...f, efficiencyUnit: 'km/L', efficiency: kmL ? kmL.toFixed(2) : f.efficiency }));
     }
@@ -190,58 +213,69 @@ const FuelCalculatorPage = () => {
       <Header />
       <div className="pt-20 pl-0 md:pl-64 w-full">
         <div className="px-5 xs:px-6 sm:px-8 max-w-5xl mx-auto w-full">
-          {/* Header full width */}
+          {showErrors && (
+            <div className="mb-4">
+              <p className="text-red-500 text-sm">Please fill in all required fields.</p>
+            </div>
+          )}
           <header className="max-w-3xl mb-6">
             <h1 className="text-3xl font-semibold tracking-tight">Fuel Calculator</h1>
             <p className="text-gray-400 text-sm mt-2 max-w-prose">Follow the numbered steps, then press Calculate.</p>
           </header>
           <div className="flex flex-col xl:flex-row gap-6 items-start">
-            {/* Left column: steps */}
+            { }
             <div className="flex-1 space-y-6 xl:pr-4 max-w-2xl w-full mx-auto">
 
               {/* Step 1: Vehicle Selection */}
-              <section className={sectionCard} aria-labelledby="stepVehicle">
+              { }
+              <section className={sectionCard + ' relative z-40'} aria-labelledby="stepVehicle">
                 <h2 id="stepVehicle" className="text-lg font-semibold flex items-center"><span className={badge}>1</span>Vehicle (Optional)</h2>
-                <p className="text-xs text-gray-500 -mt-1">Select or search to auto-fill efficiency; you can still edit manually.</p>
-                <div className="flex flex-col gap-2">
-                  <div className="flex gap-2 items-start">
-                    <input
-                      type="text"
-                      value={vehicleQuery}
-                      onChange={e => setVehicleQuery(e.target.value)}
-                      placeholder="Search make / model (e.g. Toyota Camry)"
-                      className={inputBase + ' flex-1'}
-                    />
+                <p className="text-xs text-gray-500 -mt-1">Search PH models to auto-fill efficiency; edit manually if needed.</p>
+                <div className="flex flex-col gap-2 relative">
+                  <div className="flex gap-2 items-center">
+                    <div className="relative flex-1 min-w-0">
+                      <input
+                        type="text"
+                        value={vehicleQuery}
+                        onChange={e => { const v = e.target.value; setVehicleQuery(v); if (v !== lastAppliedQueryRef.current) setShowVehicleDropdown(true); }}
+                        placeholder="Search model (e.g. Toyota Vios, Click 125)"
+                        className={
+                          inputBase + ' w-full ' + (
+                            showVehicleDropdown && !vehicleLoading && !vehicleError && vehicleQuery.length >= 2 ? 'rounded-b-none border-b-0' : ''
+                          )
+                        }
+                      />
+                      {!vehicleLoading && !vehicleError && vehicleOptions.length > 0 && showVehicleDropdown && (
+                        <div className="absolute z-50 top-full left-0 w-full max-h-56 overflow-y-auto rounded-md rounded-t-none border border-t-0 border-gray-700 bg-gray-900 divide-y divide-gray-700 text-sm shadow-lg">
+                          {vehicleOptions.map(o => (
+                            <button
+                              key={o.id}
+                              type="button"
+                              onClick={() => applyVehicle(o)}
+                              className={`w-full text-left px-3 py-2 hover:bg-gray-700/60 transition flex flex-col ${selectedVehicle?.id === o.id ? 'bg-gray-700/70' : ''}`}
+                            >
+                              <span className="font-medium text-gray-200">{o.label}</span>
+                              <span className="text-[11px] text-gray-400">Avg: {o.kmL?.toFixed ? o.kmL.toFixed(2) : o.kmL} km/L{o.source === 'remote' ? ' • ext' : ''}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {vehicleQuery && !vehicleLoading && vehicleOptions.length === 0 && !vehicleError && showVehicleDropdown && (
+                        <div className="absolute z-50 top-full left-0 w-full rounded-md rounded-t-none border border-t-0 border-gray-700 bg-gray-900 text-xs text-gray-500 px-3 py-2">No matches.</div>
+                      )}
+                    </div>
                     <button
                       type="button"
-                      onClick={() => { setVehicleQuery(''); setVehicleOptions([]); setSelectedVehicle(null); }}
-                      className="px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-xs font-medium"
+                      onClick={() => { setVehicleQuery(''); setVehicleOptions([]); setSelectedVehicle(null); lastAppliedQueryRef.current = ''; setShowVehicleDropdown(false); }}
+                      className="px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-xs font-medium flex-shrink-0"
                     >Clear</button>
                   </div>
                   <label className="flex items-center gap-2 text-[11px] text-gray-400 select-none">
                     <input type="checkbox" className="accent-indigo-500" checked={includeMotorcycles} onChange={e => setIncludeMotorcycles(e.target.checked)} />
-                    Include popular PH motorcycles
+                    Include motorcycles
                   </label>
                   {vehicleLoading && <p className="text-xs text-indigo-400">Loading vehicles...</p>}
-                  {vehicleError && <p className="text-xs text-rose-400">{vehicleError}</p>}
-                  {!vehicleLoading && !vehicleError && vehicleOptions.length > 0 && (
-                    <div className="max-h-48 overflow-y-auto rounded-md border border-gray-700 bg-gray-900/50 divide-y divide-gray-700 text-sm">
-                      {vehicleOptions.map(o => (
-                        <button
-                          key={o.id}
-                          type="button"
-                          onClick={() => applyVehicle(o)}
-                          className={`w-full text-left px-3 py-2 hover:bg-gray-700/60 transition flex flex-col ${selectedVehicle?.id === o.id ? 'bg-gray-700/70' : ''}`}
-                        >
-                          <span className="font-medium text-gray-200">{o.label}</span>
-                          <span className="text-[11px] text-gray-400">Combined: {o.combMpg} mpg ≈ {mpgToKmL(o.combMpg).toFixed(2)} km/L</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {vehicleQuery && !vehicleLoading && vehicleOptions.length === 0 && !vehicleError && (
-                    <p className="text-xs text-gray-500">No matches with fuel data.</p>
-                  )}
+                  {vehicleError && !selectedVehicle && <p className="text-xs text-rose-400">{vehicleError}</p>}
                   {selectedVehicle && (
                     <p className="text-xs text-teal-400">Applied {selectedVehicle.label}. You may adjust efficiency below.</p>
                   )}
@@ -249,26 +283,50 @@ const FuelCalculatorPage = () => {
               </section>
 
               {/* Step 2: Trip & Efficiency */}
-              <section className={sectionCard} aria-labelledby="step1">
+              <section className={sectionCard + ' relative ' + ((openDropdown === 'distanceUnit' || openDropdown === 'efficiencyUnit') ? 'z-40' : '')} aria-labelledby="step1">
                 <h2 id="step1" className="text-lg font-semibold flex items-center"><span className={badge}>2</span>Trip Details</h2>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1">
                     <label className={labelCls}>Distance {showErrors && distanceMissing && <span className="text-rose-400 text-xs font-normal">required</span>}</label>
                     <div className="flex gap-2">
-                      <input type="number" min="0" step="1" disabled={form.useManualFuel} value={form.distance} onChange={handleChange('distance')} placeholder="150" className={inputBase + (distanceMissing && showErrors ? ' border-rose-500' : '')} />
-                      <select disabled={form.useManualFuel} value={form.distanceUnit} onChange={handleChange('distanceUnit')} className={selectBase}>
-                        <option value="km">km</option><option value="miles">miles</option>
-                      </select>
-                    </div>
+                        <input type="number" min="0" step="1" disabled={form.useManualFuel} value={form.distance} onChange={handleChange('distance')} placeholder="150" className={inputBase + (distanceMissing && showErrors ? ' border-rose-500' : '')} />
+                        <div ref={distanceUnitRef} className="relative w-24">
+                          <button type="button" disabled={form.useManualFuel} onClick={() => !form.useManualFuel && setOpenDropdown(d => d === 'distanceUnit' ? null : 'distanceUnit')} className={inputBase + ' flex justify-between items-center text-left !py-2 w-full ' + (openDropdown === 'distanceUnit' ? 'rounded-b-none border-b-0' : '') + (form.useManualFuel ? ' opacity-50 cursor-not-allowed' : '')}>
+                            <span className="truncate capitalize">{form.distanceUnit}</span>
+                            <svg className={`w-4 h-4 ml-1 transition-transform ${openDropdown === 'distanceUnit' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                          </button>
+                          {openDropdown === 'distanceUnit' && (
+                            <div className="absolute z-50 top-full left-0 w-full rounded-md rounded-t-none border border-t-0 border-gray-700 bg-gray-900 text-sm shadow-lg overflow-hidden">
+                              {['km','miles'].map(opt => (
+                                <button key={opt} type="button" onClick={() => { setForm(f => ({ ...f, distanceUnit: opt })); setOpenDropdown(null); }} className={`w-full px-3 py-2 text-left hover:bg-gray-700/60 transition ${form.distanceUnit === opt ? 'bg-gray-700/70 text-indigo-300' : 'text-gray-200'}`}>{opt}</button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     <p className="text-xs text-gray-500">One-way distance.</p>
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className={labelCls}>Efficiency {showErrors && efficiencyMissing && <span className="text-rose-400 text-xs font-normal">required</span>}</label>
                     <div className="flex gap-2">
                       <input type="number" min="0" step="1" disabled={form.useManualFuel} value={form.efficiency} onChange={handleChange('efficiency')} placeholder={form.efficiencyUnit === 'L/100km' ? '7.5' : form.efficiencyUnit === 'km/L' ? '40' : '30'} className={inputBase + (efficiencyMissing && showErrors ? ' border-rose-500' : '')} />
-                      <select disabled={form.useManualFuel} value={form.efficiencyUnit} onChange={handleChange('efficiencyUnit')} className={selectBase}>
-                        <option value="L/100km">L/100km</option><option value="km/L">km/L</option><option value="mpg">mpg (US)</option>
-                      </select>
+                      <div ref={efficiencyUnitRef} className="relative w-28">
+                        <button type="button" disabled={form.useManualFuel} onClick={() => !form.useManualFuel && setOpenDropdown(d => d === 'efficiencyUnit' ? null : 'efficiencyUnit')} className={inputBase + ' flex justify-between items-center text-left !py-2 w-full ' + (openDropdown === 'efficiencyUnit' ? 'rounded-b-none border-b-0' : '') + (form.useManualFuel ? ' opacity-50 cursor-not-allowed' : '')}>
+                          <span className="truncate">{form.efficiencyUnit === 'mpg' ? 'mpg (US)' : form.efficiencyUnit}</span>
+                          <svg className={`w-4 h-4 ml-1 transition-transform ${openDropdown === 'efficiencyUnit' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        {openDropdown === 'efficiencyUnit' && (
+                          <div className="absolute z-50 top-full left-0 w-full rounded-md rounded-t-none border border-t-0 border-gray-700 bg-gray-900 text-sm shadow-lg overflow-hidden">
+                            {[
+                              { value: 'L/100km', label: 'L/100km' },
+                              { value: 'km/L', label: 'km/L' },
+                              { value: 'mpg', label: 'mpg (US)' }
+                            ].map(opt => (
+                              <button key={opt.value} type="button" onClick={() => { setForm(f => ({ ...f, efficiencyUnit: opt.value })); setOpenDropdown(null); }} className={`w-full px-3 py-2 text-left hover:bg-gray-700/60 transition ${form.efficiencyUnit === opt.value ? 'bg-gray-700/70 text-indigo-300' : 'text-gray-200'}`}>{opt.label}</button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <p className="text-xs text-gray-500">Average consumption.</p>
                   </div>
@@ -277,24 +335,57 @@ const FuelCalculatorPage = () => {
               </section>
 
               {/* Step 3: Price */}
-              <section className={sectionCard} aria-labelledby="step2">
+              <section className={sectionCard + ' relative ' + ((openDropdown === 'currency' || showFuelTypeDropdown) ? 'z-40' : '')} aria-labelledby="step2">
                 <h2 id="step2" className="text-lg font-semibold flex items-center"><span className={badge}>3</span>Fuel Type & Price</h2>
                 <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1 max-w-sm">
+                  <div className="flex flex-col gap-1 max-w-sm relative" ref={fuelTypeRef}>
                     <label className={labelCls}>Fuel Type</label>
-                    <select value={form.fuelType} onChange={handleChange('fuelType')} className={selectBase + ' w-full'}>
-                      <option>Gasoline / Unleaded (91)</option>
-                      <option>Premium Gasoline (95 / 97 / 98)</option>
-                      <option>Diesel</option>
-                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowFuelTypeDropdown(v => !v)}
+                      className={
+                        inputBase + ' flex justify-between items-center text-left !py-2 ' + (showFuelTypeDropdown ? 'rounded-b-none border-b-0' : '')
+                      }
+                      aria-haspopup="listbox"
+                      aria-expanded={showFuelTypeDropdown}
+                    >
+                      <span className="truncate">{form.fuelType || 'Select fuel type'}</span>
+                      <svg className={`w-4 h-4 ml-2 transition-transform ${showFuelTypeDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {showFuelTypeDropdown && (
+                      <div className="absolute z-50 top-full left-0 w-full max-h-48 overflow-y-auto rounded-md rounded-t-none border border-t-0 border-gray-700 bg-gray-900 divide-y divide-gray-700 text-sm shadow-lg">
+                        {['Gasoline / Unleaded (91)', 'Premium Gasoline (95 / 97 / 98)', 'Diesel'].map(ft => (
+                          <button
+                            type="button"
+                            key={ft}
+                            onClick={() => { setForm(f => ({ ...f, fuelType: ft })); setShowFuelTypeDropdown(false); }}
+                            className={`w-full px-3 py-2 text-left hover:bg-gray-700/60 transition ${form.fuelType === ft ? 'bg-gray-700/70 text-indigo-300' : 'text-gray-200'}`}
+                          >
+                            {ft}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className={labelCls}>Price per Liter {showErrors && priceMissing && <span className="text-rose-400 text-xs font-normal">required</span>}</label>
                     <div className="flex gap-2 max-w-sm">
                       <input type="number" min="0" step="1" value={form.fuelPrice} onChange={handleChange('fuelPrice')} placeholder="56" className={inputBase + (priceMissing && showErrors ? ' border-rose-500' : '')} />
-                      <select value={form.currency} onChange={handleChange('currency')} className={selectBase}>
-                        {Object.keys(currencySymbols).map(c => <option key={c}>{c}</option>)}
-                      </select>
+                      <div ref={currencyRef} className="relative w-24">
+                        <button type="button" onClick={() => setOpenDropdown(d => d === 'currency' ? null : 'currency')} className={inputBase + ' flex justify-between items-center text-left !py-2 w-full ' + (openDropdown === 'currency' ? 'rounded-b-none border-b-0' : '')}>
+                          <span className="truncate">{form.currency}</span>
+                          <svg className={`w-4 h-4 ml-1 transition-transform ${openDropdown === 'currency' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        {openDropdown === 'currency' && (
+                          <div className="absolute z-50 top-full left-0 w-full rounded-md rounded-t-none border border-t-0 border-gray-700 bg-gray-900 text-sm shadow-lg overflow-hidden">
+                            {Object.keys(currencySymbols).map(c => (
+                              <button key={c} type="button" onClick={() => { setForm(f => ({ ...f, currency: c })); setOpenDropdown(null); }} className={`w-full px-3 py-2 text-left hover:bg-gray-700/60 transition ${form.currency === c ? 'bg-gray-700/70 text-indigo-300' : 'text-gray-200'}`}>{c}</button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <p className="text-xs text-gray-500">Prices vary by station; enter your actual price for accuracy.</p>
                   </div>
@@ -321,7 +412,7 @@ const FuelCalculatorPage = () => {
             <aside className="xl:w-[25rem] w-full flex-shrink-0 xl:sticky xl:top-24 mt-0 sm:mt-2 xl:mt-0">
               <div className={sectionCard + ' border-indigo-700/40 space-y-5'}>
                 <h2 className="text-lg font-semibold flex items-center"><span className="text-indigo-400 mr-2">Result</span>Summary & Actions</h2>
-                {/* Actions inline */}
+                { }
                 <div className="flex flex-wrap gap-3">
                   <button onClick={performCalculation} disabled={!canCalculate} className="px-5 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium shadow">Calculate</button>
                   <button onClick={clearAll} disabled={pristine} className="px-5 py-2 rounded-md bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium">Clear</button>
@@ -348,13 +439,13 @@ const FuelCalculatorPage = () => {
                     <p className="text-sm text-gray-500">Enter inputs then press Calculate to see results.</p>
                   )}
                 </div>
-                {/* Tips condensed */}
+                {/* Tips */}
                 <div>
                   <h3 className="text-sm font-semibold mb-2 flex items-center"><span className="text-indigo-400 mr-1">ℹ</span>Quick Tips</h3>
                   <ul className="text-xs list-disc pl-5 space-y-1 text-gray-400">
-                    <li>Steps on left → Calculate here.</li>
-                    <li>Toggle manual liters if you know exact amount.</li>
-                    <li>Driving style & conditions change efficiency.</li>
+                    <li>Follow the steps on the left to calculate your fuel cost.</li>
+                    <li>Toggle manual liters if you know exact fuel amount.</li>
+                    <li>Driving style & conditions may change fuel  efficiency.</li>
                   </ul>
                 </div>
               </div>

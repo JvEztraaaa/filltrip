@@ -74,32 +74,32 @@ const SidePanel = () => {
                 {/* Navigation Section */}
                 <div className="py-4">
                     <nav>
-                        {/* Home link removed; logo now navigates home */}
-                        <Link to="/map" className={`${linkBase} ${isActive('/map') ? active : inactive}`}>
+                        { }
+                        <Link to="/map" className={`${linkBase} ${isActive('/map') ? active : inactive}`} onClick={() => { if (window.innerWidth < 768) toggleSidebar(); }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                             </svg>
                             <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>Map</span>
                         </Link>
-                        <Link to="/fuel-calculator" className={`${linkBase} ${isActive('/fuel-calculator') ? active : inactive}`}>
+                        <Link to="/fuel-calculator" className={`${linkBase} ${isActive('/fuel-calculator') ? active : inactive}`} onClick={() => { if (window.innerWidth < 768) toggleSidebar(); }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h7l2 3h9v13a2 2 0 01-2 2H5a2 2 0 01-2-2V3z" />
                             </svg>
                             <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>Fuel Calculator</span>
                         </Link>
-                        <Link to="/my-trips" className={`${linkBase} ${isActive('/my-trips') ? active : inactive}`}>
+                        <Link to="/my-trips" className={`${linkBase} ${isActive('/my-trips') ? active : inactive}`} onClick={() => { if (window.innerWidth < 768) toggleSidebar(); }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m6 13l4.553 2.276A1 1 0 0021 20.382V9.618a1 1 0 00-.553-.894L15 6m0 14V6m0 0L9 7" />
                             </svg>
                             <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>My Trips</span>
                         </Link>
-                        <Link to="/refuel-history" className={`${linkBase} ${isActive('/refuel-history') ? active : inactive}`}>
+                        <Link to="/refuel-history" className={`${linkBase} ${isActive('/refuel-history') ? active : inactive}`} onClick={() => { if (window.innerWidth < 768) toggleSidebar(); }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>Refuel History</span>
                         </Link>
-                        <Link to="/statistics" className={`${linkBase} ${isActive('/statistics') ? active : inactive}`}>
+                        <Link to="/statistics" className={`${linkBase} ${isActive('/statistics') ? active : inactive}`} onClick={() => { if (window.innerWidth < 768) toggleSidebar(); }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h10M4 18h6" />
                             </svg>
