@@ -8,11 +8,11 @@ const Header = () => {
 
     const pathTitleMap = {
         '/': 'Home',
-        '/map': 'Map',
-        '/fuel-calculator': 'Fuel Calculator',
-        '/my-trips': 'My Trips',
-        '/refuel-history': 'Refuel History',
-        '/statistics': 'Statistics',
+        '/map': 'MAP',
+        '/fuel-calculator': 'FUEL CALCULATOR',
+        '/my-trips': 'MY TRIPS',
+        '/refuel-history': 'REFUEL HISTORY',
+        '/statistics': 'STATISTICS',
         '/login': 'Login',
         '/signup': 'Sign Up'
     };
@@ -34,8 +34,10 @@ const Header = () => {
                     </button>
                 )}
             </div>
-            <h2 className="flex-1 text-xl font-bold text-center">
-                <span className="bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent font-extrabold tracking-wide drop-shadow-sm">{dynamicTitle}</span>
+            <h2 className="flex-1 text-[1.05rem] sm:text-lg font-semibold text-center tracking-[0.14em] text-teal-400 select-none">
+                <span className="inline-block align-middle leading-tight font-semibold drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]">
+                    {dynamicTitle}
+                </span>
             </h2>
             { }
             <div className="w-10 md:hidden" />
