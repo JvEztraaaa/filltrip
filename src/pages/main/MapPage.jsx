@@ -236,12 +236,24 @@ const MapPage = () => {
       )
     );
 
+    // Map click logic:
+    // 1st click -> start, 2nd click -> end.
+    // Further clicks default to end unless user explicitly chooses "Pick Start" in the drawer.
     map.on("click", (e) => {
-      const mode = document.querySelector("input[name=pickMode]:checked").value;
+      const selectedModeEl = document.querySelector("input[name=pickMode]:checked");
+      const selectedMode = selectedModeEl ? selectedModeEl.value : 'end';
       const coords = [e.lngLat.lng, e.lngLat.lat];
       const label = `Dropped pin (${coords[1].toFixed(4)},${coords[0].toFixed(4)})`;
-      if (mode === "start") setStart(coords, label);
-      else setEnd(coords, label);
+
+      if (!startCoords) {
+        setStart(coords, label);
+        return;
+      }
+      if (!endCoords) {
+        setEnd(coords, label);
+        return;
+      }
+      if (selectedMode === 'start') setStart(coords, label); else setEnd(coords, label);
     });
 
     document.getElementById("clearBtn").addEventListener("click", () => {
