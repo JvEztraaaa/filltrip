@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SidePanel from '../../components/SidePanel';
 import Header from '../../components/Header';
 import { addRefuel, deleteRefuel, groupRefuelsByMonth, listRefuels, updateRefuel, computeDistanceSincePrev } from '../../services/refuel';
@@ -28,6 +28,23 @@ const RefuelHistoryPage = () => {
     });
     const [editing, setEditing] = useState(null); // id
     const nowMax = useMemo(() => new Date().toISOString().slice(0,16), []);
+        // Custom dropdowns (mobile-friendly)
+        const [openMenu, setOpenMenu] = useState(null); // 'fuelType' | 'currency' | null
+        const fuelTypeRef = useRef(null);
+        const currencyRef = useRef(null);
+        useEffect(() => {
+            const onClick = (e) => {
+                const targets = [
+                    { ref: fuelTypeRef, key: 'fuelType' },
+                    { ref: currencyRef, key: 'currency' },
+                ];
+                let inside = false;
+                targets.forEach(t => { if (t.ref.current && t.ref.current.contains(e.target)) inside = true; });
+                if (!inside) setOpenMenu(null);
+            };
+            if (openMenu) document.addEventListener('mousedown', onClick);
+            return () => document.removeEventListener('mousedown', onClick);
+        }, [openMenu]);
 
     const refresh = () => setGroups(groupRefuelsByMonth(listRefuels()));
     useEffect(() => { refresh(); }, []);
@@ -107,25 +124,45 @@ const RefuelHistoryPage = () => {
                                 <label className="text-xs text-gray-400">Fuel Amount (L)</label>
                                 <input type="number" min="0" step="0.01" value={form.liters} onChange={e=>setForm(f=>({ ...f, liters: e.target.value }))} className="w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-indigo-500 outline-none text-sm" />
                             </div>
-                            <div>
-                                <label className="text-xs text-gray-400">Price per Liter</label>
-                                <div className="flex gap-2">
-                                    <input type="number" min="0" step="0.01" value={form.pricePerLiter} onChange={e=>setForm(f=>({ ...f, pricePerLiter: e.target.value }))} className="flex-1 mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-indigo-500 outline-none text-sm" />
-                                    <select value={form.currency} onChange={e=>setForm(f=>({ ...f, currency: e.target.value }))} className="w-28 mt-1 px-2 py-2 rounded bg-gray-800 border border-gray-700 focus:border-indigo-500 outline-none text-sm">
-                                        {Object.keys(currencySymbols).map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
-                                </div>
-                            </div>
+                                            <div>
+                                                <label className="text-xs text-gray-400">Price per Liter</label>
+                                                <div className="flex gap-2">
+                                                    <input type="number" min="0" step="0.01" value={form.pricePerLiter} onChange={e=>setForm(f=>({ ...f, pricePerLiter: e.target.value }))} className="flex-1 mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-indigo-500 outline-none text-sm" />
+                                                    <div ref={currencyRef} className="relative w-28">
+                                                        <button type="button" onClick={() => setOpenMenu(m => m==='currency'?null:'currency')} className={`w-full mt-1 px-2 py-2 rounded bg-gray-800 border border-gray-700 focus:border-indigo-500 outline-none text-sm flex items-center justify-between ${openMenu==='currency' ? 'rounded-b-none border-b-0' : ''}`}>
+                                                            <span className="truncate">{form.currency}</span>
+                                                            <svg className={`w-4 h-4 ml-1 transition-transform ${openMenu==='currency' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                                        </button>
+                                                        {openMenu==='currency' && (
+                                                            <div className="absolute z-40 top-full left-0 w-full rounded-md rounded-t-none border border-t-0 border-gray-700 bg-gray-900 text-sm shadow-lg overflow-hidden">
+                                                                {Object.keys(currencySymbols).map(c => (
+                                                                    <button key={c} type="button" onClick={() => { setForm(f=>({ ...f, currency: c })); setOpenMenu(null); }} className={`w-full px-3 py-2 text-left hover:bg-gray-700/60 transition ${form.currency===c ? 'bg-gray-700/70 text-indigo-300' : 'text-gray-200'}`}>{c}</button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
                             <div>
                                 <label className="text-xs text-gray-400">Total Cost</label>
                                 <input type="number" min="0" step="0.01" value={form.totalCost||autoTotal} onChange={e=>setForm(f=>({ ...f, totalCost: e.target.value }))} className="w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-indigo-500 outline-none text-sm" />
                             </div>
-                            <div>
-                                <label className="text-xs text-gray-400">Fuel Type</label>
-                                <select value={form.fuelType} onChange={e=>setForm(f=>({ ...f, fuelType: e.target.value }))} className="w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-indigo-500 outline-none text-sm">
-                                    {FUEL_TYPES.map(ft => <option key={ft} value={ft}>{ft}</option>)}
-                                </select>
-                            </div>
+                                            <div>
+                                                <label className="text-xs text-gray-400">Fuel Type</label>
+                                                <div ref={fuelTypeRef} className="relative">
+                                                    <button type="button" onClick={() => setOpenMenu(m => m==='fuelType'?null:'fuelType')} className={`w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-indigo-500 outline-none text-sm flex items-center justify-between ${openMenu==='fuelType' ? 'rounded-b-none border-b-0' : ''}`}>
+                                                        <span className="truncate">{form.fuelType}</span>
+                                                        <svg className={`w-4 h-4 ml-2 transition-transform ${openMenu==='fuelType' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                                    </button>
+                                                    {openMenu==='fuelType' && (
+                                                        <div className="absolute z-40 top-full left-0 w-full max-h-48 overflow-y-auto rounded-md rounded-t-none border border-t-0 border-gray-700 bg-gray-900 divide-y divide-gray-700 text-sm shadow-lg">
+                                                            {FUEL_TYPES.map(ft => (
+                                                                <button key={ft} type="button" onClick={() => { setForm(f=>({ ...f, fuelType: ft })); setOpenMenu(null); }} className={`w-full px-3 py-2 text-left hover:bg-gray-700/60 transition ${form.fuelType===ft ? 'bg-gray-700/70 text-indigo-300' : 'text-gray-200'}`}>{ft}</button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
                             <div className="sm:col-span-2 lg:col-span-1">
                                 <label className="text-xs text-gray-400">Station/Location (optional)</label>
                                 <input value={form.station} onChange={e=>setForm(f=>({ ...f, station: e.target.value }))} className="w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-indigo-500 outline-none text-sm" />
