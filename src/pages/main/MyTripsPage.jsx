@@ -51,7 +51,7 @@ const TripRow = ({ t, onEdit, onDelete }) => {
                     </div>
                     <div className="text-right">
                         <div className="text-[11px] uppercase tracking-wide text-gray-400">Cost</div>
-                        <div className="text-base font-bold text-teal-300">{symbol}{t.fuelCost?.toFixed ? t.fuelCost.toFixed(2) : t.fuelCost}</div>
+                        <div className="text-base font-bold text-indigo-300">{symbol}{t.fuelCost?.toFixed ? t.fuelCost.toFixed(2) : t.fuelCost}</div>
                     </div>
                     <div className="flex items-center gap-2 ml-2">
                         <button onClick={() => onEdit(t)} className="px-3.5 py-1.5 text-sm rounded-md bg-teal-500 hover:bg-teal-400 text-white shadow-sm ring-1 ring-teal-300/40 cursor-pointer">Edit</button>
@@ -70,7 +70,7 @@ const TripRow = ({ t, onEdit, onDelete }) => {
                 </div>
                 <div>
                     <div className="text-[11px] uppercase tracking-wide text-gray-400">Cost</div>
-                    <div className="text-sm font-bold text-teal-300">{symbol}{t.fuelCost?.toFixed ? t.fuelCost.toFixed(2) : t.fuelCost}</div>
+                    <div className="text-sm font-bold text-indigo-300">{symbol}{t.fuelCost?.toFixed ? t.fuelCost.toFixed(2) : t.fuelCost}</div>
                 </div>
             </div>
             <div className="mt-4 pt-2 border-t border-gray-700/60 sm:hidden grid grid-cols-2 gap-2">
@@ -166,8 +166,8 @@ const MyTripsPage = () => {
 
             {/* Edit Modal */}
             {editingId && editForm && (
-                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-xl rounded-lg bg-gray-900 border border-gray-700 text-white shadow-xl">
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-2 sm:p-4">
+                    <div className="w-full max-w-xl rounded-lg bg-gray-900 border border-gray-700 text-white shadow-xl max-h-[90vh] overflow-y-auto">
                         <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
                             <h3 className="text-base font-semibold">Edit Trip</h3>
                             <button onClick={closeEdit} className="text-gray-400 hover:text-gray-200 cursor-pointer">✕</button>
@@ -219,13 +219,21 @@ const MyTripsPage = () => {
                                 <label className="text-xs text-gray-400">Vehicle</label>
                                 <input value={editForm.vehicleLabel} onChange={e => setEditForm(f => ({ ...f, vehicleLabel: e.target.value }))} className="w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-teal-500 outline-none text-sm" />
                             </div>
-                            <div className="sm:col-span-2">
+                                                                                                        <div className="sm:col-span-2">
                                 <label className="text-xs text-gray-400">Date/Time</label>
-                                <input type="datetime-local" max={nowMax} value={new Date(editForm.createdAt).toISOString().slice(0, 16)} onChange={e => {
-                                    const val = e.target.value; // yyyy-MM-ddTHH:mm
-                                    const iso = val ? new Date(val).toISOString() : new Date().toISOString();
-                                    setEditForm(f => ({ ...f, createdAt: iso }));
-                                }} className="w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-teal-500 outline-none text-sm" />
+                                                                <input type="datetime-local" max={nowMax} value={(function(){
+                                                                        try {
+                                                                            const d = new Date(editForm.createdAt);
+                                                                            const tzOffset = d.getTimezoneOffset() * 60000;
+                                                                            return new Date(d.getTime() - tzOffset).toISOString().slice(0,16);
+                                                                        } catch { return nowMax; }
+                                                                    })()} onChange={e => {
+                                                                        const val = e.target.value; // yyyy-MM-ddTHH:mm (local)
+                                                                        if (!val) return;
+                                                                        const local = new Date(val);
+                                                                        // Store as ISO in UTC to keep consistency
+                                                                        setEditForm(f => ({ ...f, createdAt: new Date(local.getTime()).toISOString() }));
+                                                                }} className="w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-teal-500 outline-none text-sm" />
                                 {new Date(editForm.createdAt) > new Date() && (
                                     <p className="text-xs text-rose-400 mt-1">Date cannot be in the future.</p>
                                 )}
