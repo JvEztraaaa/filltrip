@@ -86,7 +86,25 @@ const MyTripsPage = () => {
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState(null);
     const [confirm, setConfirm] = useState(null); // { id, title }
-    const nowMax = useMemo(() => new Date().toISOString().slice(0, 16), []);
+    // Local-time "now" for datetime-local max to allow selecting current day/time
+    const nowMax = useMemo(() => {
+        const d = new Date();
+        const tz = d.getTimezoneOffset() * 60000;
+        return new Date(d.getTime() - tz).toISOString().slice(0, 16);
+    }, []);
+    const [openCurrency, setOpenCurrency] = useState(false);
+    const [openFuelType, setOpenFuelType] = useState(false);
+    const currencyWrapRef = React.useRef(null);
+    const fuelTypeWrapRef = React.useRef(null);
+
+    useEffect(() => {
+        const onDown = (e) => {
+            if (currencyWrapRef.current && !currencyWrapRef.current.contains(e.target)) setOpenCurrency(false);
+            if (fuelTypeWrapRef.current && !fuelTypeWrapRef.current.contains(e.target)) setOpenFuelType(false);
+        };
+        if (editingId) document.addEventListener('mousedown', onDown);
+        return () => document.removeEventListener('mousedown', onDown);
+    }, [editingId]);
 
     useEffect(() => {
         const trips = listTrips();
@@ -193,27 +211,33 @@ const MyTripsPage = () => {
                                 <label className="text-xs text-gray-400">Cost</label>
                                 <input type="number" step="0.01" value={editForm.fuelCost} onChange={e => setEditForm(f => ({ ...f, fuelCost: e.target.value }))} className="w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-teal-500 outline-none text-sm" />
                             </div>
-                            <div>
+                            <div ref={currencyWrapRef} className="relative">
                                 <label className="text-xs text-gray-400">Currency</label>
-                                <select value={editForm.currency} onChange={e => setEditForm(f => ({ ...f, currency: e.target.value }))} className="w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-teal-500 outline-none text-sm">
-                                    <option value="PHP">PHP</option>
-                                    <option value="USD">USD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="JPY">JPY</option>
-                                </select>
-                            </div>
-                            <div className="sm:col-span-2">
-                                <label className="text-xs text-gray-400">Fuel Type</label>
-                                <div className="relative mt-1">
-                                    <select value={editForm.fuelType} onChange={e => setEditForm(f => ({ ...f, fuelType: e.target.value }))} className="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-teal-500 outline-none text-sm appearance-none">
-                                        {FUEL_TYPES.map(ft => (
-                                            <option key={ft} value={ft}>{ft}</option>
+                                <button type="button" onClick={() => setOpenCurrency(v => !v)} className="w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-teal-500 outline-none text-sm flex items-center justify-between">
+                                    <span>{editForm.currency}</span>
+                                    <svg className={`w-4 h-4 ml-2 transition-transform ${openCurrency ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                </button>
+                                {openCurrency && (
+                                    <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-md border border-gray-700 bg-gray-900 text-sm shadow-lg overflow-hidden">
+                                        {['PHP','USD','EUR','JPY'].map(c => (
+                                            <button key={c} type="button" onClick={() => { setEditForm(f => ({ ...f, currency: c })); setOpenCurrency(false); }} className={`w-full px-3 py-2 text-left hover:bg-gray-700/60 transition ${editForm.currency === c ? 'bg-gray-700/70 text-indigo-300' : 'text-gray-200'}`}>{c}</button>
                                         ))}
-                                    </select>
-                                    <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 9l-7 7-7-7" /></svg>
                                     </div>
-                                </div>
+                                )}
+                            </div>
+                            <div ref={fuelTypeWrapRef} className="relative sm:col-span-2">
+                                <label className="text-xs text-gray-400">Fuel Type</label>
+                                <button type="button" onClick={() => setOpenFuelType(v => !v)} className="w-full mt-1 px-3 py-2 rounded bg-gray-800 border border-gray-700 focus:border-teal-500 outline-none text-sm flex items-center justify-between">
+                                    <span className="truncate">{editForm.fuelType}</span>
+                                    <svg className={`w-4 h-4 ml-2 transition-transform ${openFuelType ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                </button>
+                                {openFuelType && (
+                                    <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-md border border-gray-700 bg-gray-900 text-sm shadow-lg">
+                                        {FUEL_TYPES.map(ft => (
+                                            <button key={ft} type="button" onClick={() => { setEditForm(f => ({ ...f, fuelType: ft })); setOpenFuelType(false); }} className={`w-full px-3 py-2 text-left hover:bg-gray-700/60 transition ${editForm.fuelType === ft ? 'bg-gray-700/70 text-indigo-300' : 'text-gray-200'}`}>{ft}</button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <div className="sm:col-span-2">
                                 <label className="text-xs text-gray-400">Vehicle</label>
