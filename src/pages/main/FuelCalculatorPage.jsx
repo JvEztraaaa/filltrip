@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { addTrip } from '../../services/trips';
 import { motorcycleModelsPH, carModelsPH } from '../../data/fuelEfficiency';
 import SidePanel from '../../components/SidePanel';
@@ -42,6 +42,7 @@ const mpgToKmL = (mpg) => mpg * 0.425143707; // US mpg to km/L
 const FuelCalculatorPage = () => {
   const [form, setForm] = useState(initialState);
   const location = useLocation();
+  const navigate = useNavigate();
   const [results, setResults] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [attempted, setAttempted] = useState(false);
@@ -197,6 +198,7 @@ const FuelCalculatorPage = () => {
   // Animated counter values
   const animatedFuelRef = useRef(null);
   const animatedCostRef = useRef(null);
+  const [savedToast, setSavedToast] = useState(false);
 
   useEffect(() => {
     if (!results) return;
@@ -231,16 +233,16 @@ const FuelCalculatorPage = () => {
       litersNeeded = (distanceKm / 100) * l100;
     }
     const cost = litersNeeded * (price || 0);
-    setResults({ litersNeeded, cost, currency: form.currency, timestamp: new Date().toISOString() });
+  setResults({ litersNeeded, cost, currency: form.currency, timestamp: new Date().toISOString() });
     setForm((f) => ({ ...f, lastCalculated: Date.now() }));
 
     // Save trip snapshot to localStorage
-    try {
+  try {
       const state = location.state || {};
       const startName = state.startName || null;
       const endName = state.endName || null;
       const vehicleLabel = selectedVehicle?.label || (vehicleQuery ? vehicleQuery : null);
-      addTrip({
+  addTrip({
         startName,
         endName,
         distanceKm: form.useManualFuel ? (Number.isFinite(distanceKm) ? Number(distanceKm?.toFixed?.(2) || distanceKm) : null) : Number(distanceKm?.toFixed?.(2) || distanceKm),
@@ -250,10 +252,16 @@ const FuelCalculatorPage = () => {
         fuelType: form.fuelType,
         vehicleLabel,
       });
+    // Show saved toast (persistent until cleared/reloaded)
+    setSavedToast(true);
     } catch { }
   };
   const clearAll = () => { setForm(initialState); setResults(null); setAttempted(false); };
-  const reloadCalculator = () => { clearAll(); setReloadKey(k => k + 1); };
+  // Also clear the toast on clear/reload
+  const _origClearAll = clearAll;
+  const clearAllPatched = () => { _origClearAll(); setSavedToast(false); };
+  const clearAllRef = clearAllPatched; // alias for concise usage below
+  const reloadCalculator = () => { clearAllRef(); setReloadKey(k => k + 1); };
 
 
   // Validation hints
@@ -471,7 +479,7 @@ const FuelCalculatorPage = () => {
                 { }
                 <div className="flex flex-wrap gap-3">
                   <button onClick={performCalculation} disabled={!canCalculate} className="px-5 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium shadow">Calculate</button>
-                  <button onClick={clearAll} disabled={pristine} className="px-5 py-2 rounded-md bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium">Clear</button>
+                  <button onClick={clearAllRef} disabled={pristine} className="px-5 py-2 rounded-md bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium">Clear</button>
                   <button onClick={reloadCalculator} className="px-5 py-2 rounded-md bg-gray-800 hover:bg-gray-700 border border-gray-600 text-sm font-medium">Reload</button>
                 </div>
                 {!canCalculate && <p className="text-xs text-amber-400 -mt-2">Fill required fields on the left.</p>}
@@ -495,6 +503,12 @@ const FuelCalculatorPage = () => {
                     <p className="text-sm text-gray-500">Enter inputs then press Calculate to see results.</p>
                   )}
                 </div>
+                {savedToast && (
+                  <div className="rounded-md border border-teal-600/40 bg-teal-900/40 text-teal-200 text-sm px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+                    <span className="flex-1">Trip saved to My Trips.</span>
+                    <button onClick={() => navigate('/my-trips')} className="px-3 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-xs shadow cursor-pointer">View here</button>
+                  </div>
+                )}
                 {/* Tips */}
                 <div>
                   <h3 className="text-sm font-semibold mb-2 flex items-center"><span className="text-indigo-400 mr-1">ℹ</span>Quick Tips</h3>
