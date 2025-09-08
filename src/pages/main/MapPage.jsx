@@ -184,12 +184,17 @@ const MapPage = () => {
         const toast = document.getElementById('longTripToast');
         if (toast) {
           if (distKm >= 25) {
-            toast.textContent = `Heads up: Long trip detected (~${distKm.toFixed(1)} km). Consider checking fuel price and efficiency.`;
+            toast.innerHTML = `
+              <div class="text-sm font-semibold">Long trip (~${distKm.toFixed(1)} km)</div>
+              <ul class="mt-1 text-[11px] leading-5 list-disc pl-4 text-indigo-100/90">
+                <li>Check tires, brakes, lights, oil, and coolant.</li>
+                <li>Fuel up fully; stations can be sparse in rural areas.</li>
+              </ul>`;
             toast.classList.remove('opacity-0', 'translate-y-2');
             clearTimeout(toast._hideTimer);
             toast._hideTimer = setTimeout(() => {
               toast.classList.add('opacity-0', 'translate-y-2');
-            }, 2600);
+            }, 3600);
           }
         }
       } catch {}
@@ -859,7 +864,7 @@ const MapPage = () => {
       <div id="fuelStatus" className="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[70] bg-gray-800/90 backdrop-blur px-4 py-2 rounded shadow-lg text-white text-xs font-medium max-w-xs text-center"></div>
 
   {/* Long trip toast */}
-  <div id="longTripToast" className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[70] bg-indigo-600/90 backdrop-blur px-4 py-2 rounded shadow-lg text-white text-xs font-medium max-w-sm text-center transition transform opacity-0 translate-y-2"></div>
+  <div id="longTripToast" className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[70] bg-indigo-700/90 backdrop-blur px-4 py-3 rounded-lg shadow-xl text-white text-xs max-w-sm w-[92vw] sm:w-auto text-left transition transform opacity-0 translate-y-2 ring-1 ring-white/10"></div>
 
       {/* Saved places panel */}
       <div
