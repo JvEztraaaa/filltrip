@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import { addTrip } from '../../services/trips';
 import { motorcycleModelsPH, carModelsPH } from '../../data/fuelEfficiency';
 import SidePanel from '../../components/SidePanel';
 import Header from '../../components/Header';
@@ -230,8 +231,26 @@ const FuelCalculatorPage = () => {
       litersNeeded = (distanceKm / 100) * l100;
     }
     const cost = litersNeeded * (price || 0);
-  setResults({ litersNeeded, cost, currency: form.currency, timestamp: new Date().toISOString() });
+    setResults({ litersNeeded, cost, currency: form.currency, timestamp: new Date().toISOString() });
     setForm((f) => ({ ...f, lastCalculated: Date.now() }));
+
+    // Save trip snapshot to localStorage
+    try {
+      const state = location.state || {};
+      const startName = state.startName || null;
+      const endName = state.endName || null;
+      const vehicleLabel = selectedVehicle?.label || (vehicleQuery ? vehicleQuery : null);
+      addTrip({
+        startName,
+        endName,
+        distanceKm: form.useManualFuel ? (Number.isFinite(distanceKm) ? Number(distanceKm?.toFixed?.(2) || distanceKm) : null) : Number(distanceKm?.toFixed?.(2) || distanceKm),
+        litersNeeded: Number(litersNeeded?.toFixed?.(2) || litersNeeded) || 0,
+        fuelCost: Number(cost?.toFixed?.(2) || cost) || 0,
+        currency: form.currency,
+        fuelType: form.fuelType,
+        vehicleLabel,
+      });
+    } catch { }
   };
   const clearAll = () => { setForm(initialState); setResults(null); setAttempted(false); };
   const reloadCalculator = () => { clearAll(); setReloadKey(k => k + 1); };

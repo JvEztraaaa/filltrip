@@ -662,8 +662,6 @@ const MapPage = () => {
     loadSaved();
     renderSaved();
 
-    // (Removed DOM listener for savedBtn to avoid double toggling because JSX already has onClick)
-
     if (saveStartBtn) {
       saveStartBtn.addEventListener('click', () => {
         if (!startCoords) return toast('No start selected');
@@ -978,7 +976,13 @@ const MapPage = () => {
       {/* Proceed button overlay on map (appears after both points chosen) */}
       {routeDistanceKm !== null && (
         <button
-          onClick={() => navigate('/fuel-calculator', { state: { distanceKm: parseFloat(routeDistanceKm.toFixed(2)) } })}
+          onClick={() => {
+            const sEl = document.getElementById('start-label');
+            const eEl = document.getElementById('end-label');
+            const startName = sEl?.getAttribute('title')?.replace(/^Start:\s*/, '') || sEl?.textContent?.replace(/^Start:\s*/, '') || null;
+            const endName = eEl?.getAttribute('title')?.replace(/^End:\s*/, '') || eEl?.textContent?.replace(/^End:\s*/, '') || null;
+            navigate('/fuel-calculator', { state: { distanceKm: parseFloat(routeDistanceKm.toFixed(2)), startName, endName } });
+          }}
           className="fixed z-[58] md:z-[65] bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 hover:brightness-110 text-white font-medium shadow-lg shadow-indigo-900/40 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-[13px] sm:text-sm flex items-center gap-2 transition cursor-pointer bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 ring-1 ring-white/10 whitespace-nowrap"
           aria-label="Proceed to Fuel Calculator"
         >
