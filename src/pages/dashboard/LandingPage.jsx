@@ -140,7 +140,7 @@ export default function LandingPage() {
               >
                 Get started
               </Link>
-              <a href="#" className="text-sm/6 font-semibold text-white transition-all duration-200 hover:underline hover:text-[#4FD1C5]">
+              <a href="/about" className="text-sm/6 font-semibold text-white transition-all duration-200 hover:underline hover:text-[#4FD1C5]">
                 Learn more <span aria-hidden="true">→</span>
               </a>
             </div>
