@@ -11,7 +11,7 @@ const Header = () => {
         '/map': 'FILLTRIP MAP',
         '/fuel-calculator': 'FUEL CALCULATOR',
         '/my-trips': 'MY TRIPS',
-        '/refuel-history': 'REFUEL HISTORY',
+        '/refuel-history': 'FUEL HISTORY',
         '/statistics': 'STATISTICS',
         '/login': 'Login',
         '/signup': 'Sign Up'

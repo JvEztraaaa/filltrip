@@ -9,7 +9,7 @@ import MapPage from './pages/main/MapPage';
 import ContactUsPage from './pages/dashboard/ContactUsPage';
 import FuelCalculatorPage from './pages/main/FuelCalculatorPage';
 import MyTripsPage from './pages/main/MyTripsPage';
-import RefuelHistoryPage from './pages/main/RefuelHistoryPage';
+import RefuelHistoryPage from './pages/main/FuelHistoryPage';
 import StatisticsPage from './pages/main/StatisticsPage';
 import './App.css';
 

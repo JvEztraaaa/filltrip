@@ -97,7 +97,7 @@ const SidePanel = () => {
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>Refuel History</span>
+                            <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>Fuel History</span>
                         </Link>
                         <Link to="/statistics" className={`${linkBase} ${isActive('/statistics') ? active : inactive}`} onClick={() => { if (window.innerWidth < 768) toggleSidebar(); }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
