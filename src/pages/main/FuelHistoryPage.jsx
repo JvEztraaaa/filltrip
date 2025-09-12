@@ -8,7 +8,6 @@ import {
   groupRefuelsByMonth,
   listRefuels,
   updateRefuel,
-  computeDistanceSincePrev,
 } from "../../services/refuel";
 
 const currencySymbols = { PHP: "₱", USD: "$", EUR: "€", JPY: "¥" };
@@ -49,6 +48,8 @@ const RefuelHistoryPage = () => {
   const [editing, setEditing] = useState(null); // id
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({});
+  const [validationErrors, setValidationErrors] = useState({});
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null });
   const nowMax = useMemo(() => new Date().toISOString().slice(0, 16), []);
   const [openMenu, setOpenMenu] = useState(null); // 'fuelType' | 'currency' | 'distanceUnit' | 'fuelUnit' | null
   const fuelTypeRef = useRef(null);
@@ -107,7 +108,34 @@ const RefuelHistoryPage = () => {
     return l * p || 0;
   }, [form.liters, form.pricePerLiter]);
 
+  // Validation function
+  const validateForm = (formData) => {
+    const errors = {};
+    
+    if (!formData.vehicleName.trim()) {
+      errors.vehicleName = true;
+    }
+    if (!formData.odometerKm || parseFloat(formData.odometerKm) <= 0) {
+      errors.odometerKm = true;
+    }
+    if (!formData.liters || parseFloat(formData.liters) <= 0) {
+      errors.liters = true;
+    }
+    if (!formData.pricePerLiter || parseFloat(formData.pricePerLiter) <= 0) {
+      errors.pricePerLiter = true;
+    }
+    
+    return errors;
+  };
+
   const submit = () => {
+    const errors = validateForm(form);
+    setValidationErrors(errors);
+    
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
     const entry = {
       createdAt: form.createdAt,
       vehicleName: form.vehicleName,
@@ -139,6 +167,7 @@ const RefuelHistoryPage = () => {
       station: "",
       currency: "PHP",
     });
+    setValidationErrors({});
     setEditing(null);
     refresh();
   };
@@ -162,6 +191,13 @@ const RefuelHistoryPage = () => {
   };
 
   const saveEdit = () => {
+    const errors = validateForm(editForm);
+    setValidationErrors(errors);
+    
+    if (Object.keys(errors).length > 0) {
+      return; 
+    }
+
     const entry = {
       createdAt: editForm.createdAt,
       vehicleName: editForm.vehicleName,
@@ -179,6 +215,7 @@ const RefuelHistoryPage = () => {
     setEditModalOpen(false);
     setEditing(null);
     setEditForm({});
+    setValidationErrors({});
     refresh();
   };
 
@@ -189,8 +226,28 @@ const RefuelHistoryPage = () => {
   };
 
   const remove = (id) => {
-    deleteRefuel(id);
-    refresh();
+    setDeleteConfirm({ show: true, id: id });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm.id) {
+      deleteRefuel(deleteConfirm.id);
+      refresh();
+    }
+    setDeleteConfirm({ show: false, id: null });
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirm({ show: false, id: null });
+  };
+
+  // Clear validation error for a specific field when user starts editing
+  const clearFieldError = (fieldName) => {
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[fieldName];
+      return newErrors;
+    });
   };
 
   // Auto-calculation for edit form
@@ -199,19 +256,6 @@ const RefuelHistoryPage = () => {
     const p = parseFloat(editForm.pricePerLiter) || 0;
     return l * p || 0;
   }, [editForm.liters, editForm.pricePerLiter]);
-
-  // Compute distances since previous fill-up (per overall chronology)
-  const allSortedAsc = useMemo(
-    () =>
-      listRefuels().sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-      ),
-    [groups]
-  );
-  const distMap = useMemo(
-    () => computeDistanceSincePrev(allSortedAsc),
-    [allSortedAsc]
-  );
 
   return (
     <div className="relative min-h-screen w-full bg-gray-900 text-white overflow-x-hidden">
@@ -292,7 +336,10 @@ const RefuelHistoryPage = () => {
                       onChange={(e) =>
                         setForm((f) => ({ ...f, vehicleName: e.target.value }))
                       }
-                      className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200"
+                      onFocus={() => clearFieldError('vehicleName')}
+                      className={`w-full px-4 py-3 rounded-lg bg-gray-800/60 border ${
+                        validationErrors.vehicleName ? 'border-red-500' : 'border-gray-600'
+                      } focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200`}
                       placeholder="e.g., Honda Civic"
                     />
                   </div>
@@ -381,7 +428,9 @@ const RefuelHistoryPage = () => {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Odometer Reading
                     </label>
-                    <div className="flex rounded-lg focus-within:ring-1 focus-within:ring-teal-500">
+                    <div className={`flex rounded-lg focus-within:ring-1 focus-within:ring-teal-500 ${
+                      validationErrors.odometerKm ? 'ring-1 ring-red-500 focus-within:ring-teal-500' : ''
+                    }`}>
                       <input
                         type="number"
                         min="0"
@@ -390,7 +439,10 @@ const RefuelHistoryPage = () => {
                         onChange={(e) =>
                           setForm((f) => ({ ...f, odometerKm: e.target.value }))
                         }
-                        className="flex-1 px-4 py-3 rounded-l-lg bg-gray-800/60 border border-gray-600 border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        onFocus={() => clearFieldError('odometerKm')}
+                        className={`flex-1 px-4 py-3 rounded-l-lg bg-gray-800/60 border ${
+                          validationErrors.odometerKm ? 'border-red-500' : 'border-gray-600'
+                        } border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                         placeholder="0.0"
                       />
                       <div className="border-l border-gray-700"></div>
@@ -403,6 +455,8 @@ const RefuelHistoryPage = () => {
                             )
                           }
                           className={`fuel-dropdown-button rounded-r ${
+                            validationErrors.odometerKm ? 'border-red-500' : ''
+                          } ${
                             openMenu === "distanceUnit" ? "open" : ""
                           }`}
                         >
@@ -458,7 +512,9 @@ const RefuelHistoryPage = () => {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Fuel Amount
                     </label>
-                    <div className="flex rounded-lg focus-within:ring-1 focus-within:ring-teal-500">
+                    <div className={`flex rounded-lg focus-within:ring-1 focus-within:ring-teal-500 ${
+                      validationErrors.liters ? 'ring-1 ring-red-500 focus-within:ring-teal-500' : ''
+                    }`}>
                       <input
                         type="number"
                         min="0"
@@ -467,7 +523,10 @@ const RefuelHistoryPage = () => {
                         onChange={(e) =>
                           setForm((f) => ({ ...f, liters: e.target.value }))
                         }
-                        className="flex-1 px-4 py-3 rounded-l-lg bg-gray-800/60 border border-gray-600 border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        onFocus={() => clearFieldError('liters')}
+                        className={`flex-1 px-4 py-3 rounded-l-lg bg-gray-800/60 border ${
+                          validationErrors.liters ? 'border-red-500' : 'border-gray-600'
+                        } border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                         placeholder="0.00"
                       />
                       <div className="border-l border-gray-700"></div>
@@ -480,6 +539,8 @@ const RefuelHistoryPage = () => {
                             )
                           }
                           className={`fuel-dropdown-button rounded-r ${
+                            validationErrors.liters ? 'border-red-500' : ''
+                          } ${
                             openMenu === "fuelUnit" ? "open" : ""
                           }`}
                         >
@@ -531,7 +592,9 @@ const RefuelHistoryPage = () => {
                       Price per{" "}
                       {form.fuelUnit === "liters" ? "Liter" : "Gallon"}
                     </label>
-                    <div className="flex rounded-lg focus-within:ring-1 focus-within:ring-teal-500">
+                    <div className={`flex rounded-lg focus-within:ring-1 focus-within:ring-teal-500 ${
+                      validationErrors.pricePerLiter ? 'ring-1 ring-red-500 focus-within:ring-teal-500' : ''
+                    }`}>
                       <input
                         type="number"
                         min="0"
@@ -543,7 +606,10 @@ const RefuelHistoryPage = () => {
                             pricePerLiter: e.target.value,
                           }))
                         }
-                        className="flex-1 px-4 py-3 rounded-l-lg bg-gray-800/60 border border-gray-600 border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        onFocus={() => clearFieldError('pricePerLiter')}
+                        className={`flex-1 px-4 py-3 rounded-l-lg bg-gray-800/60 border ${
+                          validationErrors.pricePerLiter ? 'border-red-500' : 'border-gray-600'
+                        } border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                         placeholder="0.00"
                       />
                       <div className="border-l border-gray-700"></div>
@@ -556,6 +622,8 @@ const RefuelHistoryPage = () => {
                             )
                           }
                           className={`fuel-dropdown-button rounded-r ${
+                            validationErrors.pricePerLiter ? 'border-red-500' : ''
+                          } ${
                             openMenu === "currency" ? "open" : ""
                           }`}
                         >
@@ -668,6 +736,11 @@ const RefuelHistoryPage = () => {
                     </svg>
                     Add Entry
                   </button>
+                  {Object.keys(validationErrors).length > 0 && (
+                    <p className="text-red-400 text-sm flex items-center">
+                      Please fill up all the necessary fields
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -738,7 +811,6 @@ const RefuelHistoryPage = () => {
                     <div className="space-y-4">
                     {g.items.map((e, index) => {
                       const sym = currencySymbols[e.currency] || "";
-                      const dist = distMap.get(e.id);
                       const isLatest = index === 0 && g === groups[0];
 
                       return (
@@ -951,31 +1023,6 @@ const RefuelHistoryPage = () => {
                               </div>
                             </div>
 
-                            {/* Distance Info */}
-                            {dist != null && (
-                              <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-3 mb-4">
-                                <div className="flex items-center gap-2 text-indigo-300">
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                                    />
-                                  </svg>
-                                  <span className="text-sm font-medium">
-                                    Distance since previous fill-up:{" "}
-                                    <span className="font-bold">{dist} km</span>
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-
                             {/* Mobile Action Buttons */}
                             <div className="lg:hidden grid grid-cols-2 gap-3">
                               <button
@@ -1101,7 +1148,10 @@ const RefuelHistoryPage = () => {
                         vehicleName: e.target.value,
                       }))
                     }
-                    className="w-full px-4 py-3 rounded-lg bg-gray-700/60 border border-gray-600 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200"
+                    onFocus={() => clearFieldError('vehicleName')}
+                    className={`w-full px-4 py-3 rounded-lg bg-gray-700/60 border ${
+                      validationErrors.vehicleName ? 'border-red-500' : 'border-gray-600'
+                    } focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200`}
                     placeholder="e.g., Honda Civic"
                   />
                 </div>
@@ -1502,6 +1552,61 @@ const RefuelHistoryPage = () => {
                     />
                   </svg>
                   Save Changes
+                </button>
+                {Object.keys(validationErrors).length > 0 && (
+                  <p className="text-red-400 text-sm flex items-center">
+                    Please fill up all the necessary fields
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm.show && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-red-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Delete Fuel Entry</h3>
+                  <p className="text-sm text-gray-400">This action cannot be undone</p>
+                </div>
+              </div>
+              
+              <p className="text-gray-300 mb-6">
+                Are you sure you want to delete this fuel log entry? This will permanently remove the entry from your history.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={cancelDelete}
+                  className="flex-1 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white transition-colors cursor-pointer"
+                >
+                  Delete
                 </button>
               </div>
             </div>

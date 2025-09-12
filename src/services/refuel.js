@@ -24,8 +24,11 @@ export function addRefuel(entry) {
   const e = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
     createdAt: entry.createdAt || nowIso,
+    vehicleName: entry.vehicleName || '',
     odometerKm: Number(entry.odometerKm ?? 0) || 0,
+    distanceUnit: entry.distanceUnit || 'km',
     liters: Number(entry.liters ?? 0) || 0,
+    fuelUnit: entry.fuelUnit || 'liters',
     pricePerLiter: Number(entry.pricePerLiter ?? 0) || 0,
     totalCost: Number(entry.totalCost ?? (Number(entry.liters || 0) * Number(entry.pricePerLiter || 0))) || 0,
     fuelType: entry.fuelType || 'Gasoline / Unleaded (91)',
@@ -48,6 +51,13 @@ export function updateRefuel(id, updates) {
   if ('liters' in u) u.liters = Number(u.liters ?? 0) || 0;
   if ('pricePerLiter' in u) u.pricePerLiter = Number(u.pricePerLiter ?? 0) || 0;
   if ('totalCost' in u) u.totalCost = Number(u.totalCost ?? (u.liters * u.pricePerLiter)) || 0;
+  // Handle string fields
+  if ('vehicleName' in u) u.vehicleName = u.vehicleName || '';
+  if ('distanceUnit' in u) u.distanceUnit = u.distanceUnit || 'km';
+  if ('fuelUnit' in u) u.fuelUnit = u.fuelUnit || 'liters';
+  if ('fuelType' in u) u.fuelType = u.fuelType || 'Gasoline / Unleaded (91)';
+  if ('station' in u) u.station = u.station || '';
+  if ('currency' in u) u.currency = u.currency || 'PHP';
   all[idx] = { ...cur, ...u };
   safeWrite(all);
   return true;
@@ -70,21 +80,4 @@ export function groupRefuelsByMonth(items) {
     groups.get(key).items.push(i);
   });
   return Array.from(groups.values()).sort((a,b)=>a.key<b.key?1:-1);
-}
-
-export function computeDistanceSincePrev(sortedByDateAsc) {
-  // Returns map: id -> distance since previous entry, based on odometer
-  let prevOdo = null;
-  const map = new Map();
-  sortedByDateAsc.forEach(i => {
-    if (prevOdo == null) {
-      map.set(i.id, null);
-      prevOdo = i.odometerKm;
-      return;
-    }
-    const dist = (Number(i.odometerKm) || 0) - (Number(prevOdo) || 0);
-    map.set(i.id, dist >= 0 ? Number(dist.toFixed(2)) : null);
-    prevOdo = i.odometerKm;
-  });
-  return map;
 }
