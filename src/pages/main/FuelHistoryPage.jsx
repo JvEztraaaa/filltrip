@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import SidePanel from "../../components/SidePanel";
 import Header from "../../components/Header";
+import "./FuelHistoryDropdowns.css";
 import {
   addRefuel,
   deleteRefuel,
@@ -31,6 +32,7 @@ function localInputValue(iso) {
 
 const RefuelHistoryPage = () => {
   const [groups, setGroups] = useState([]);
+  const [collapsedMonths, setCollapsedMonths] = useState(new Set()); // Track collapsed months
   const [form, setForm] = useState({
     createdAt: new Date().toISOString(),
     vehicleName: "",
@@ -80,6 +82,20 @@ const RefuelHistoryPage = () => {
   }, [openMenu]);
 
   const refresh = () => setGroups(groupRefuelsByMonth(listRefuels()));
+  
+  // Toggle month collapse state
+  const toggleMonthCollapse = (monthKey) => {
+    setCollapsedMonths(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(monthKey)) {
+        newSet.delete(monthKey);
+      } else {
+        newSet.add(monthKey);
+      }
+      return newSet;
+    });
+  };
+  
   useEffect(() => {
     refresh();
   }, []);
@@ -264,8 +280,9 @@ const RefuelHistoryPage = () => {
               <div className="p-6">
                 {/* Form Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {/* Row 1: Vehicle Name - Date - Fuel Type */}
                   {/* Vehicle Name */}
-                  <div className="md:col-span-2 xl:col-span-1">
+                  <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Vehicle Name / Model
                     </label>
@@ -281,7 +298,7 @@ const RefuelHistoryPage = () => {
                   </div>
 
                   {/* Date & Time */}
-                  <div className="md:col-span-2 xl:col-span-1">
+                  <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Date & Time
                     </label>
@@ -296,9 +313,69 @@ const RefuelHistoryPage = () => {
                         }))
                       }
                       className="w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200"
+                      style={{ colorScheme: 'dark' }}
                     />
                   </div>
 
+                  {/* Fuel Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Fuel Type
+                    </label>
+                    <div ref={fuelTypeRef} className="fuel-dropdown-container">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenMenu((m) =>
+                            m === "fuelType" ? null : "fuelType"
+                          )
+                        }
+                        className={`fuel-dropdown-button rounded-full ${
+                          openMenu === "fuelType" ? "open" : ""
+                        }`}
+                      >
+                        <span className="dropdown-text">
+                          {form.fuelType}
+                        </span>
+                        <svg
+                          className={`dropdown-arrow ${
+                            openMenu === "fuelType" ? "open" : ""
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
+                      {openMenu === "fuelType" && (
+                        <div className="fuel-dropdown-content" style={{ maxHeight: "12rem" }}>
+                          {FUEL_TYPES.map((ft) => (
+                            <button
+                              key={ft}
+                              type="button"
+                              onClick={() => {
+                                setForm((f) => ({ ...f, fuelType: ft }));
+                                setOpenMenu(null);
+                              }}
+                              className={`fuel-dropdown-item ${
+                                form.fuelType === ft ? "active" : ""
+                              }`}
+                            >
+                              {ft}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Row 2: Odometer - Fuel Amount - Price per Liter */}
                   {/* Odometer */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -317,7 +394,7 @@ const RefuelHistoryPage = () => {
                         placeholder="0.0"
                       />
                       <div className="border-l border-gray-700"></div>
-                      <div ref={distanceUnitRef} className="relative w-24 md:w-32">
+                      <div ref={distanceUnitRef} className="fuel-dropdown-container dropdown-width-md">
                         <button
                           type="button"
                           onClick={() =>
@@ -325,18 +402,16 @@ const RefuelHistoryPage = () => {
                               m === "distanceUnit" ? null : "distanceUnit"
                             )
                           }
-                          className={`w-full h-full px-3 py-3 rounded-r-lg bg-gray-800/60 border border-gray-600 border-l-0 outline-none text-white flex items-center justify-between transition-all duration-200 hover:bg-gray-700/60 cursor-pointer ${
-                            openMenu === "distanceUnit"
-                              ? "rounded-br-none border-b-0"
-                              : ""
+                          className={`fuel-dropdown-button rounded-r ${
+                            openMenu === "distanceUnit" ? "open" : ""
                           }`}
                         >
-                          <span className="font-medium text-sm">
+                          <span className="dropdown-text">
                             {form.distanceUnit}
                           </span>
                           <svg
-                            className={`w-3 h-3 ml-1 transition-transform flex-shrink-0 ${
-                              openMenu === "distanceUnit" ? "rotate-180" : ""
+                            className={`dropdown-arrow ${
+                              openMenu === "distanceUnit" ? "open" : ""
                             }`}
                             fill="none"
                             stroke="currentColor"
@@ -351,7 +426,7 @@ const RefuelHistoryPage = () => {
                           </svg>
                         </button>
                         {openMenu === "distanceUnit" && (
-                          <div className="absolute z-50 top-full left-0 w-full rounded-lg rounded-t-none border border-t-0 border-gray-600 bg-gray-800 shadow-xl overflow-hidden">
+                          <div className="fuel-dropdown-content">
                             {Object.entries(DISTANCE_UNITS).map(
                               ([key, label]) => (
                                 <button
@@ -364,10 +439,8 @@ const RefuelHistoryPage = () => {
                                     }));
                                     setOpenMenu(null);
                                   }}
-                                  className={`w-full px-3 py-2 text-left hover:bg-gray-700 transition-colors cursor-pointer text-sm ${
-                                    form.distanceUnit === key
-                                      ? "bg-teal-500/20 text-teal-300"
-                                      : "text-gray-200"
+                                  className={`fuel-dropdown-item ${
+                                    form.distanceUnit === key ? "active" : ""
                                   }`}
                                 >
                                   {key}
@@ -398,7 +471,7 @@ const RefuelHistoryPage = () => {
                         placeholder="0.00"
                       />
                       <div className="border-l border-gray-700"></div>
-                      <div ref={fuelUnitRef} className="relative w-20">
+                      <div ref={fuelUnitRef} className="fuel-dropdown-container dropdown-width-md">
                         <button
                           type="button"
                           onClick={() =>
@@ -406,18 +479,16 @@ const RefuelHistoryPage = () => {
                               m === "fuelUnit" ? null : "fuelUnit"
                             )
                           }
-                          className={`w-full h-full px-3 py-3 rounded-r-lg bg-gray-800/60 border border-gray-600 border-l-0 outline-none text-white flex items-center justify-between transition-all duration-200 hover:bg-gray-700/60 cursor-pointer ${
-                            openMenu === "fuelUnit"
-                              ? "rounded-br-none border-b-0"
-                              : ""
+                          className={`fuel-dropdown-button rounded-r ${
+                            openMenu === "fuelUnit" ? "open" : ""
                           }`}
                         >
-                          <span className="font-medium text-sm">
+                          <span className="dropdown-text">
                             {form.fuelUnit}
                           </span>
                           <svg
-                            className={`w-3 h-3 ml-1 transition-transform flex-shrink-0 ${
-                              openMenu === "fuelUnit" ? "rotate-180" : ""
+                            className={`dropdown-arrow ${
+                              openMenu === "fuelUnit" ? "open" : ""
                             }`}
                             fill="none"
                             stroke="currentColor"
@@ -432,7 +503,7 @@ const RefuelHistoryPage = () => {
                           </svg>
                         </button>
                         {openMenu === "fuelUnit" && (
-                          <div className="absolute z-50 top-full left-0 w-full rounded-lg rounded-t-none border border-t-0 border-gray-600 bg-gray-800 shadow-xl overflow-hidden">
+                          <div className="fuel-dropdown-content">
                             {Object.entries(FUEL_UNITS).map(([key, label]) => (
                               <button
                                 key={key}
@@ -441,10 +512,8 @@ const RefuelHistoryPage = () => {
                                   setForm((f) => ({ ...f, fuelUnit: key }));
                                   setOpenMenu(null);
                                 }}
-                                className={`w-full px-3 py-2 text-left hover:bg-gray-700 transition-colors cursor-pointer text-sm ${
-                                  form.fuelUnit === key
-                                    ? "bg-teal-500/20 text-teal-300"
-                                    : "text-gray-200"
+                                className={`fuel-dropdown-item ${
+                                  form.fuelUnit === key ? "active" : ""
                                 }`}
                               >
                                 {key}
@@ -457,7 +526,7 @@ const RefuelHistoryPage = () => {
                   </div>
 
                   {/* Price per Unit & Currency */}
-                  <div className="md:col-span-2 xl:col-span-1">
+                  <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Price per{" "}
                       {form.fuelUnit === "liters" ? "Liter" : "Gallon"}
@@ -478,7 +547,7 @@ const RefuelHistoryPage = () => {
                         placeholder="0.00"
                       />
                       <div className="border-l border-gray-700"></div>
-                      <div ref={currencyRef} className="relative w-20">
+                      <div ref={currencyRef} className="fuel-dropdown-container dropdown-width-md">
                         <button
                           type="button"
                           onClick={() =>
@@ -486,18 +555,16 @@ const RefuelHistoryPage = () => {
                               m === "currency" ? null : "currency"
                             )
                           }
-                          className={`w-full h-full px-3 py-3 rounded-r-lg bg-gray-800/60 border border-gray-600 border-l-0 outline-none text-white flex items-center justify-between transition-all duration-200 hover:bg-gray-700/60 cursor-pointer ${
-                            openMenu === "currency"
-                              ? "rounded-br-none border-b-0"
-                              : ""
+                          className={`fuel-dropdown-button rounded-r ${
+                            openMenu === "currency" ? "open" : ""
                           }`}
                         >
-                          <span className="font-medium text-sm">
+                          <span className="dropdown-text">
                             {form.currency}
                           </span>
                           <svg
-                            className={`w-3 h-3 ml-1 transition-transform flex-shrink-0 ${
-                              openMenu === "currency" ? "rotate-180" : ""
+                            className={`dropdown-arrow ${
+                              openMenu === "currency" ? "open" : ""
                             }`}
                             fill="none"
                             stroke="currentColor"
@@ -512,7 +579,7 @@ const RefuelHistoryPage = () => {
                           </svg>
                         </button>
                         {openMenu === "currency" && (
-                          <div className="absolute z-50 top-full left-0 w-full rounded-lg rounded-t-none border border-t-0 border-gray-600 bg-gray-800 shadow-xl overflow-hidden">
+                          <div className="fuel-dropdown-content">
                             {Object.keys(currencySymbols).map((c) => (
                               <button
                                 key={c}
@@ -521,10 +588,8 @@ const RefuelHistoryPage = () => {
                                   setForm((f) => ({ ...f, currency: c }));
                                   setOpenMenu(null);
                                 }}
-                                className={`w-full px-3 py-2 text-left hover:bg-gray-700 transition-colors cursor-pointer text-sm ${
-                                  form.currency === c
-                                    ? "bg-teal-500/20 text-teal-300"
-                                    : "text-gray-200"
+                                className={`fuel-dropdown-item ${
+                                  form.currency === c ? "active" : ""
                                 }`}
                               >
                                 {c}
@@ -536,6 +601,7 @@ const RefuelHistoryPage = () => {
                     </div>
                   </div>
 
+                  {/* Row 3: Total Cost - Station */}
                   {/* Total Cost */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -565,70 +631,8 @@ const RefuelHistoryPage = () => {
                     )}
                   </div>
 
-                  {/* Fuel Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Fuel Type
-                    </label>
-                    <div ref={fuelTypeRef} className="relative">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenMenu((m) =>
-                            m === "fuelType" ? null : "fuelType"
-                          )
-                        }
-                        className={`w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white flex items-center justify-between transition-all duration-200 hover:bg-gray-700/60 cursor-pointer ${
-                          openMenu === "fuelType"
-                            ? "rounded-b-none border-b-0 border-teal-500 ring-1 ring-teal-500"
-                            : ""
-                        }`}
-                      >
-                        <span className="truncate text-left">
-                          {form.fuelType}
-                        </span>
-                        <svg
-                          className={`w-4 h-4 ml-2 transition-transform ${
-                            openMenu === "fuelType" ? "rotate-180" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </button>
-                      {openMenu === "fuelType" && (
-                        <div className="absolute z-50 top-full left-0 w-full max-h-48 overflow-y-auto rounded-lg rounded-t-none border border-t-0 border-gray-600 bg-gray-800 shadow-xl">
-                          {FUEL_TYPES.map((ft) => (
-                            <button
-                              key={ft}
-                              type="button"
-                              onClick={() => {
-                                setForm((f) => ({ ...f, fuelType: ft }));
-                                setOpenMenu(null);
-                              }}
-                              className={`w-full px-4 py-3 text-left hover:bg-gray-700 transition-colors border-b border-gray-700 last:border-b-0 cursor-pointer ${
-                                form.fuelType === ft
-                                  ? "bg-teal-500/20 text-teal-300"
-                                  : "text-gray-200"
-                              }`}
-                            >
-                              {ft}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
                   {/* Station */}
-                  <div className="md:col-span-2 xl:col-span-1">
+                  <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Gas Station / Location
                     </label>
@@ -700,7 +704,29 @@ const RefuelHistoryPage = () => {
               {groups.map((g) => (
                 <section key={g.key} className="space-y-4">
                   <div className="flex items-center gap-4">
-                    <h2 className="text-2xl font-bold text-white">{g.label}</h2>
+                    <button
+                      onClick={() => toggleMonthCollapse(g.key)}
+                      className="flex items-center gap-3 hover:bg-gray-800/50 rounded-lg p-2 -ml-2 transition-colors cursor-pointer group"
+                    >
+                      <svg
+                        className={`w-5 h-5 text-gray-400 transition-transform ${
+                          collapsedMonths.has(g.key) ? '-rotate-90' : ''
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                      <h2 className="text-2xl font-bold text-white group-hover:text-teal-300 transition-colors">
+                        {g.label}
+                      </h2>
+                    </button>
                     <div className="flex-1 h-px bg-gradient-to-r from-gray-600 to-transparent"></div>
                     <span className="text-sm text-gray-400 bg-gray-800/50 px-3 py-1 rounded-full">
                       {g.items.length}{" "}
@@ -708,7 +734,8 @@ const RefuelHistoryPage = () => {
                     </span>
                   </div>
 
-                  <div className="space-y-4">
+                  {!collapsedMonths.has(g.key) && (
+                    <div className="space-y-4">
                     {g.items.map((e, index) => {
                       const sym = currencySymbols[e.currency] || "";
                       const dist = distMap.get(e.id);
@@ -994,7 +1021,8 @@ const RefuelHistoryPage = () => {
                         </div>
                       );
                     })}
-                  </div>
+                    </div>
+                  )}
                 </section>
               ))}
             </div>
@@ -1057,9 +1085,10 @@ const RefuelHistoryPage = () => {
 
             {/* Modal Content */}
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                {/* Row 1: Vehicle Name - Date - Fuel Type */}
                 {/* Vehicle Name */}
-                <div>
+                <div className="lg:col-span-2">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Vehicle Name / Model
                   </label>
@@ -1093,9 +1122,69 @@ const RefuelHistoryPage = () => {
                       }))
                     }
                     className="w-full px-4 py-3 rounded-lg bg-gray-700/60 border border-gray-600 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200"
+                    style={{ colorScheme: 'dark' }}
                   />
                 </div>
 
+                {/* Fuel Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Fuel Type
+                  </label>
+                  <div ref={editFuelTypeRef} className="fuel-dropdown-container">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenMenu((m) =>
+                          m === "editFuelType" ? null : "editFuelType"
+                        )
+                      }
+                      className={`fuel-dropdown-button edit-mode rounded-full ${
+                        openMenu === "editFuelType" ? "open" : ""
+                      }`}
+                    >
+                      <span className="dropdown-text">
+                        {editForm.fuelType}
+                      </span>
+                      <svg
+                        className={`dropdown-arrow ${
+                          openMenu === "editFuelType" ? "open" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+                    {openMenu === "editFuelType" && (
+                      <div className="fuel-dropdown-content edit-mode" style={{ maxHeight: "12rem" }}>
+                        {FUEL_TYPES.map((ft) => (
+                          <button
+                            key={ft}
+                            type="button"
+                            onClick={() => {
+                              setEditForm((f) => ({ ...f, fuelType: ft }));
+                              setOpenMenu(null);
+                            }}
+                            className={`fuel-dropdown-item edit-mode ${
+                              editForm.fuelType === ft ? "active" : ""
+                            }`}
+                          >
+                            {ft}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Row 2: Odometer - Fuel Amount - Price per Liter */}
                 {/* Odometer */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -1117,7 +1206,7 @@ const RefuelHistoryPage = () => {
                       placeholder="0.0"
                     />
                     <div className="border-l border-gray-600"></div>
-                    <div ref={editDistanceUnitRef} className="relative w-20 sm:w-24 md:w-28 lg:w-32">
+                    <div ref={editDistanceUnitRef} className="fuel-dropdown-container modal-dropdown-width-md">
                       <button
                         type="button"
                         onClick={() =>
@@ -1125,18 +1214,16 @@ const RefuelHistoryPage = () => {
                             m === "editDistanceUnit" ? null : "editDistanceUnit"
                           )
                         }
-                        className={`w-full h-full px-2 py-3 rounded-r-lg bg-gray-700/60 border border-gray-600 border-l-0 outline-none text-white flex items-center justify-between transition-all duration-200 hover:bg-gray-600/60 cursor-pointer ${
-                          openMenu === "editDistanceUnit"
-                            ? "rounded-br-none border-b-0"
-                            : ""
+                        className={`fuel-dropdown-button edit-mode rounded-r ${
+                          openMenu === "editDistanceUnit" ? "open" : ""
                         }`}
                       >
-                        <span className="font-medium text-xs">
+                        <span className="dropdown-text">
                           {editForm.distanceUnit}
                         </span>
                         <svg
-                          className={`w-3 h-3 transition-transform flex-shrink-0 ${
-                            openMenu === "editDistanceUnit" ? "rotate-180" : ""
+                          className={`dropdown-arrow ${
+                            openMenu === "editDistanceUnit" ? "open" : ""
                           }`}
                           fill="none"
                           stroke="currentColor"
@@ -1151,7 +1238,7 @@ const RefuelHistoryPage = () => {
                         </svg>
                       </button>
                       {openMenu === "editDistanceUnit" && (
-                        <div className="absolute z-50 top-full right-0 w-full rounded-lg rounded-t-none border border-t-0 border-gray-600 bg-gray-700 shadow-xl overflow-hidden">
+                        <div className="fuel-dropdown-content edit-mode right-aligned">
                           {Object.entries(DISTANCE_UNITS).map(
                             ([key, label]) => (
                               <button
@@ -1164,10 +1251,8 @@ const RefuelHistoryPage = () => {
                                   }));
                                   setOpenMenu(null);
                                 }}
-                                className={`w-full px-2 py-2 text-left hover:bg-gray-600 transition-colors cursor-pointer text-xs ${
-                                  editForm.distanceUnit === key
-                                    ? "bg-teal-500/20 text-teal-300"
-                                    : "text-gray-200"
+                                className={`fuel-dropdown-item edit-mode ${
+                                  editForm.distanceUnit === key ? "active" : ""
                                 }`}
                               >
                                 {key}
@@ -1198,7 +1283,7 @@ const RefuelHistoryPage = () => {
                       placeholder="0.00"
                     />
                     <div className="border-l border-gray-600"></div>
-                    <div ref={editFuelUnitRef} className="relative w-24 sm:w-28 md:w-32 lg:w-36">
+                    <div ref={editFuelUnitRef} className="fuel-dropdown-container modal-dropdown-width-md">
                       <button
                         type="button"
                         onClick={() =>
@@ -1206,18 +1291,16 @@ const RefuelHistoryPage = () => {
                             m === "editFuelUnit" ? null : "editFuelUnit"
                           )
                         }
-                        className={`w-full h-full px-2 py-3 rounded-r-lg bg-gray-700/60 border border-gray-600 border-l-0 outline-none text-white flex items-center justify-between transition-all duration-200 hover:bg-gray-600/60 cursor-pointer ${
-                          openMenu === "editFuelUnit"
-                            ? "rounded-br-none border-b-0"
-                            : ""
+                        className={`fuel-dropdown-button edit-mode rounded-r ${
+                          openMenu === "editFuelUnit" ? "open" : ""
                         }`}
                       >
-                        <span className="font-medium text-xs">
+                        <span className="dropdown-text">
                           {editForm.fuelUnit}
                         </span>
                         <svg
-                          className={`w-3 h-3 transition-transform flex-shrink-0 ${
-                            openMenu === "editFuelUnit" ? "rotate-180" : ""
+                          className={`dropdown-arrow ${
+                            openMenu === "editFuelUnit" ? "open" : ""
                           }`}
                           fill="none"
                           stroke="currentColor"
@@ -1232,7 +1315,7 @@ const RefuelHistoryPage = () => {
                         </svg>
                       </button>
                       {openMenu === "editFuelUnit" && (
-                        <div className="absolute z-50 top-full right-0 w-full rounded-lg rounded-t-none border border-t-0 border-gray-600 bg-gray-700 shadow-xl overflow-hidden">
+                        <div className="fuel-dropdown-content edit-mode right-aligned">
                           {Object.entries(FUEL_UNITS).map(([key, label]) => (
                             <button
                               key={key}
@@ -1241,10 +1324,8 @@ const RefuelHistoryPage = () => {
                                 setEditForm((f) => ({ ...f, fuelUnit: key }));
                                 setOpenMenu(null);
                               }}
-                              className={`w-full px-2 py-2 text-left hover:bg-gray-600 transition-colors cursor-pointer text-xs ${
-                                editForm.fuelUnit === key
-                                  ? "bg-teal-500/20 text-teal-300"
-                                  : "text-gray-200"
+                              className={`fuel-dropdown-item edit-mode ${
+                                editForm.fuelUnit === key ? "active" : ""
                               }`}
                             >
                               {key}
@@ -1278,7 +1359,7 @@ const RefuelHistoryPage = () => {
                       placeholder="0.00"
                     />
                     <div className="border-l border-gray-600"></div>
-                    <div ref={editCurrencyRef} className="relative w-20 sm:w-24 md:w-28 lg:w-32">
+                    <div ref={editCurrencyRef} className="fuel-dropdown-container modal-dropdown-width-md">
                       <button
                         type="button"
                         onClick={() =>
@@ -1286,18 +1367,16 @@ const RefuelHistoryPage = () => {
                             m === "editCurrency" ? null : "editCurrency"
                           )
                         }
-                        className={`w-full h-full px-2 py-3 rounded-r-lg bg-gray-700/60 border border-gray-600 border-l-0 outline-none text-white flex items-center justify-between transition-all duration-200 hover:bg-gray-600/60 cursor-pointer ${
-                          openMenu === "editCurrency"
-                            ? "rounded-br-none border-b-0"
-                            : ""
+                        className={`fuel-dropdown-button edit-mode rounded-r ${
+                          openMenu === "editCurrency" ? "open" : ""
                         }`}
                       >
-                        <span className="font-medium text-xs">
+                        <span className="dropdown-text">
                           {editForm.currency}
                         </span>
                         <svg
-                          className={`w-3 h-3 transition-transform flex-shrink-0 ${
-                            openMenu === "editCurrency" ? "rotate-180" : ""
+                          className={`dropdown-arrow ${
+                            openMenu === "editCurrency" ? "open" : ""
                           }`}
                           fill="none"
                           stroke="currentColor"
@@ -1312,7 +1391,7 @@ const RefuelHistoryPage = () => {
                         </svg>
                       </button>
                       {openMenu === "editCurrency" && (
-                        <div className="absolute z-50 top-full right-0 w-full rounded-lg rounded-t-none border border-t-0 border-gray-600 bg-gray-700 shadow-xl overflow-hidden">
+                        <div className="fuel-dropdown-content edit-mode right-aligned">
                           {Object.keys(currencySymbols).map((c) => (
                             <button
                               key={c}
@@ -1321,10 +1400,8 @@ const RefuelHistoryPage = () => {
                                 setEditForm((f) => ({ ...f, currency: c }));
                                 setOpenMenu(null);
                               }}
-                              className={`w-full px-2 py-2 text-left hover:bg-gray-600 transition-colors cursor-pointer text-xs ${
-                                editForm.currency === c
-                                  ? "bg-teal-500/20 text-teal-300"
-                                  : "text-gray-200"
+                              className={`fuel-dropdown-item edit-mode ${
+                                editForm.currency === c ? "active" : ""
                               }`}
                             >
                               {c}
@@ -1336,6 +1413,7 @@ const RefuelHistoryPage = () => {
                   </div>
                 </div>
 
+                {/* Row 3: Total Cost - Station */}
                 {/* Total Cost */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -1369,70 +1447,8 @@ const RefuelHistoryPage = () => {
                   )}
                 </div>
 
-                {/* Fuel Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Fuel Type
-                  </label>
-                  <div ref={editFuelTypeRef} className="relative">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenMenu((m) =>
-                          m === "editFuelType" ? null : "editFuelType"
-                        )
-                      }
-                      className={`w-full px-4 py-3 rounded-lg bg-gray-700/60 border border-gray-600 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white flex items-center justify-between transition-all duration-200 hover:bg-gray-600/60 cursor-pointer ${
-                        openMenu === "editFuelType"
-                          ? "rounded-b-none border-b-0 border-teal-500 ring-1 ring-teal-500"
-                          : ""
-                      }`}
-                    >
-                      <span className="truncate text-left">
-                        {editForm.fuelType}
-                      </span>
-                      <svg
-                        className={`w-4 h-4 ml-2 transition-transform ${
-                          openMenu === "editFuelType" ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
-                    {openMenu === "editFuelType" && (
-                      <div className="absolute z-50 top-full left-0 w-full max-h-48 overflow-y-auto rounded-lg rounded-t-none border border-t-0 border-gray-600 bg-gray-700 shadow-xl">
-                        {FUEL_TYPES.map((ft) => (
-                          <button
-                            key={ft}
-                            type="button"
-                            onClick={() => {
-                              setEditForm((f) => ({ ...f, fuelType: ft }));
-                              setOpenMenu(null);
-                            }}
-                            className={`w-full px-4 py-3 text-left hover:bg-gray-600 transition-colors border-b border-gray-600 last:border-b-0 cursor-pointer ${
-                              editForm.fuelType === ft
-                                ? "bg-teal-500/20 text-teal-300"
-                                : "text-gray-200"
-                            }`}
-                          >
-                            {ft}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
                 {/* Station */}
-                <div>
+                <div className="lg:col-span-2">
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Gas Station / Location
                   </label>
