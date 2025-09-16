@@ -236,24 +236,26 @@ const FuelCalculatorPage = () => {
   setResults({ litersNeeded, cost, currency: form.currency, timestamp: new Date().toISOString() });
     setForm((f) => ({ ...f, lastCalculated: Date.now() }));
 
-    // Save trip snapshot to localStorage
-  try {
+    // Save trip snapshot to localStorage ONLY if coming from Map Page (has start & end)
+    try {
       const state = location.state || {};
       const startName = state.startName || null;
       const endName = state.endName || null;
-      const vehicleLabel = selectedVehicle?.label || (vehicleQuery ? vehicleQuery : null);
-  addTrip({
-        startName,
-        endName,
-        distanceKm: form.useManualFuel ? (Number.isFinite(distanceKm) ? Number(distanceKm?.toFixed?.(2) || distanceKm) : null) : Number(distanceKm?.toFixed?.(2) || distanceKm),
-        litersNeeded: Number(litersNeeded?.toFixed?.(2) || litersNeeded) || 0,
-        fuelCost: Number(cost?.toFixed?.(2) || cost) || 0,
-        currency: form.currency,
-        fuelType: form.fuelType,
-        vehicleLabel,
-      });
-    // Show saved toast (persistent until cleared/reloaded)
-    setSavedToast(true);
+      if (startName && endName) {
+        const vehicleLabel = selectedVehicle?.label || (vehicleQuery ? vehicleQuery : null);
+        addTrip({
+          startName,
+          endName,
+          distanceKm: form.useManualFuel ? (Number.isFinite(distanceKm) ? Number(distanceKm?.toFixed?.(2) || distanceKm) : null) : Number(distanceKm?.toFixed?.(2) || distanceKm),
+          litersNeeded: Number(litersNeeded?.toFixed?.(2) || litersNeeded) || 0,
+          fuelCost: Number(cost?.toFixed?.(2) || cost) || 0,
+          currency: form.currency,
+          fuelType: form.fuelType,
+          vehicleLabel,
+        });
+        // Show saved toast (persistent until cleared/reloaded)
+        setSavedToast(true);
+      }
     } catch { }
   };
   const clearAll = () => { setForm(initialState); setResults(null); setAttempted(false); };
