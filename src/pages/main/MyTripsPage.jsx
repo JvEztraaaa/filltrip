@@ -14,6 +14,15 @@ const ellipsize = (str, max = 60) => {
 
 const sectionCard = 'bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-lg border border-gray-700/50 backdrop-blur-sm shadow-xl';
 
+// Small presentational box used in the stats grid (Distance/Fuel/Cost)
+const StatsItem = ({ label, children, valueClassName }) => (
+    <div className="text-center p-2.5 rounded-md bg-gray-700/15 border border-gray-600/20">
+        <div className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-400 mb-0.5">{label}</div>
+        <div className={valueClassName}>{children}</div>
+    </div>
+);
+
+// Renders a single trip row with summary and actions
 const TripRow = ({ t, onDelete, isLatest = false }) => {
     const d = new Date(t.createdAt);
     const when = isNaN(d) ? '' : `${d.toLocaleDateString()} • ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
@@ -99,23 +108,22 @@ const TripRow = ({ t, onDelete, isLatest = false }) => {
             </div>
             {/* Compact Stats Grid */}
             <div className="mt-3 grid grid-cols-3 gap-3">
-                <div className="text-center p-2.5 rounded-md bg-gray-700/15 border border-gray-600/20">
-                    <div className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-400 mb-0.5">Distance</div>
-                    <div className="text-sm sm:text-base font-semibold text-teal-300">{t.distanceKm ? `${t.distanceKm} km` : '—'}</div>
-                </div>
-                <div className="text-center p-2.5 rounded-md bg-gray-700/15 border border-gray-600/20">
-                    <div className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-400 mb-0.5">Fuel</div>
-                    <div className="text-sm sm:text-base font-semibold text-indigo-300">{(t.litersNeeded?.toFixed ? t.litersNeeded.toFixed(2) : t.litersNeeded) || 0} L</div>
-                </div>
-                <div className="text-center p-2.5 rounded-md bg-gray-700/15 border border-gray-600/20">
-                    <div className="text-[10px] sm:text-xs uppercase tracking-wider text-gray-400 mb-0.5">Cost</div>
-                    <div className="text-sm sm:text-base font-semibold bg-gradient-to-r from-teal-400 to-indigo-400 bg-clip-text text-transparent">{symbol}{t.fuelCost?.toFixed ? t.fuelCost.toFixed(2) : t.fuelCost}</div>
-                </div>
+                {/* Refactor: use StatsItem to avoid repeated markup */}
+                <StatsItem label="Distance" valueClassName="text-sm sm:text-base font-semibold text-teal-300">
+                    {t.distanceKm ? `${t.distanceKm} km` : '—'}
+                </StatsItem>
+                <StatsItem label="Fuel" valueClassName="text-sm sm:text-base font-semibold text-indigo-300">
+                    {(t.litersNeeded?.toFixed ? t.litersNeeded.toFixed(2) : t.litersNeeded) || 0} L
+                </StatsItem>
+                <StatsItem label="Cost" valueClassName="text-sm sm:text-base font-semibold bg-gradient-to-r from-teal-400 to-indigo-400 bg-clip-text text-transparent">
+                    {symbol}{t.fuelCost?.toFixed ? t.fuelCost.toFixed(2) : t.fuelCost}
+                </StatsItem>
             </div>
         </div>
     );
 };
 
+// Lists saved trips, grouped by month, with delete confirmation
 const MyTripsPage = () => {
     const [groups, setGroups] = useState([]);
     const [confirm, setConfirm] = useState(null); // { id, title }

@@ -6,6 +6,18 @@ import "./MapPage.css";
 import Header from "../../components/Header";
 import SidePanel from "../../components/SidePanel";
 
+// Small internal component to render a labeled search field with suggestions dropdown.
+// Preserves exact DOM ids and classes so the imperative logic continues to work.
+const SearchField = ({ inputId, suggestionsId, labelId, labelText, placeholder }) => (
+  <div className="mb-5 relative">
+    <label htmlFor={inputId} className="block text-xs font-medium text-gray-400 mb-1">{labelText}</label>
+    <input id={inputId} className="w-full custom-input px-3 py-2 text-sm" placeholder={placeholder} autoComplete="off" />
+    <div id={suggestionsId} className="hidden absolute left-0 right-0 top-full mt-1 z-50 border border-gray-700 rounded-md bg-gray-800 text-white shadow-lg suggestions-box" />
+    <div id={labelId} className="text-xs text-gray-400 mt-1">{labelText.split(' ')[0]}: (none)</div>
+  </div>
+);
+
+// Main map page: interactive routing, gas station overlay, saved places, and handoff to fuel calculator
 const MapPage = () => {
   const mapRef = useRef(null);
   const navigate = useNavigate();
@@ -781,15 +793,9 @@ const MapPage = () => {
 
   return (
     <div className="relative h-screen w-screen bg-gray-900 overflow-hidden">
-      { }
       <SidePanel />
-
-      { }
       <div id="map" className="absolute inset-0 h-full w-full z-0" />
-
-      { }
-      <Header />      { }
-      { }
+      <Header />
       <button
         onClick={toggleSidebar}
         className="fixed top-16 right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
@@ -835,7 +841,6 @@ const MapPage = () => {
         aria-label="Show nearby gas stations"
         style={{ top: '176px', width: '48px', height: '48px' }}
       >
-        { }
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none">
           <path d="M3 3h12v18H3z" />
           <path d="M16 8h1a4 4 0 0 1 4 4v6a2 2 0 0 1-2 2h-1" />
@@ -863,7 +868,7 @@ const MapPage = () => {
       {/* Fuel status toast (progress) */}
       <div id="fuelStatus" className="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[70] bg-gray-800/90 backdrop-blur px-4 py-2 rounded shadow-lg text-white text-xs font-medium max-w-xs text-center"></div>
 
-  {/* Long trip toast */}
+    {/* Long trip toast */}
   <div id="longTripToast" className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[70] bg-indigo-700/90 backdrop-blur px-4 py-3 rounded-lg shadow-xl text-white text-xs max-w-sm w-[92vw] sm:w-auto text-left transition transform opacity-0 translate-y-2 ring-1 ring-white/10"></div>
 
       {/* Saved places panel */}
@@ -885,7 +890,6 @@ const MapPage = () => {
       {/* Saved places toast */}
       <div id="savedPlacesToast" className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[70] bg-gray-800/90 text-white text-xs font-medium px-3 py-1 rounded shadow transition transform opacity-0 translate-y-2"></div>
 
-      { }
       {isSidebarOpen && (
         <button
           onClick={toggleSidebar}
@@ -899,48 +903,16 @@ const MapPage = () => {
         </button>
       )}
 
-      { }
       <aside
         id="sidebar"
         className={`fixed top-0 right-0 h-full bg-gray-900 text-white p-4 overflow-y-auto transition-all duration-300 z-[60] w-full md:w-80 transform ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} pt-12 md:pt-20 closed-${!isSidebarOpen}`}
       >
-        { }
-        { }
-        { }
         <div className="pt-2 md:pt-5 mb-2"></div>
 
-        { }
-        <div className="mb-5 relative">
-          <label htmlFor="searchStart" className="block text-xs font-medium text-gray-400 mb-1">Start Location</label>
-          <input
-            id="searchStart"
-            className="w-full custom-input px-3 py-2 text-sm"
-            placeholder="Enter starting point"
-            autoComplete="off"
-          />
-          <div
-            id="suggestionsStart"
-            className="hidden absolute left-0 right-0 top-full mt-1 z-50 border border-gray-700 rounded-md bg-gray-800 text-white shadow-lg suggestions-box"
-          />
-          <div id="start-label" className="text-xs text-gray-400 mt-1">Start: (none)</div>
-        </div>
+        {/* Refactored: search fields extracted to reusable component */}
+        <SearchField inputId="searchStart" suggestionsId="suggestionsStart" labelId="start-label" labelText="Start Location" placeholder="Enter starting point" />
+        <SearchField inputId="searchEnd" suggestionsId="suggestionsEnd" labelId="end-label" labelText="End Location" placeholder="Enter destination" />
 
-        <div className="mb-5 relative">
-          <label htmlFor="searchEnd" className="block text-xs font-medium text-gray-400 mb-1">End Location</label>
-          <input
-            id="searchEnd"
-            className="w-full custom-input px-3 py-2 text-sm"
-            placeholder="Enter destination"
-            autoComplete="off"
-          />
-          <div
-            id="suggestionsEnd"
-            className="hidden absolute left-0 right-0 top-full mt-1 z-50 border border-gray-700 rounded-md bg-gray-800 text-white shadow-lg suggestions-box"
-          />
-          <div id="end-label" className="text-xs text-gray-400 mt-1">End: (none)</div>
-        </div>
-
-        { }
         <div className="grid grid-cols-2 gap-4 mb-3 bg-gray-800 rounded-lg p-3">
           <div className="text-center">
             <div id="distance" className="text-xl font-bold gradient-text">--</div>
@@ -952,7 +924,6 @@ const MapPage = () => {
           </div>
         </div>
 
-        { }
         <div className="mb-7">
           <div className="flex gap-3 mb-5 bg-gray-800 rounded-lg p-3">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -983,7 +954,6 @@ const MapPage = () => {
           </div>
         </div>
 
-        { }
         <div id="stepsCard" className="hidden">
           <div className="flex items-center gap-2 mb-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#4FD1C5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
@@ -1015,7 +985,6 @@ const MapPage = () => {
         </button>
       )}
 
-      { }
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-gray-900 border-t border-gray-800 p-3 flex justify-between z-[55]">
         <button onClick={toggleSidebar} className="flex items-center justify-center py-2 px-4 bg-gray-800 rounded-md cursor-pointer">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import SidePanel from "../../components/SidePanel";
 import Header from "../../components/Header";
-import "./DropdownStyling.css";
 import {
   addRefuel,
   deleteRefuel,
@@ -9,6 +8,7 @@ import {
   listRefuels,
   updateRefuel,
 } from "../../services/refuel";
+import "./DropdownStyling.css";
 
 const currencySymbols = { PHP: "₱", USD: "$", EUR: "€", JPY: "¥" };
 const FUEL_TYPES = [
@@ -19,6 +19,7 @@ const FUEL_TYPES = [
 const DISTANCE_UNITS = { km: "Kilometers", miles: "Miles", meters: "Meters" };
 const FUEL_UNITS = { liters: "Liters", gallons: "Gallons" };
 
+// Purpose: Convert an ISO date string to a local datetime-local input value (YYYY-MM-DDTHH:mm)
 function localInputValue(iso) {
   try {
     const d = new Date(iso);
@@ -29,6 +30,75 @@ function localInputValue(iso) {
   }
 }
 
+// Reusable dropdown menu for add/edit forms to eliminate JSX repetition.
+// Mirrors existing markup/classes to avoid any visual changes.
+const DropdownMenu = React.forwardRef(
+  (
+    {
+      mode, // 'add' | 'edit'
+      menuKey, // unique key used in openMenu state
+      openMenu,
+      setOpenMenu,
+      value, // current selected value (displayed)
+      options, // string[] of selectable options
+      onSelect, // (opt: string) => void
+      rounded = "r", // 'full' | 'r'
+      rightAligned = false,
+      containerClassName = "",
+      contentStyle,
+    },
+    ref
+  ) => {
+    const isOpen = openMenu === menuKey;
+    const modeClass = mode === "edit" ? "edit-mode" : "add-mode";
+    const roundedClass = rounded === "full" ? "rounded-full" : "rounded-r";
+    return (
+      <div ref={ref} className={`fuel-dropdown-container ${containerClassName}`}>
+        <button
+          type="button"
+          onClick={() => setOpenMenu((m) => (m === menuKey ? null : menuKey))}
+          className={`fuel-dropdown-button ${modeClass} ${roundedClass} ${isOpen ? "open" : ""}`}
+        >
+          <span className="dropdown-text">{value}</span>
+          <svg
+            className={`dropdown-arrow ${isOpen ? "open" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {isOpen && (
+          <div
+            className={`fuel-dropdown-content ${modeClass} ${rightAligned ? "right-aligned" : ""}`}
+            style={contentStyle}
+          >
+            {options.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => {
+                  onSelect(opt);
+                  setOpenMenu(null);
+                }}
+                className={`fuel-dropdown-item ${modeClass} ${value === opt ? "active" : ""}`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+
+// Display name to aid debugging; no functional impact
+DropdownMenu.displayName = "DropdownMenu";
+
+// Main page component: shows fuel history, and add/edit/delete modals
 const RefuelHistoryPage = () => {
   const [groups, setGroups] = useState([]);
   const [collapsedMonths, setCollapsedMonths] = useState(new Set()); // Track collapsed months
@@ -62,6 +132,7 @@ const RefuelHistoryPage = () => {
   const editCurrencyRef = useRef(null);
   const editDistanceUnitRef = useRef(null);
   const editFuelUnitRef = useRef(null);
+  // Purpose: Close any open dropdown when clicking outside of them
   useEffect(() => {
     const onClick = (e) => {
       const targets = [
@@ -84,6 +155,7 @@ const RefuelHistoryPage = () => {
     return () => document.removeEventListener("mousedown", onClick);
   }, [openMenu]);
 
+  // Purpose: Refresh grouped refuels data from storage/service
   const refresh = () => setGroups(groupRefuelsByMonth(listRefuels()));
   
   // Toggle month collapse state
@@ -111,7 +183,7 @@ const RefuelHistoryPage = () => {
     return l * p || 0;
   }, [form.liters, form.pricePerLiter]);
 
-  // Validation function
+  // Validation function: ensures required numeric/text fields are present and valid
   const validateForm = (formData) => {
     const errors = {};
     
@@ -131,6 +203,7 @@ const RefuelHistoryPage = () => {
     return errors;
   };
 
+  // Handle add (and update when editing) submission
   const submit = () => {
     const errors = validateForm(form);
     setValidationErrors(errors);
@@ -176,6 +249,7 @@ const RefuelHistoryPage = () => {
     refresh();
   };
 
+  // Populate edit form and show edit modal
   const startEdit = (e) => {
     setEditForm({
       createdAt: e.createdAt,
@@ -194,6 +268,7 @@ const RefuelHistoryPage = () => {
     setEditModalOpen(true);
   };
 
+  // Save changes from edit modal
   const saveEdit = () => {
     const errors = validateForm(editForm);
     setValidationErrors(errors);
@@ -223,16 +298,19 @@ const RefuelHistoryPage = () => {
     refresh();
   };
 
+  // Close edit modal without saving
   const cancelEdit = () => {
     setEditModalOpen(false);
     setEditing(null);
     setEditForm({});
   };
 
+  // Trigger delete confirmation dialog
   const remove = (id) => {
     setDeleteConfirm({ show: true, id: id });
   };
 
+  // Confirm deletion and remove entry
   const confirmDelete = () => {
     if (deleteConfirm.id) {
       deleteRefuel(deleteConfirm.id);
@@ -241,6 +319,7 @@ const RefuelHistoryPage = () => {
     setDeleteConfirm({ show: false, id: null });
   };
 
+  // Cancel deletion and close dialog
   const cancelDelete = () => {
     setDeleteConfirm({ show: false, id: null });
   };
@@ -747,57 +826,19 @@ const RefuelHistoryPage = () => {
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Fuel Type
                   </label>
-                  <div ref={editFuelTypeRef} className="fuel-dropdown-container">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenMenu((m) =>
-                          m === "editFuelType" ? null : "editFuelType"
-                        )
-                      }
-                      className={`fuel-dropdown-button edit-mode rounded-full ${
-                        openMenu === "editFuelType" ? "open" : ""
-                      }`}
-                    >
-                      <span className="dropdown-text">
-                        {editForm.fuelType}
-                      </span>
-                      <svg
-                        className={`dropdown-arrow ${
-                          openMenu === "editFuelType" ? "open" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
-                    {openMenu === "editFuelType" && (
-                      <div className="fuel-dropdown-content edit-mode" style={{ maxHeight: "12rem" }}>
-                        {FUEL_TYPES.map((ft) => (
-                          <button
-                            key={ft}
-                            type="button"
-                            onClick={() => {
-                              setEditForm((f) => ({ ...f, fuelType: ft }));
-                              setOpenMenu(null);
-                            }}
-                            className={`fuel-dropdown-item edit-mode ${
-                              editForm.fuelType === ft ? "active" : ""
-                            }`}
-                          >
-                            {ft}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {/* Refactored: dropdown extracted to reusable component */}
+                  <DropdownMenu
+                    ref={editFuelTypeRef}
+                    mode="edit"
+                    menuKey="editFuelType"
+                    openMenu={openMenu}
+                    setOpenMenu={setOpenMenu}
+                    value={editForm.fuelType}
+                    options={FUEL_TYPES}
+                    onSelect={(opt) => setEditForm((f) => ({ ...f, fuelType: opt }))}
+                    rounded="full"
+                    contentStyle={{ maxHeight: "12rem" }}
+                  />
                 </div>
 
                 {/* Row 2: Odometer - Fuel Amount - Price per Liter */}
@@ -822,62 +863,19 @@ const RefuelHistoryPage = () => {
                       placeholder="0.0"
                     />
                     <div className="border-l border-gray-600"></div>
-                    <div ref={editDistanceUnitRef} className="fuel-dropdown-container modal-dropdown-width-md">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenMenu((m) =>
-                            m === "editDistanceUnit" ? null : "editDistanceUnit"
-                          )
-                        }
-                        className={`fuel-dropdown-button edit-mode rounded-r ${
-                          openMenu === "editDistanceUnit" ? "open" : ""
-                        }`}
-                      >
-                        <span className="dropdown-text">
-                          {editForm.distanceUnit}
-                        </span>
-                        <svg
-                          className={`dropdown-arrow ${
-                            openMenu === "editDistanceUnit" ? "open" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </button>
-                      {openMenu === "editDistanceUnit" && (
-                        <div className="fuel-dropdown-content edit-mode right-aligned">
-                          {Object.entries(DISTANCE_UNITS).map(
-                            ([key, label]) => (
-                              <button
-                                key={key}
-                                type="button"
-                                onClick={() => {
-                                  setEditForm((f) => ({
-                                    ...f,
-                                    distanceUnit: key,
-                                  }));
-                                  setOpenMenu(null);
-                                }}
-                                className={`fuel-dropdown-item edit-mode ${
-                                  editForm.distanceUnit === key ? "active" : ""
-                                }`}
-                              >
-                                {key}
-                              </button>
-                            )
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    {/* Refactored: dropdown extracted to reusable component */}
+                    <DropdownMenu
+                      ref={editDistanceUnitRef}
+                      mode="edit"
+                      menuKey="editDistanceUnit"
+                      openMenu={openMenu}
+                      setOpenMenu={setOpenMenu}
+                      value={editForm.distanceUnit}
+                      options={Object.keys(DISTANCE_UNITS)}
+                      onSelect={(opt) => setEditForm((f) => ({ ...f, distanceUnit: opt }))}
+                      rightAligned
+                      containerClassName="modal-dropdown-width-md"
+                    />
                   </div>
                 </div>
 
@@ -899,57 +897,19 @@ const RefuelHistoryPage = () => {
                       placeholder="0.00"
                     />
                     <div className="border-l border-gray-600"></div>
-                    <div ref={editFuelUnitRef} className="fuel-dropdown-container modal-dropdown-width-md">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenMenu((m) =>
-                            m === "editFuelUnit" ? null : "editFuelUnit"
-                          )
-                        }
-                        className={`fuel-dropdown-button edit-mode rounded-r ${
-                          openMenu === "editFuelUnit" ? "open" : ""
-                        }`}
-                      >
-                        <span className="dropdown-text">
-                          {editForm.fuelUnit}
-                        </span>
-                        <svg
-                          className={`dropdown-arrow ${
-                            openMenu === "editFuelUnit" ? "open" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </button>
-                      {openMenu === "editFuelUnit" && (
-                        <div className="fuel-dropdown-content edit-mode right-aligned">
-                          {Object.entries(FUEL_UNITS).map(([key, label]) => (
-                            <button
-                              key={key}
-                              type="button"
-                              onClick={() => {
-                                setEditForm((f) => ({ ...f, fuelUnit: key }));
-                                setOpenMenu(null);
-                              }}
-                              className={`fuel-dropdown-item edit-mode ${
-                                editForm.fuelUnit === key ? "active" : ""
-                              }`}
-                            >
-                              {key}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    {/* Refactored: dropdown extracted to reusable component */}
+                    <DropdownMenu
+                      ref={editFuelUnitRef}
+                      mode="edit"
+                      menuKey="editFuelUnit"
+                      openMenu={openMenu}
+                      setOpenMenu={setOpenMenu}
+                      value={editForm.fuelUnit}
+                      options={Object.keys(FUEL_UNITS)}
+                      onSelect={(opt) => setEditForm((f) => ({ ...f, fuelUnit: opt }))}
+                      rightAligned
+                      containerClassName="modal-dropdown-width-md"
+                    />
                   </div>
                 </div>
 
@@ -975,57 +935,19 @@ const RefuelHistoryPage = () => {
                       placeholder="0.00"
                     />
                     <div className="border-l border-gray-600"></div>
-                    <div ref={editCurrencyRef} className="fuel-dropdown-container modal-dropdown-width-md">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenMenu((m) =>
-                            m === "editCurrency" ? null : "editCurrency"
-                          )
-                        }
-                        className={`fuel-dropdown-button edit-mode rounded-r ${
-                          openMenu === "editCurrency" ? "open" : ""
-                        }`}
-                      >
-                        <span className="dropdown-text">
-                          {editForm.currency}
-                        </span>
-                        <svg
-                          className={`dropdown-arrow ${
-                            openMenu === "editCurrency" ? "open" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </button>
-                      {openMenu === "editCurrency" && (
-                        <div className="fuel-dropdown-content edit-mode right-aligned">
-                          {Object.keys(currencySymbols).map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              onClick={() => {
-                                setEditForm((f) => ({ ...f, currency: c }));
-                                setOpenMenu(null);
-                              }}
-                              className={`fuel-dropdown-item edit-mode ${
-                                editForm.currency === c ? "active" : ""
-                              }`}
-                            >
-                              {c}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    {/* Refactored: dropdown extracted to reusable component */}
+                    <DropdownMenu
+                      ref={editCurrencyRef}
+                      mode="edit"
+                      menuKey="editCurrency"
+                      openMenu={openMenu}
+                      setOpenMenu={setOpenMenu}
+                      value={editForm.currency}
+                      options={Object.keys(currencySymbols)}
+                      onSelect={(opt) => setEditForm((f) => ({ ...f, currency: opt }))}
+                      rightAligned
+                      containerClassName="modal-dropdown-width-md"
+                    />
                   </div>
                 </div>
 
@@ -1228,57 +1150,19 @@ const RefuelHistoryPage = () => {
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Fuel Type
                   </label>
-                  <div ref={fuelTypeRef} className="fuel-dropdown-container">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenMenu((m) =>
-                          m === "addFuelType" ? null : "addFuelType"
-                        )
-                      }
-                      className={`fuel-dropdown-button add-mode rounded-full ${
-                        openMenu === "addFuelType" ? "open" : ""
-                      }`}
-                    >
-                      <span className="dropdown-text">
-                        {form.fuelType}
-                      </span>
-                      <svg
-                        className={`dropdown-arrow ${
-                          openMenu === "addFuelType" ? "open" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
-                    {openMenu === "addFuelType" && (
-                      <div className="fuel-dropdown-content add-mode" style={{ maxHeight: "12rem" }}>
-                        {FUEL_TYPES.map((fuel) => (
-                          <button
-                            key={fuel}
-                            type="button"
-                            onClick={() => {
-                              setForm((f) => ({ ...f, fuelType: fuel }));
-                              setOpenMenu(null);
-                            }}
-                            className={`fuel-dropdown-item add-mode ${
-                              form.fuelType === fuel ? "active" : ""
-                            }`}
-                          >
-                            {fuel}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {/* Refactored: dropdown extracted to reusable component */}
+                  <DropdownMenu
+                    ref={fuelTypeRef}
+                    mode="add"
+                    menuKey="addFuelType"
+                    openMenu={openMenu}
+                    setOpenMenu={setOpenMenu}
+                    value={form.fuelType}
+                    options={FUEL_TYPES}
+                    onSelect={(opt) => setForm((f) => ({ ...f, fuelType: opt }))}
+                    rounded="full"
+                    contentStyle={{ maxHeight: "12rem" }}
+                  />
                 </div>
 
                 {/* Odometer Reading */}
@@ -1302,62 +1186,19 @@ const RefuelHistoryPage = () => {
                       placeholder="0.0"
                     />
                     <div className="border-l border-gray-600"></div>
-                    <div ref={distanceUnitRef} className="fuel-dropdown-container modal-dropdown-width-md">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenMenu((m) =>
-                            m === "addDistanceUnit" ? null : "addDistanceUnit"
-                          )
-                        }
-                        className={`fuel-dropdown-button add-mode rounded-r ${
-                          openMenu === "addDistanceUnit" ? "open" : ""
-                        }`}
-                      >
-                        <span className="dropdown-text">
-                          {form.distanceUnit}
-                        </span>
-                        <svg
-                          className={`dropdown-arrow ${
-                            openMenu === "addDistanceUnit" ? "open" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </button>
-                      {openMenu === "addDistanceUnit" && (
-                        <div className="fuel-dropdown-content add-mode right-aligned">
-                          {Object.entries(DISTANCE_UNITS).map(
-                            ([key, label]) => (
-                              <button
-                                key={key}
-                                type="button"
-                                onClick={() => {
-                                  setForm((f) => ({
-                                    ...f,
-                                    distanceUnit: key,
-                                  }));
-                                  setOpenMenu(null);
-                                }}
-                                className={`fuel-dropdown-item add-mode ${
-                                  form.distanceUnit === key ? "active" : ""
-                                }`}
-                              >
-                                {key}
-                              </button>
-                            )
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    {/* Refactored: dropdown extracted to reusable component */}
+                    <DropdownMenu
+                      ref={distanceUnitRef}
+                      mode="add"
+                      menuKey="addDistanceUnit"
+                      openMenu={openMenu}
+                      setOpenMenu={setOpenMenu}
+                      value={form.distanceUnit}
+                      options={Object.keys(DISTANCE_UNITS)}
+                      onSelect={(opt) => setForm((f) => ({ ...f, distanceUnit: opt }))}
+                      rightAligned
+                      containerClassName="modal-dropdown-width-md"
+                    />
                   </div>
                 </div>
 
@@ -1382,57 +1223,19 @@ const RefuelHistoryPage = () => {
                       placeholder="0.00"
                     />
                     <div className="border-l border-gray-600"></div>
-                    <div ref={fuelUnitRef} className="fuel-dropdown-container modal-dropdown-width-md">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenMenu((m) =>
-                            m === "addFuelUnit" ? null : "addFuelUnit"
-                          )
-                        }
-                        className={`fuel-dropdown-button add-mode rounded-r ${
-                          openMenu === "addFuelUnit" ? "open" : ""
-                        }`}
-                      >
-                        <span className="dropdown-text">
-                          {form.fuelUnit}
-                        </span>
-                        <svg
-                          className={`dropdown-arrow ${
-                            openMenu === "addFuelUnit" ? "open" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </button>
-                      {openMenu === "addFuelUnit" && (
-                        <div className="fuel-dropdown-content add-mode right-aligned">
-                          {Object.entries(FUEL_UNITS).map(([key, label]) => (
-                            <button
-                              key={key}
-                              type="button"
-                              onClick={() => {
-                                setForm((f) => ({ ...f, fuelUnit: key }));
-                                setOpenMenu(null);
-                              }}
-                              className={`fuel-dropdown-item add-mode ${
-                                form.fuelUnit === key ? "active" : ""
-                              }`}
-                            >
-                              {key}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    {/* Refactored: dropdown extracted to reusable component */}
+                    <DropdownMenu
+                      ref={fuelUnitRef}
+                      mode="add"
+                      menuKey="addFuelUnit"
+                      openMenu={openMenu}
+                      setOpenMenu={setOpenMenu}
+                      value={form.fuelUnit}
+                      options={Object.keys(FUEL_UNITS)}
+                      onSelect={(opt) => setForm((f) => ({ ...f, fuelUnit: opt }))}
+                      rightAligned
+                      containerClassName="modal-dropdown-width-md"
+                    />
                   </div>
                 </div>
 
@@ -1460,57 +1263,19 @@ const RefuelHistoryPage = () => {
                       placeholder="0.00"
                     />
                     <div className="border-l border-gray-600"></div>
-                    <div ref={currencyRef} className="fuel-dropdown-container modal-dropdown-width-md">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenMenu((m) =>
-                            m === "addCurrency" ? null : "addCurrency"
-                          )
-                        }
-                        className={`fuel-dropdown-button add-mode rounded-r ${
-                          openMenu === "addCurrency" ? "open" : ""
-                        }`}
-                      >
-                        <span className="dropdown-text">
-                          {form.currency}
-                        </span>
-                        <svg
-                          className={`dropdown-arrow ${
-                            openMenu === "addCurrency" ? "open" : ""
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </button>
-                      {openMenu === "addCurrency" && (
-                        <div className="fuel-dropdown-content add-mode right-aligned">
-                          {Object.keys(currencySymbols).map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              onClick={() => {
-                                setForm((f) => ({ ...f, currency: c }));
-                                setOpenMenu(null);
-                              }}
-                              className={`fuel-dropdown-item add-mode ${
-                                form.currency === c ? "active" : ""
-                              }`}
-                            >
-                              {c}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    {/* Refactored: dropdown extracted to reusable component */}
+                    <DropdownMenu
+                      ref={currencyRef}
+                      mode="add"
+                      menuKey="addCurrency"
+                      openMenu={openMenu}
+                      setOpenMenu={setOpenMenu}
+                      value={form.currency}
+                      options={Object.keys(currencySymbols)}
+                      onSelect={(opt) => setForm((f) => ({ ...f, currency: opt }))}
+                      rightAligned
+                      containerClassName="modal-dropdown-width-md"
+                    />
                   </div>
                 </div>
 

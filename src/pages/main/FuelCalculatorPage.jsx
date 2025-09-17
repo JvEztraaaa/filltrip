@@ -7,7 +7,9 @@ import Header from '../../components/Header';
 import "./DropdownStyling.css";
 
 // --- Helpers ---
+// Convert miles to kilometers
 const milesToKm = (m) => m * 1.60934;
+// Convert vehicle efficiency to L/100km given value and unit
 const toLitersPer100km = (v, unit) => {
   if (!v || v <= 0) return 0;
   switch (unit) {
@@ -28,15 +30,53 @@ const initialState = {
   lastCalculated: null,
 };
 const currencySymbols = { PHP: '₱', USD: '$' };
-
-const badge = 'inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-medium mr-2 shadow';
 const sectionCard = 'bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-xl border border-gray-700/50 backdrop-blur-sm shadow-2xl px-6 py-6 flex flex-col gap-4 w-full';
 const labelCls = 'block text-sm font-medium text-gray-300 mb-2';
 const inputBase = 'w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200';
-const selectBase = 'px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white transition-all duration-200';
-
+// Convert US mpg to km/L
 const mpgToKmL = (mpg) => mpg * 0.425143707; // US mpg to km/L
 
+// Small reusable dropdown for unit/currency selections (distance/efficiency/currency)
+// Preserves exact classes/structure to avoid any visual changes.
+const DropdownMenu = React.forwardRef(
+  (
+    { menuKey, openDropdown, setOpenDropdown, value, options, onSelect },
+    ref
+  ) => {
+    const isOpen = openDropdown === menuKey;
+    return (
+      <div ref={ref} className="fuel-dropdown-container">
+        <button
+          type="button"
+          onClick={() => setOpenDropdown((d) => (d === menuKey ? null : menuKey))}
+          className={`fuel-dropdown-button rounded-full cursor-pointer w-full ${isOpen ? 'open' : ''}`}
+        >
+          <span className="dropdown-text truncate">{value}</span>
+          <svg className={`dropdown-arrow ${isOpen ? 'open' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {isOpen && (
+          <div className="fuel-dropdown-content">
+            {options.map((opt) => (
+              <button
+                key={typeof opt === 'string' ? opt : opt.value}
+                type="button"
+                onClick={() => { onSelect(typeof opt === 'string' ? opt : opt.value); setOpenDropdown(null); }}
+                className={`fuel-dropdown-item ${value === (typeof opt === 'string' ? opt : opt.value) ? 'active' : ''}`}
+              >
+                {typeof opt === 'string' ? opt : opt.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+DropdownMenu.displayName = 'DropdownMenu';
+
+// Fuel calculator page: estimate liters and cost from distance, efficiency, and price
 const FuelCalculatorPage = () => {
   const [form, setForm] = useState(initialState);
   const location = useLocation();
@@ -70,6 +110,7 @@ const FuelCalculatorPage = () => {
     setForm((f) => ({ ...f, [field]: value }));
   };
 
+  // Close any open dropdowns when clicking outside
   useEffect(() => {
     const onClick = (e) => {
       const targets = [
@@ -85,6 +126,7 @@ const FuelCalculatorPage = () => {
   }, [showFuelTypeDropdown, openDropdown]);
 
   // Prefill distance if coming from MapPage route state
+  // Prefill distance when navigated from Map page
   useEffect(() => {
     const state = location.state;
     if (state && typeof state.distanceKm === 'number' && !isNaN(state.distanceKm)) {
@@ -97,6 +139,7 @@ const FuelCalculatorPage = () => {
   }, []);
 
   // Local dataset + remote fallback search
+  // Local dataset search + remote fallback for vehicle lookup
   useEffect(() => {
     const qRaw = vehicleQuery.trim();
     const q = qRaw.toLowerCase();
@@ -172,6 +215,7 @@ const FuelCalculatorPage = () => {
     return () => { clearTimeout(timeout); controller.abort(); };
   }, [vehicleQuery, includeMotorcycles]);
 
+  // Apply selected vehicle and prefill efficiency from dataset
   const applyVehicle = (veh) => {
     setSelectedVehicle(veh);
     if (!veh) return;
@@ -197,6 +241,7 @@ const FuelCalculatorPage = () => {
   const animatedCostRef = useRef(null);
   const [savedToast, setSavedToast] = useState(false);
 
+  // Animate results counters (liters and cost)
   useEffect(() => {
     if (!results) return;
     const dur = 650; // ms
@@ -214,6 +259,7 @@ const FuelCalculatorPage = () => {
     requestAnimationFrame(frame);
   }, [results]);
 
+  // Perform calculation: liters needed and total cost
   const performCalculation = () => {
     setAttempted(true);
     if (!canCalculate) return;
@@ -250,6 +296,7 @@ const FuelCalculatorPage = () => {
       }
     } catch { }
   };
+  // Reset form and results
   const clearAll = () => { setForm(initialState); setResults(null); setAttempted(false); };
   // Also clear the toast on clear/reload
   const _origClearAll = clearAll;
@@ -407,19 +454,14 @@ const FuelCalculatorPage = () => {
                     <div className="flex gap-2">
                       <input ref={distanceInputRef} type="text" value={form.distance} onChange={handleChange('distance')} placeholder="150" className={inputBase + (distanceMissing && showErrors ? ' border-rose-500' : '')} />
                       <div ref={distanceUnitRef} className="relative w-28">
-                        <div className="fuel-dropdown-container">
-                          <button type="button" onClick={() => setOpenDropdown(d => d === 'distanceUnit' ? null : 'distanceUnit')} className={`fuel-dropdown-button rounded-full cursor-pointer w-full ${openDropdown === 'distanceUnit' ? 'open' : ''}`}>
-                            <span className="dropdown-text truncate">{form.distanceUnit}</span>
-                            <svg className={`dropdown-arrow ${openDropdown === 'distanceUnit' ? 'open' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                          </button>
-                          {openDropdown === 'distanceUnit' && (
-                            <div className="fuel-dropdown-content">
-                              {['km', 'miles'].map(opt => (
-                                <button key={opt} type="button" onClick={() => { setForm(f => ({ ...f, distanceUnit: opt })); setOpenDropdown(null); }} className={`fuel-dropdown-item ${form.distanceUnit === opt ? 'active' : ''}`}>{opt}</button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        <DropdownMenu
+                          menuKey="distanceUnit"
+                          openDropdown={openDropdown}
+                          setOpenDropdown={setOpenDropdown}
+                          value={form.distanceUnit}
+                          options={["km", "miles"]}
+                          onSelect={(opt) => setForm((f) => ({ ...f, distanceUnit: opt }))}
+                        />
                       </div>
                     </div>
                     <p className="text-xs text-gray-400">One-way distance.</p>
@@ -429,22 +471,17 @@ const FuelCalculatorPage = () => {
                     <div className="flex gap-2">
                       <input type="text" value={form.efficiency} onChange={handleChange('efficiency')} placeholder={form.efficiencyUnit === 'km/L' ? '40' : '30'} className={inputBase + (efficiencyMissing && showErrors ? ' border-rose-500' : '')} />
                       <div ref={efficiencyUnitRef} className="relative w-28">
-                        <div className="fuel-dropdown-container">
-                          <button type="button" onClick={() => setOpenDropdown(d => d === 'efficiencyUnit' ? null : 'efficiencyUnit')} className={`fuel-dropdown-button rounded-full cursor-pointer w-full ${openDropdown === 'efficiencyUnit' ? 'open' : ''}`}>
-                            <span className="dropdown-text truncate">{form.efficiencyUnit === 'mpg' ? 'mpg' : form.efficiencyUnit}</span>
-                            <svg className={`dropdown-arrow ${openDropdown === 'efficiencyUnit' ? 'open' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                          </button>
-                          {openDropdown === 'efficiencyUnit' && (
-                            <div className="fuel-dropdown-content">
-                              {[
-                                { value: 'km/L', label: 'km/L' },
-                                { value: 'mpg', label: 'mpg' }
-                              ].map(opt => (
-                                <button key={opt.value} type="button" onClick={() => { setForm(f => ({ ...f, efficiencyUnit: opt.value })); setOpenDropdown(null); }} className={`fuel-dropdown-item ${form.efficiencyUnit === opt.value ? 'active' : ''}`}>{opt.label}</button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        <DropdownMenu
+                          menuKey="efficiencyUnit"
+                          openDropdown={openDropdown}
+                          setOpenDropdown={setOpenDropdown}
+                          value={form.efficiencyUnit === 'mpg' ? 'mpg' : form.efficiencyUnit}
+                          options={[
+                            { value: 'km/L', label: 'km/L' },
+                            { value: 'mpg', label: 'mpg' }
+                          ]}
+                          onSelect={(opt) => setForm((f) => ({ ...f, efficiencyUnit: opt }))}
+                        />
                       </div>
                     </div>
                     <p className="text-xs text-gray-400">Average consumption.</p>
@@ -518,19 +555,14 @@ const FuelCalculatorPage = () => {
                     <div className="flex gap-2 max-w-sm">
                       <input type="text" value={form.fuelPrice} onChange={handleChange('fuelPrice')} placeholder="56" className={inputBase + (priceMissing && showErrors ? ' border-rose-500' : '')} />
                       <div ref={currencyRef} className="relative w-28">
-                        <div className="fuel-dropdown-container">
-                          <button type="button" onClick={() => setOpenDropdown(d => d === 'currency' ? null : 'currency')} className={`fuel-dropdown-button rounded-full cursor-pointer w-full ${openDropdown === 'currency' ? 'open' : ''}`}>
-                            <span className="dropdown-text truncate">{form.currency}</span>
-                            <svg className={`dropdown-arrow ${openDropdown === 'currency' ? 'open' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                          </button>
-                          {openDropdown === 'currency' && (
-                            <div className="fuel-dropdown-content">
-                              {Object.keys(currencySymbols).map(c => (
-                                <button key={c} type="button" onClick={() => { setForm(f => ({ ...f, currency: c })); setOpenDropdown(null); }} className={`fuel-dropdown-item ${form.currency === c ? 'active' : ''}`}>{c}</button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        <DropdownMenu
+                          menuKey="currency"
+                          openDropdown={openDropdown}
+                          setOpenDropdown={setOpenDropdown}
+                          value={form.currency}
+                          options={Object.keys(currencySymbols)}
+                          onSelect={(c) => setForm((f) => ({ ...f, currency: c }))}
+                        />
                       </div>
                     </div>
                     <p className="text-xs text-gray-400">Prices vary by station; enter your actual price for accuracy.</p>
