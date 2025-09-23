@@ -1,79 +1,94 @@
-// LocalStorage-backed Refuel History service
-const STORAGE_KEY = 'filltrip_refuels_v1';
+const API_BASE =
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
+  'http://localhost/filltrip-db';
 
-function safeRead() {
+function toForm(obj) {
+  const p = new URLSearchParams();
+  Object.entries(obj || {}).forEach(([k, v]) => {
+    if (v !== undefined && v !== null) p.append(k, String(v));
+  });
+  return p;
+}
+
+async function fetchJSON(url, init = {}) {
+  const res = await fetch(url, { credentials: 'include', ...init });
+  const text = await res.text();
+  let data = {};
+  try { data = JSON.parse(text); } catch {}
+  if (!res.ok || data?.success === false) {
+    const err = new Error(data?.error || `Request failed (${res.status})`);
+    err.status = res.status; err.data = data; throw err;
+  }
+  return data;
+}
+
+export async function listRefuels() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr : [];
-  } catch {
+    const data = await fetchJSON(`${API_BASE}/refuel_list.php`, { method: 'GET' });
+    const items = Array.isArray(data?.items) ? data.items : [];
+    return items.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } catch (e) {
+    console.error('listRefuels failed:', e);
     return [];
   }
 }
-function safeWrite(arr) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-}
 
-export function listRefuels() {
-  const items = safeRead();
-  return items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-}
-
-export function addRefuel(entry) {
-  const nowIso = new Date().toISOString();
-  const e = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-    createdAt: entry.createdAt || nowIso,
-    vehicleName: entry.vehicleName || '',
-    odometerKm: Number(entry.odometerKm ?? 0) || 0,
-    distanceUnit: entry.distanceUnit || 'km',
-    liters: Number(entry.liters ?? 0) || 0,
-    fuelUnit: entry.fuelUnit || 'liters',
-    pricePerLiter: Number(entry.pricePerLiter ?? 0) || 0,
-    totalCost: Number(entry.totalCost ?? (Number(entry.liters || 0) * Number(entry.pricePerLiter || 0))) || 0,
-    fuelType: entry.fuelType || 'Gasoline / Unleaded (91)',
-    station: entry.station || '',
-    currency: entry.currency || 'PHP',
+export async function addRefuel(entry) {
+  const payload = {
+    createdAt:      entry.createdAt,         
+    vehicleName:    entry.vehicleName,
+    odometerKm:     entry.odometerKm,
+    distanceUnit:   entry.distanceUnit || 'km',
+    liters:         entry.liters,
+    fuelUnit:       entry.fuelUnit || 'liters',
+    pricePerLiter:  entry.pricePerLiter,
+    totalCost:      entry.totalCost,         
+    fuelType:       entry.fuelType || 'Gasoline / Unleaded (91)',
+    station:        entry.station || '',
+    currency:       entry.currency || 'PHP',
   };
-  const all = safeRead();
-  all.push(e);
-  safeWrite(all);
-  return e;
+  const data = await fetchJSON(`${API_BASE}/refuel_add.php`, {
+    method: 'POST',
+    body: toForm(payload),
+  });
+  return data.entry;
 }
 
-export function updateRefuel(id, updates) {
-  const all = safeRead();
-  const idx = all.findIndex(x => x.id === id);
-  if (idx === -1) return false;
-  const cur = all[idx];
-  const u = { ...updates };
-  if ('odometerKm' in u) u.odometerKm = Number(u.odometerKm ?? 0) || 0;
-  if ('liters' in u) u.liters = Number(u.liters ?? 0) || 0;
-  if ('pricePerLiter' in u) u.pricePerLiter = Number(u.pricePerLiter ?? 0) || 0;
-  if ('totalCost' in u) u.totalCost = Number(u.totalCost ?? (u.liters * u.pricePerLiter)) || 0;
-  // Handle string fields
-  if ('vehicleName' in u) u.vehicleName = u.vehicleName || '';
-  if ('distanceUnit' in u) u.distanceUnit = u.distanceUnit || 'km';
-  if ('fuelUnit' in u) u.fuelUnit = u.fuelUnit || 'liters';
-  if ('fuelType' in u) u.fuelType = u.fuelType || 'Gasoline / Unleaded (91)';
-  if ('station' in u) u.station = u.station || '';
-  if ('currency' in u) u.currency = u.currency || 'PHP';
-  all[idx] = { ...cur, ...u };
-  safeWrite(all);
-  return true;
+export async function updateRefuel(id, updates) {
+  const payload = { id,
+    createdAt:     updates.createdAt,
+    vehicleName:   updates.vehicleName,
+    odometerKm:    updates.odometerKm,
+    distanceUnit:  updates.distanceUnit,
+    liters:        updates.liters,
+    fuelUnit:      updates.fuelUnit,
+    pricePerLiter: updates.pricePerLiter,
+    totalCost:     updates.totalCost,
+    fuelType:      updates.fuelType,
+    station:       updates.station,
+    currency:      updates.currency,
+  };
+  const data = await fetchJSON(`${API_BASE}/refuel_update.php`, {
+    method: 'POST',
+    body: toForm(payload),
+  });
+  return { ok: !!data.updated };
 }
 
-export function deleteRefuel(id) {
-  const all = safeRead();
-  const next = all.filter(x => x.id !== id);
-  safeWrite(next);
+export async function deleteRefuel(id) {
+  const data = await fetchJSON(`${API_BASE}/refuel_delete.php`, {
+    method: 'POST',
+    body: toForm({ id }),
+  });
+  return { ok: !!data.deleted };
 }
 
 export function groupRefuelsByMonth(items) {
   const fmt = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
   const groups = new Map();
-  items.forEach(i => {
+  (Array.isArray(items) ? items : []).forEach(i => {
     const d = new Date(i.createdAt);
+    if (isNaN(d)) return;
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     const label = fmt.format(d);
     if (!groups.has(key)) groups.set(key, { key, label, items: [] });

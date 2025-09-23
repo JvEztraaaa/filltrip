@@ -5,6 +5,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import "./MapPage.css";
 import Header from "../../components/Header";
 import SidePanel from "../../components/SidePanel";
+import { useAuth } from "../../context/AuthContext";
 
 // Small internal component to render a labeled search field with suggestions dropdown.
 // Preserves exact DOM ids and classes so the imperative logic continues to work.
@@ -23,6 +24,7 @@ const MapPage = () => {
   const navigate = useNavigate();
   const [routeDistanceKm, setRouteDistanceKm] = useState(null);
   const [isDarkStyle, setIsDarkStyle] = useState(false);
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -621,8 +623,10 @@ const MapPage = () => {
       });
     }
 
-    // --- Saved Places Feature ---
-    const STORAGE_KEY = 'filltrip_saved_places_v1';
+  // --- Saved Places Feature ---
+  const STORAGE_KEY = `filltrip_saved_places_v1_${currentUser && currentUser.id ? currentUser.id : 'anon'}`;
+  // Clean up legacy global key to avoid showing another user's places
+  try { localStorage.removeItem('filltrip_saved_places_v1'); } catch {}
     let savedPlaces = [];
     const savedBtn = document.getElementById('savedPlacesBtn');
     const savedPanel = document.getElementById('savedPlacesPanel');
@@ -642,6 +646,22 @@ const MapPage = () => {
       }, 2200);
     }
 
+    async function syncFromServer() {
+      try {
+        const mod = await import('../../services/savedPlaces');
+        const serverItems = await mod.listSavedPlaces();
+        // Map server items to local shape { id, name, coords:[lng,lat] }
+        const mapped = serverItems.map(it => ({ id: String(it.id), name: it.name, coords: [Number(it.longitude)||0, Number(it.latitude)||0] }))
+          .filter(p => !isNaN(p.coords[0]) && !isNaN(p.coords[1]) && (p.coords[0]!==0 || p.coords[1]!==0));
+        // Merge: prefer server; keep any local entries missing server id
+        const byId = new Map(mapped.map(p=>[p.id,p]));
+        savedPlaces = mapped;
+        // Persist merged list locally for quick UI
+        persistSaved();
+      } catch(e) {
+        // no-op; fall back to local cache
+      }
+    }
     function loadSaved() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -679,18 +699,38 @@ const MapPage = () => {
         savedList.appendChild(row);
       });
     }
-    function addSaved(name, coords) {
+    async function addSaved(name, coords) {
       if (!coords) return toast('No coordinates to save.');
       const exists = savedPlaces.some(p => p.name === name || (p.coords[0] === coords[0] && p.coords[1] === coords[1]));
       if (exists) return toast('Already saved.');
-      savedPlaces.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), name, coords });
+      // Optimistic local add
+      const tempId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      savedPlaces.unshift({ id: tempId, name, coords });
       if (savedPlaces.length > 100) savedPlaces.pop();
       persistSaved();
       renderSaved();
       toast('Place saved');
+      // Push to server in background
+      try {
+        const mod = await import('../../services/savedPlaces');
+        const place = await mod.addSavedPlace({ name, latitude: coords[1], longitude: coords[0] });
+        if (place) {
+          // Replace temp with server id
+          const idx = savedPlaces.findIndex(p => p.id===tempId);
+          if (idx>=0) {
+            savedPlaces[idx].id = String(place.id || savedPlaces[idx].id);
+            persistSaved();
+            renderSaved();
+          }
+        }
+      } catch (e) {
+        // If server failed, keep local copy. Consider surfacing error later.
+      }
     }
 
-    loadSaved();
+  loadSaved();
+  // Try to sync from server on open
+  syncFromServer();
     renderSaved();
 
     if (saveStartBtn) {
@@ -723,6 +763,13 @@ const MapPage = () => {
           persistSaved();
           renderSaved();
           toast('Deleted');
+          // Delete on server (best-effort)
+          (async()=>{
+            try {
+              const mod = await import('../../services/savedPlaces');
+              await mod.deleteSavedPlace(id);
+            } catch {}
+          })();
         } else if (action === 'use-start') {
           setStart(place.coords.slice(), place.name);
           toast('Set as start');
@@ -767,7 +814,7 @@ const MapPage = () => {
       document.removeEventListener('mousedown', outsideHandler);
       document.removeEventListener('touchstart', outsideHandler);
     };
-  }, []);
+  }, [currentUser && currentUser.id]);
 
   // Toggle between light and dark map styles
   const toggleStyle = () => {

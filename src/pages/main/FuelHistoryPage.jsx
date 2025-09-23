@@ -155,8 +155,11 @@ const RefuelHistoryPage = () => {
     return () => document.removeEventListener("mousedown", onClick);
   }, [openMenu]);
 
-  // Purpose: Refresh grouped refuels data from storage/service
-  const refresh = () => setGroups(groupRefuelsByMonth(listRefuels()));
+  // Purpose: Refresh grouped refuels data from backend service
+  const refresh = async () => {
+    const items = await listRefuels();
+    setGroups(groupRefuelsByMonth(items));
+  };
   
   // Toggle month collapse state
   const toggleMonthCollapse = (monthKey) => {
@@ -204,7 +207,7 @@ const RefuelHistoryPage = () => {
   };
 
   // Handle add (and update when editing) submission
-  const submit = () => {
+  const submit = async () => {
     const errors = validateForm(form);
     setValidationErrors(errors);
     
@@ -226,9 +229,9 @@ const RefuelHistoryPage = () => {
       currency: form.currency,
     };
     if (editing) {
-      updateRefuel(editing, entry);
+      await updateRefuel(editing, entry);
     } else {
-      addRefuel(entry);
+      await addRefuel(entry);
       setAddModalOpen(false); // Close the add modal after successful addition
     }
     setForm({
@@ -246,7 +249,7 @@ const RefuelHistoryPage = () => {
     });
     setValidationErrors({});
     setEditing(null);
-    refresh();
+    await refresh();
   };
 
   // Populate edit form and show edit modal
@@ -269,7 +272,7 @@ const RefuelHistoryPage = () => {
   };
 
   // Save changes from edit modal
-  const saveEdit = () => {
+  const saveEdit = async () => {
     const errors = validateForm(editForm);
     setValidationErrors(errors);
     
@@ -290,12 +293,12 @@ const RefuelHistoryPage = () => {
       station: editForm.station,
       currency: editForm.currency,
     };
-    updateRefuel(editing, entry);
+    await updateRefuel(editing, entry);
     setEditModalOpen(false);
     setEditing(null);
     setEditForm({});
     setValidationErrors({});
-    refresh();
+    await refresh();
   };
 
   // Close edit modal without saving
@@ -311,10 +314,10 @@ const RefuelHistoryPage = () => {
   };
 
   // Confirm deletion and remove entry
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteConfirm.id) {
-      deleteRefuel(deleteConfirm.id);
-      refresh();
+      await deleteRefuel(deleteConfirm.id);
+      await refresh();
     }
     setDeleteConfirm({ show: false, id: null });
   };
