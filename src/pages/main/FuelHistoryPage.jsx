@@ -9,6 +9,8 @@ import {
   updateRefuel,
 } from "../../services/refuel";
 import "./DropdownStyling.css";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const currencySymbols = { PHP: "₱", USD: "$", EUR: "€", JPY: "¥" };
 const FUEL_TYPES = [
@@ -122,7 +124,11 @@ const RefuelHistoryPage = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null });
   
-  const nowMax = useMemo(() => new Date().toISOString().slice(0, 16), []);
+  const nowMax = useMemo(() => {
+    const d = new Date();
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+  }, []);
   const [openMenu, setOpenMenu] = useState(null); // 'fuelType' | 'currency' | 'distanceUnit' | 'fuelUnit' | null
   const fuelTypeRef = useRef(null);
   const currencyRef = useRef(null);
@@ -343,6 +349,93 @@ const RefuelHistoryPage = () => {
     return l * p || 0;
   }, [editForm.liters, editForm.pricePerLiter]);
 
+  const handleExportPDF = () => {
+    try {
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+      const marginX = 36;
+      const startY = 64;
+
+      const title = 'Refuel History Report';
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text(title, marginX, 40);
+
+      const headers = [
+        'Date',
+        'Vehicle',
+        'Station',
+        'Fuel Type',
+        'Odometer',
+        'Liters',
+        'Price/L',
+        'Total',
+      ];
+
+      const all = groups.flatMap(g => g.items || []);
+      const rows = [];
+      for (const e of all) {
+        const d = new Date(e.createdAt);
+        const dateStr = isNaN(d) ? '' : `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        const vehicle = e.vehicleName || '';
+        const station = e.station || '';
+        const fuelType = e.fuelType || '';
+        const odo = e.odometerKm != null && e.odometerKm !== ''
+          ? `${Number(e.odometerKm).toFixed(0)} ${e.distanceUnit || 'km'}`
+          : '';
+        const liters = e.liters != null && e.liters !== ''
+          ? `${Number(e.liters).toFixed(2)} ${e.fuelUnit || 'liters'}`
+          : '';
+        const symbol = currencySymbols[e.currency] || (e.currency || '');
+        const currencyPrefix = symbol === '₱' ? 'PHP ' : (symbol ? `${symbol} ` : '');
+        const priceL = e.pricePerLiter != null && e.pricePerLiter !== ''
+          ? `${currencyPrefix}${Number(e.pricePerLiter).toFixed(2)}`
+          : '';
+        const total = e.totalCost != null && e.totalCost !== ''
+          ? `${currencyPrefix}${Number(e.totalCost).toFixed(2)}`
+          : '';
+        rows.push([dateStr, vehicle, station, fuelType, odo, liters, priceL, total]);
+      }
+
+      autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY,
+        styles: { fontSize: 9, cellPadding: 6, overflow: 'linebreak', valign: 'top' },
+        bodyStyles: { valign: 'top' },
+        headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        tableWidth: 'auto',
+        columnStyles: {
+          0: { cellWidth: 95 },   // Date
+          1: { cellWidth: 120 },  // Vehicle
+          2: { cellWidth: 170, overflow: 'linebreak' }, // Station
+          3: { cellWidth: 110 },  // Fuel Type
+          4: { halign: 'right', cellWidth: 65 },  // Odometer
+          5: { halign: 'right', cellWidth: 60 },  // Liters
+          6: { halign: 'right', cellWidth: 70 },  // Price/L
+          7: { halign: 'right', cellWidth: 65 },  // Total
+        },
+        didDrawPage: () => {
+          const pageSize = doc.internal.pageSize;
+          const pageWidth = pageSize.getWidth();
+          const pageHeight = pageSize.getHeight();
+          doc.setFontSize(9);
+          doc.setTextColor(120);
+          const page = (typeof doc.getNumberOfPages === 'function') ? doc.getNumberOfPages() : (doc.internal?.getNumberOfPages?.() || 1);
+          doc.text(`Page ${page}`, pageWidth - marginX, pageHeight - 20, { align: 'right' });
+        },
+        margin: { left: marginX, right: marginX },
+      });
+
+      const now = new Date();
+      const ymd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      doc.save(`refuel_history_${ymd}.pdf`);
+    } catch (e) {
+      console.error('PDF export failed:', e);
+      alert('Failed to export PDF.');
+    }
+  };
+
   return (
     <div className="relative min-h-screen w-full bg-gray-900 text-white overflow-x-hidden">
       <SidePanel />
@@ -370,6 +463,12 @@ const RefuelHistoryPage = () => {
                     {groups.reduce((acc, g) => acc + g.items.length, 0)}
                   </div>
                 </div>
+                <button
+                  onClick={handleExportPDF}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-white font-medium shadow-lg transition-all duration-200 cursor-pointer"
+                >
+                  Download PDF
+                </button>
               </div>
             </div>
           </div>

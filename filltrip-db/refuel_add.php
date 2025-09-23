@@ -48,7 +48,18 @@ function num($v): float {
 /* ------------------------------ Input --------------------------------------- */
 $x = in();
 $entryAtClient = trim($x['createdAt'] ?? '');
-// We'll store server-side timestamp in created_at; keep client timestamp ignored or for future use
+// Parse client-provided ISO datetime (expected UTC 'Z') and store as UTC; fallback to current UTC
+$createdAtUtc = null;
+if ($entryAtClient !== '') {
+  try {
+    $dt = new DateTime($entryAtClient);
+    $dt->setTimezone(new DateTimeZone('UTC'));
+    $createdAtUtc = $dt->format('Y-m-d H:i:s');
+  } catch (Throwable $e) { $createdAtUtc = null; }
+}
+if ($createdAtUtc === null) {
+  $createdAtUtc = gmdate('Y-m-d H:i:s');
+}
 
 $vehicleName   = trim($x['vehicleName'] ?? '');
 $odometerKm    = num($x['odometerKm'] ?? 0);
@@ -77,11 +88,11 @@ if ($vehicleName==='' || $odometerKm<=0 || $liters<=0 || $pricePerLiter<=0) {
 $ins = $pdo->prepare("INSERT INTO refuel_history
   (user_id, vehicle_name, odometer_km, distance_unit, liters, fuel_unit,
    price_per_liter, total_cost, fuel_type, station, currency, created_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 $ins->execute([
   $uid, $vehicleName, $odometerKm, $distanceUnit, $liters, $fuelUnit,
-  $pricePerLiter, $totalCost, $fuelType, $station, $currency
+  $pricePerLiter, $totalCost, $fuelType, $station, $currency, $createdAtUtc
 ]);
 
 $id = (int)$pdo->lastInsertId();

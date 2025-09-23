@@ -22,7 +22,7 @@ export default function AccountSettingsModal({ open, onClose }) {
       setError('');
       setTimeout(() => dialogRef.current?.focus(), 0);
     }
-  }, [open, currentUser]);
+  }, [open]);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
@@ -49,7 +49,9 @@ export default function AccountSettingsModal({ open, onClose }) {
   const saveProfile = async () => {
     setSaving(true);
     try {
-      await updateProfile({ fullName: form.fullName, username: form.username, email: form.email });
+      const res = await updateProfile({ fullName: form.fullName, username: form.username, email: form.email });
+      const u = res?.user || null;
+      if (u) setForm({ fullName: u.fullName || '', username: u.username || '', email: u.email || '' });
       showNotice('Account details updated');
     } catch (err) {
       showError((err && err.message) || 'Update failed');

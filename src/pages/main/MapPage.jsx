@@ -863,73 +863,75 @@ const MapPage = () => {
     <div className="relative h-screen w-screen bg-gray-900 overflow-hidden">
       <SidePanel />
       <div id="map" className="absolute inset-0 h-full w-full z-0" />
-      <Header />
-      <button
-        onClick={toggleSidebar}
-        className="fixed top-16 right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
-        aria-label="Toggle route sidebar"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="3" y1="12" x2="21" y2="12"></line>
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-      </button>
-
-      {/* Dark theme toggle */}
-      <button
-        onClick={toggleStyle}
-        className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
-        aria-label="Toggle map style"
-        style={{ top: '120px' }}
-      >
-        {isDarkStyle ? (
+  <Header solidBg />
+      {/* Floating actions (stacked with consistent spacing) */}
+      <div className="fixed right-4 z-[55] flex flex-col items-center gap-3" style={{ top: '88px' }}>
+        <button
+          onClick={toggleSidebar}
+          className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
+          aria-label="Toggle route sidebar"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
-        ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </button>
+
+        {/* Dark theme toggle */}
+        <button
+          onClick={toggleStyle}
+          className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
+          aria-label="Toggle map style"
+        >
+          {isDarkStyle ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          )}
+        </button>
+
+        {/* Fuel stations toggle button */}
+        <button
+          id="fuelBtn"
+          className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
+          aria-label="Show nearby gas stations"
+          style={{ width: '48px', height: '48px' }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none">
+            <path d="M3 3h12v18H3z" />
+            <path d="M16 8h1a4 4 0 0 1 4 4v6a2 2 0 0 1-2 2h-1" />
+            <path d="M16 3v5" />
+            <circle cx="7.5" cy="10.5" r="1.5" />
           </svg>
-        )}
-      </button>
+          <span className="label sr-only">Show Gas</span>
+        </button>
 
-      {/* Fuel stations toggle button */}
-      <button
-        id="fuelBtn"
-        className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
-        aria-label="Show nearby gas stations"
-        style={{ top: '176px', width: '48px', height: '48px' }}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none">
-          <path d="M3 3h12v18H3z" />
-          <path d="M16 8h1a4 4 0 0 1 4 4v6a2 2 0 0 1-2 2h-1" />
-          <path d="M16 3v5" />
-          <circle cx="7.5" cy="10.5" r="1.5" />
-        </svg>
-        <span className="label sr-only">Show Gas</span>
-      </button>
-
-      {/* Saved places toggle button */}
-      <button
-        id="savedPlacesBtn"
-        onClick={() => { const panel = document.getElementById('savedPlacesPanel'); if (panel) panel.classList.toggle('hidden'); }}
-        className="fixed right-4 z-[55] bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
-        aria-label="Saved places"
-        style={{ top: '232px', width: '48px', height: '48px' }}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none">
-          <path d="M12 21s-6-5.686-6-11A6 6 0 0 1 12 4a6 6 0 0 1 6 6c0 5.314-6 11-6 11z" />
-        </svg>
-      </button>
+        {/* Saved places toggle button */}
+        <button
+          id="savedPlacesBtn"
+          onClick={() => { const panel = document.getElementById('savedPlacesPanel'); if (panel) panel.classList.toggle('hidden'); }}
+          className="bg-gray-800 hover:bg-gray-700 p-3 rounded-md shadow-lg flex items-center justify-center text-white transition-all duration-200 cursor-pointer"
+          aria-label="Saved places"
+          style={{ width: '48px', height: '48px' }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none">
+            <path d="M12 21s-6-5.686-6-11A6 6 0 0 1 12 4a6 6 0 0 1 6 6c0 5.314-6 11-6 11z" />
+          </svg>
+        </button>
+      </div>
 
       {/* Fuel error toast */}
       <div id="fuelError" className="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-red-600/90 backdrop-blur px-4 py-2 rounded shadow-lg text-white text-sm font-medium max-w-xs text-center"></div>
@@ -942,7 +944,7 @@ const MapPage = () => {
       {/* Saved places panel */}
       <div
         id="savedPlacesPanel"
-        className="hidden fixed z-[65] bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl shadow-2xl text-white w-[86vw] sm:w-[340px] max-h-[65vh] overflow-hidden flex flex-col right-4 top-[288px] md:top-[288px]"
+  className="hidden fixed z-[65] bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl shadow-2xl text-white w-[86vw] sm:w-[340px] max-h-[65vh] overflow-hidden flex flex-col right-4 top-[300px] md:top-[300px]"
       >
         <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
           <div className="flex items-center gap-2">

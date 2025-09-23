@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import SidePanel from '../../components/SidePanel';
 import Header from '../../components/Header';
 import { listTrips, groupTripsByMonth, deleteTrip } from '../../services/trips';
@@ -114,6 +116,91 @@ const MyTripsPage = () => {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
 
+  const handleExportPDF = () => {
+    try {
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+      const marginX = 36;
+      const startY = 64;
+
+      const title = 'My Trips Report';
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text(title, marginX, 40);
+
+      const rows = [];
+      const headers = [
+        'Date',
+        'Start',
+        'End',
+        'Vehicle',
+        'Fuel Type',
+        'Distance (km)',
+        'Fuel (L)',
+        'Cost',
+      ];
+
+      const allTrips = groups.flatMap(g => g.items || []);
+      for (const t of allTrips) {
+        const d = new Date(t.createdAt);
+        const dateStr = isNaN(d) ? '' : `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        const startTitle = t.startName || t.startLocationName || '';
+        const endTitle = t.endName || t.endLocationName || '';
+        const vehicle = t.vehicleLabel || '';
+        const fuelType = t.fuelType || '';
+        const distance = t.distanceKm ? Number(t.distanceKm).toFixed(2) : '';
+        const liters = (t.litersNeeded?.toFixed ? t.litersNeeded.toFixed(2) : Number(t.litersNeeded || 0).toFixed(2));
+        const symbol = currencySymbols[t.currency] || (t.currency || '');
+        const costNum = (t.fuelCost?.toFixed ? Number(t.fuelCost) : Number(t.fuelCost || 0));
+        const currencyPrefix = symbol === '₱' ? 'PHP ' : (symbol ? `${symbol} ` : '');
+        const cost = `${currencyPrefix}${costNum.toFixed(2)}`;
+        rows.push([dateStr, startTitle, endTitle, vehicle, fuelType, distance, liters, cost]);
+      }
+
+      // Grouping label rows per month for readability (optional)
+      // If needed later, can insert section headers using autoTable hooks.
+
+      autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY,
+        styles: { fontSize: 9, cellPadding: 6, overflow: 'linebreak', valign: 'top' },
+        bodyStyles: { valign: 'top' },
+        headStyles: { fillColor: [15, 23, 42], textColor: 255 }, // slate-900
+        alternateRowStyles: { fillColor: [248, 250, 252] }, // slate-50
+        tableWidth: 'auto',
+        columnStyles: {
+          0: { cellWidth: 100 },                 // Date
+          1: { cellWidth: 160, overflow: 'linebreak' }, // Start
+          2: { cellWidth: 160, overflow: 'linebreak' }, // End
+          3: { cellWidth: 85 },                  // Vehicle
+          4: { cellWidth: 95 },                  // Fuel Type
+          5: { halign: 'right', cellWidth: 55 }, // Distance (km)
+          6: { halign: 'right', cellWidth: 50 }, // Fuel (L)
+          7: { halign: 'right', cellWidth: 65 }, // Cost
+        },
+        // Let autoTable manage widths to fit page; long text wraps.
+        didDrawPage: (data) => {
+          // Footer with page number
+          const pageSize = doc.internal.pageSize;
+          const pageWidth = pageSize.getWidth();
+          const pageHeight = pageSize.getHeight();
+          doc.setFontSize(9);
+          doc.setTextColor(120);
+          const page = (typeof doc.getNumberOfPages === 'function') ? doc.getNumberOfPages() : (doc.internal?.getNumberOfPages?.() || 1);
+          doc.text(`Page ${page}`, pageWidth - marginX, pageHeight - 20, { align: 'right' });
+        },
+        margin: { left: marginX, right: marginX },
+      });
+
+      const now = new Date();
+      const ymd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      doc.save(`my_trips_${ymd}.pdf`);
+    } catch (e) {
+      console.error('PDF export failed:', e);
+      alert('Failed to export PDF.');
+    }
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -177,6 +264,12 @@ const MyTripsPage = () => {
                     {groups.reduce((total, g) => total + g.items.length, 0)}
                   </div>
                 </div>
+                <button
+                  onClick={handleExportPDF}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-white font-medium shadow-lg transition-all duration-200 cursor-pointer"
+                >
+                  Download PDF
+                </button>
               </div>
             </div>
           </header>

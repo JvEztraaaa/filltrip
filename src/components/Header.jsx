@@ -5,7 +5,7 @@ import { SidePanelContext } from './SidePanel';
 import { useAuth } from "../context/AuthContext";
 import AccountSettingsModal from "./AccountSettingsModal";
 
-const Header = () => {
+const Header = ({ solidBg = false }) => {
     const { sidebarOpen, openSidebar } = useContext(SidePanelContext);
     const { currentUser, logout } = useAuth();
     const navigate = useNavigate();
@@ -59,7 +59,7 @@ const Header = () => {
     };
 
     return (
-    <div className="fixed top-0 left-0 right-0 z-[45] bg-gray-900/95 backdrop-blur-md border-b border-gray-800 flex items-center px-2 sm:px-3 h-16 shadow-lg">
+    <div className={`fixed top-0 left-0 right-0 z-[45] ${solidBg ? 'bg-gray-900' : 'bg-gray-900/95 backdrop-blur-md'} border-b border-gray-800 flex items-center px-2 sm:px-3 h-16 shadow-lg`}>
             {/* Mobile burger */}
             <div className="w-10 md:hidden flex-shrink-0 flex justify-start">
                 {!sidebarOpen && (

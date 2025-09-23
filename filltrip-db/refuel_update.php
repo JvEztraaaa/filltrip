@@ -49,8 +49,20 @@ $x = in();
 $id = (int)($x['id'] ?? 0);
 if ($id<=0){ http_response_code(400); echo json_encode(['success'=>false,'error'=>'Missing id']); exit; }
 
-// We no longer update created_at from client; ignore createdAt field for safety
+// If client passes createdAt, parse and update created_at in UTC
 $entryAt = null;
+if (array_key_exists('createdAt',$x)){
+  $raw = trim((string)$x['createdAt']);
+  if ($raw !== '') {
+    try{
+      $dt = new DateTime($raw);
+      $dt->setTimezone(new DateTimeZone('UTC'));
+      $entryAt = $dt->format('Y-m-d H:i:s');
+    }catch(Throwable $e){ $entryAt = null; }
+  } else {
+    $entryAt = null;
+  }
+}
 $vehicleName   = array_key_exists('vehicleName',$x)   ? trim($x['vehicleName'])   : null;
 $odometerKm    = array_key_exists('odometerKm',$x)    ? num($x['odometerKm'])    : null;
 $distanceUnit  = array_key_exists('distanceUnit',$x)  ? (($x['distanceUnit'] ?: 'km')) : null;
@@ -70,7 +82,7 @@ if (($totalCost===null || $totalCost<=0) && $liters!==null && $liters>0 && $pric
 /* --------------------------------  UPDATE ------------------------------------ */
 $fields = [];
 $args = [];
-// created_at is server-managed; no update here
+if ($entryAt!==null)      { $fields[]='created_at=?';      $args[]=$entryAt; }
 if ($vehicleName!==null)   { $fields[]='vehicle_name=?';    $args[]=$vehicleName; }
 if ($odometerKm!==null)    { $fields[]='odometer_km=?';     $args[]=$odometerKm; }
 if ($distanceUnit!==null)  { $fields[]='distance_unit=?';   $args[]=$distanceUnit; }
