@@ -105,6 +105,7 @@ CREATE TABLE `users` (
   `username` varchar(50) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
+  `user_icon` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -134,7 +135,7 @@ ALTER TABLE `refuel_history`
 --
 ALTER TABLE `saved_places`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uniq_user_name` (`user_id`,`name`),
+  ADD UNIQUE KEY `uniq_user_name` (`user_id`,`place_name`),
   ADD KEY `idx_user_created` (`user_id`,`created_at`);
 
 --
@@ -179,6 +180,9 @@ ALTER TABLE `trips`
 --
 ALTER TABLE `users`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+-- Add user_icon column if it does not exist (for migrations when applying this SQL)
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `user_icon` varchar(255) DEFAULT NULL AFTER `password_hash`;
 
 --
 -- Constraints for dumped tables

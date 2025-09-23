@@ -84,17 +84,21 @@ const Header = () => {
                         <span className="hidden sm:inline text-sm text-gray-200/90 dark:text-gray-100 truncate max-w-[10rem]" title={currentUser?.username || currentUser?.fullName}>
                             {currentUser?.username || currentUser?.fullName || 'User'}
                         </span>
-                        <button
+                                                <button
                             onClick={() => setMenuOpen(v => { const nv = !v; if (!v) computeMenuPos(); return nv; })}
-                            className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-800 text-gray-100 ring-1 ring-gray-700 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-400/40 transition-all shadow-md cursor-pointer"
+                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-800 text-gray-100 ring-1 ring-gray-700 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-400/40 transition-all shadow-md cursor-pointer overflow-hidden"
                             aria-haspopup="menu"
                             aria-expanded={menuOpen}
                             aria-label="User menu"
                         >
-                            <span className="sr-only">Open user menu</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                                <path d="M12 12a5 5 0 100-10 5 5 0 000 10zM3.172 20.828A4 4 0 017 19h10a4 4 0 013.828 1.828A1 1 0 0119.999 23H4.001a1 1 0 01-.829-1.672z" />
-                            </svg>
+                                                        <span className="sr-only">Open user menu</span>
+                                                        {currentUser?.avatarUrl ? (
+                                                            <img src={currentUser.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                                                                <path d="M12 12a5 5 0 100-10 5 5 0 000 10zM3.172 20.828A4 4 0 017 19h10a4 4 0 013.828 1.828A1 1 0 0119.999 23H4.001a1 1 0 01-.829-1.672z" />
+                                                            </svg>
+                                                        )}
                         </button>
                         {menuOpen && createPortal(
                             <div ref={menuPortalRef} role="menu" style={{ position: 'fixed', top: menuPos.top, right: menuPos.right }}

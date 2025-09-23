@@ -8,6 +8,8 @@ export default function AccountSettingsModal({ open, onClose }) {
   const [form, setForm] = useState({ fullName: '', username: '', email: '' });
   const [pw, setPw] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
   const dialogRef = useRef(null);
   const fileRef = useRef(null);
 
@@ -16,6 +18,8 @@ export default function AccountSettingsModal({ open, onClose }) {
       setTab('profile');
       setForm({ fullName: currentUser?.fullName || '', username: currentUser?.username || '', email: currentUser?.email || '' });
       setPw({ currentPassword: '', newPassword: '', confirm: '' });
+      setNotice('');
+      setError('');
       setTimeout(() => dialogRef.current?.focus(), 0);
     }
   }, [open, currentUser]);
@@ -32,20 +36,47 @@ export default function AccountSettingsModal({ open, onClose }) {
     const f = e.target.files?.[0];
     if (!f) return;
     setSaving(true);
-    try { await updateAvatar(f); } finally { setSaving(false); }
+    try {
+      await updateAvatar(f);
+      showNotice('Profile photo updated');
+      // reset file input so selecting the same file again triggers change
+      if (fileRef.current) fileRef.current.value = '';
+    } catch (err) {
+      showError((err && err.message) || 'Upload failed');
+    } finally { setSaving(false); }
   };
 
   const saveProfile = async () => {
     setSaving(true);
-    try { await updateProfile({ fullName: form.fullName, username: form.username, email: form.email }); }
-    finally { setSaving(false); }
+    try {
+      await updateProfile({ fullName: form.fullName, username: form.username, email: form.email });
+      showNotice('Account details updated');
+    } catch (err) {
+      showError((err && err.message) || 'Update failed');
+    } finally { setSaving(false); }
   };
 
   const savePassword = async () => {
     if (!pw.newPassword || pw.newPassword !== pw.confirm) return;
     setSaving(true);
-    try { await updatePassword({ currentPassword: pw.currentPassword, newPassword: pw.newPassword }); }
-    finally { setSaving(false); }
+    try {
+      await updatePassword({ currentPassword: pw.currentPassword, newPassword: pw.newPassword });
+      showNotice('Password updated');
+      setPw({ currentPassword: '', newPassword: '', confirm: '' });
+    } catch (err) {
+      showError((err && err.message) || 'Password update failed');
+    } finally { setSaving(false); }
+  };
+
+  const showNotice = (msg) => {
+    setNotice(msg);
+    setError('');
+    setTimeout(() => { setNotice(''); }, 3000);
+  };
+  const showError = (msg) => {
+    setError(msg);
+    setNotice('');
+    setTimeout(() => { setError(''); }, 3000);
   };
 
   return createPortal(
@@ -72,14 +103,19 @@ export default function AccountSettingsModal({ open, onClose }) {
             <button className={`px-3 py-1.5 rounded-md text-sm cursor-pointer ${tab==='profile'?'bg-gray-700 text-white':'text-gray-300 hover:bg-gray-700/70'}`} onClick={()=>setTab('profile')}>Profile</button>
             <button className={`px-3 py-1.5 rounded-md text-sm cursor-pointer ${tab==='security'?'bg-gray-700 text-white':'text-gray-300 hover:bg-gray-700/70'}`} onClick={()=>setTab('security')}>Security</button>
           </div>
+          {(notice || error) && (
+            <div className={`mb-3 text-sm rounded-md border px-3 py-2 ${notice ? 'border-teal-600/50 bg-teal-900/30 text-teal-200' : 'border-rose-600/50 bg-rose-900/30 text-rose-200'}`}>
+              {notice || error}
+            </div>
+          )}
         </div>
 
         {tab==='profile' && (
           <div className="px-6 pb-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="relative w-16 h-16 rounded-full overflow-hidden ring-1 ring-gray-700 bg-gray-800 flex items-center justify-center">
-                {currentUser?.avatarDataUrl ? (
-                  <img src={currentUser.avatarDataUrl} alt="avatar" className="w-full h-full object-cover" />
+                {currentUser?.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
                 ) : (
                   <svg className="w-7 h-7 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zM3.172 20.828A4 4 0 017 19h10a4 4 0 013.828 1.828A1 1 0 0119.999 23H4.001a1 1 0 01-.829-1.672z"/></svg>
                 )}
