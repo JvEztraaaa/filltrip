@@ -621,117 +621,207 @@ const MapPage = () => {
       });
     }
 
-    // --- Saved Places Feature ---
-    const STORAGE_KEY = 'filltrip_saved_places_v1';
-    let savedPlaces = [];
-    const savedBtn = document.getElementById('savedPlacesBtn');
-    const savedPanel = document.getElementById('savedPlacesPanel');
-    const savedList = document.getElementById('savedPlacesList');
-    const saveStartBtn = document.getElementById('saveStartBtn');
-    const saveEndBtn = document.getElementById('saveEndBtn');
-    // Removed center save button per request
-    const savedToast = document.getElementById('savedPlacesToast');
 
-    function toast(msg) {
-      if (!savedToast) return;
-      savedToast.textContent = msg;
-      savedToast.classList.remove('opacity-0', 'translate-y-2');
-      clearTimeout(savedToast._hideTimer);
-      savedToast._hideTimer = setTimeout(() => {
-        savedToast.classList.add('opacity-0', 'translate-y-2');
-      }, 2200);
+
+    //* --------- Saved Places Feature 
+let savedPlaces = [];
+
+const savedBtn = document.getElementById('savedPlacesBtn');
+const savedPanel = document.getElementById('savedPlacesPanel');
+const savedList = document.getElementById('savedPlacesList');
+const saveStartBtn = document.getElementById('saveStartBtn');
+const saveEndBtn = document.getElementById('saveEndBtn');
+const savedToast = document.getElementById('savedPlacesToast');
+
+function toast(msg) {
+  if (!savedToast) {
+    console.log('[toast]', msg);
+    return;
+  }
+  savedToast.textContent = msg;
+  savedToast.classList.remove('opacity-0', 'translate-y-2');
+  clearTimeout(savedToast?._hideTimer);
+  savedToast._hideTimer = setTimeout(() => {
+    savedToast.classList.add('opacity-0', 'translate-y-2');
+  }, 2200);
+}
+
+function renderSaved() {
+  if (!savedList) return;
+
+  savedList.innerHTML = '';  // Clear existing list
+  if (savedPlaces.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'text-xs text-gray-400 py-4 text-center';
+    empty.textContent = 'No saved places yet.';
+    savedList.appendChild(empty);
+  } else {
+    savedPlaces.forEach(place => {
+      const row = document.createElement('div');
+      row.className = 'flex items-start gap-2 py-2 border-b border-gray-800 last:border-0';
+      row.innerHTML = `
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-medium truncate">${place.name}</div>
+          <div class="text-[10px] text-gray-400">${place.coords[1].toFixed(4)}, ${place.coords[0].toFixed(4)}</div>
+        </div>
+        <div class="flex items-center gap-1">
+          <button data-action="use-start" data-id="${place.id}" class="px-2 py-1 rounded bg-teal-600 hover:bg-teal-500 text-[10px] text-white">Start</button>
+          <button data-action="use-end" data-id="${place.id}" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-[10px] text-white">End</button>
+          <button data-action="delete" data-id="${place.id}" class="px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-[10px] text-white">Del</button>
+        </div>`;
+      savedList.appendChild(row);
+    });
+  }
+}
+
+// ---- API helpers ----
+async function apiCreate({ name, coords }) {
+  const body = new URLSearchParams({
+    name,
+    latitude: coords[1],   // lat
+    longitude: coords[0],  // lng
+  });
+
+  const res = await fetch('/filltrip-db/backend/places/create.php', {
+    method: 'POST',
+    body,
+    credentials: 'include',  // Ensure session cookies are sent
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error('Error response:', text);
+    try {
+      const jsonResponse = JSON.parse(text);  // Try parsing the error response
+      console.error('JSON Error:', jsonResponse);
+      throw new Error(`Failed to create place: ${jsonResponse.error || text}`);
+    } catch (e) {
+      console.error('Failed to parse JSON:', e);
+      throw new Error(`Failed to create place: ${res.status} - ${text}`);
     }
+  }
 
-    function loadSaved() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) savedPlaces = JSON.parse(raw);
-      } catch {
-        savedPlaces = [];
+  try {
+    return await res.json();
+  } catch (e) {
+    console.error('Error parsing response as JSON:', e);
+    throw new Error('Failed to parse JSON response');
+  }
+}
+
+
+async function apiList() {
+  const res = await fetch('/filltrip-db/backend/places/list.php', {
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const text = await res.text();  // Read the response as text
+    console.error('Error response:', text);  // Log the error content
+    throw new Error(`Failed to load places: ${res.status} - ${text}`);
+  }
+
+  try {
+    return await res.json();
+  } catch (e) {
+    console.error('Error parsing response as JSON:', e);
+    throw new Error('Failed to parse JSON response');
+  }
+}
+
+async function apiDelete(id) {
+  const body = new URLSearchParams({ id });
+  const res = await fetch('/filltrip-db/backend/places/delete.php', {
+    method: 'POST',
+    body,
+    credentials: 'include',
+  });
+  return await res.json();
+}
+
+// ---- Load & render ----
+async function loadSavedFromServer() {
+  try {
+    savedPlaces = await apiList();  // Fetch saved places from server
+  } catch (e) {
+    savedPlaces = [];  // Reset to empty if error occurs
+    console.error(e);
+    toast('Error loading saved places');
+  }
+  renderSaved();  // Render the updated list
+}
+
+// ---- Add ----
+async function addSaved(name, coords) {
+  if (!coords) return toast('No coordinates to save.');
+
+  // Check for duplicate entries
+  const exists = savedPlaces.some(p => p.name === name ||
+    (p.coords[0] === coords[0] && p.coords[1] === coords[1])
+  );
+  if (exists) return toast('Already saved.');
+
+  // Save the new place
+  const result = await apiCreate({ name, coords });
+  if (result.status === 'ok') {
+    toast('Place saved');
+    await loadSavedFromServer();
+  } else if (result.status === 'duplicate') {
+    toast('Name already saved');
+  } else {
+    toast('Error saving place');
+  }
+}
+
+// ---- Delete / Use ----
+if (savedList) {
+  savedList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    const place = savedPlaces.find(p => p.id === id);
+    if (!place) return;
+
+    const action = btn.getAttribute('data-action');
+    if (action === 'delete') {
+      const r = await apiDelete(id);
+      if (r.status === 'ok') {
+        toast('Deleted');
+        await loadSavedFromServer();
+      } else {
+        toast('Error deleting');
       }
+    } else if (action === 'use-start') {
+      setStart(place.coords.slice(), place.name);
+      toast('Set as start');
+    } else if (action === 'use-end') {
+      setEnd(place.coords.slice(), place.name);
+      toast('Set as end');
     }
-    function persistSaved() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedPlaces));
-    }
-    function renderSaved() {
-      if (!savedList) return;
-      savedList.innerHTML = '';
-      if (!savedPlaces.length) {
-        const empty = document.createElement('div');
-        empty.className = 'text-xs text-gray-400 py-4 text-center';
-        empty.textContent = 'No saved places yet.';
-        savedList.appendChild(empty);
-        return;
-      }
-      savedPlaces.forEach(p => {
-        const row = document.createElement('div');
-        row.className = 'flex items-start gap-2 py-2 border-b border-gray-800 last:border-0';
-        row.innerHTML = `
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium truncate">${p.name}</div>
-            <div class="text-[10px] text-gray-400">${p.coords[1].toFixed(4)}, ${p.coords[0].toFixed(4)}</div>
-          </div>
-          <div class="flex items-center gap-1">
-            <button data-action="use-start" data-id="${p.id}" class="px-2 py-1 rounded bg-teal-600 hover:bg-teal-500 text-[10px] text-white">Start</button>
-            <button data-action="use-end" data-id="${p.id}" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-[10px] text-white">End</button>
-            <button data-action="delete" data-id="${p.id}" class="px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-[10px] text-white">Del</button>
-          </div>`;
-        savedList.appendChild(row);
-      });
-    }
-    function addSaved(name, coords) {
-      if (!coords) return toast('No coordinates to save.');
-      const exists = savedPlaces.some(p => p.name === name || (p.coords[0] === coords[0] && p.coords[1] === coords[1]));
-      if (exists) return toast('Already saved.');
-      savedPlaces.unshift({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8), name, coords });
-      if (savedPlaces.length > 100) savedPlaces.pop();
-      persistSaved();
-      renderSaved();
-      toast('Place saved');
-    }
+  });
+}
 
-    loadSaved();
-    renderSaved();
+// ---- Hook up Save buttons (unchanged UI) ----
+if (saveStartBtn) {
+  saveStartBtn.addEventListener('click', () => {
+    if (!startCoords) return toast('No start selected');
+    const raw = (document.getElementById('searchStart').value || '').trim();
+    const name = raw || `${startCoords[1].toFixed(4)}, ${startCoords[0].toFixed(4)}`;
+    addSaved(name, startCoords);  // Pass startCoords directly
+  });
+}
+if (saveEndBtn) {
+  saveEndBtn.addEventListener('click', () => {
+    if (!endCoords) return toast('No end selected');
+    const raw = (document.getElementById('searchEnd').value || '').trim();
+    const name = raw || `${endCoords[1].toFixed(4)}, ${endCoords[0].toFixed(4)}`;
+    addSaved(name, endCoords);  // Pass endCoords directly
+  });
+}
 
-    if (saveStartBtn) {
-      saveStartBtn.addEventListener('click', () => {
-        if (!startCoords) return toast('No start selected');
-        const raw = (document.getElementById('searchStart').value || '').trim();
-        const name = raw || `${startCoords[1].toFixed(4)}, ${startCoords[0].toFixed(4)}`;
-        addSaved(name, startCoords.slice());
-      });
-    }
-    if (saveEndBtn) {
-      saveEndBtn.addEventListener('click', () => {
-        if (!endCoords) return toast('No end selected');
-        const raw = (document.getElementById('searchEnd').value || '').trim();
-        const name = raw || `${endCoords[1].toFixed(4)}, ${endCoords[0].toFixed(4)}`;
-        addSaved(name, endCoords.slice());
-      });
-    }
+loadSavedFromServer();
 
-    if (savedList) {
-      savedList.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-action]');
-        if (!btn) return;
-        const id = btn.getAttribute('data-id');
-        const place = savedPlaces.find(p => p.id === id);
-        if (!place) return;
-        const action = btn.getAttribute('data-action');
-        if (action === 'delete') {
-          savedPlaces = savedPlaces.filter(p => p.id !== id);
-          persistSaved();
-          renderSaved();
-          toast('Deleted');
-        } else if (action === 'use-start') {
-          setStart(place.coords.slice(), place.name);
-          toast('Set as start');
-        } else if (action === 'use-end') {
-          setEnd(place.coords.slice(), place.name);
-          toast('Set as end');
-        }
-      });
-    }
+
 
     function closeSavedPanel() {
       if (savedPanel && !savedPanel.classList.contains('hidden')) savedPanel.classList.add('hidden');
