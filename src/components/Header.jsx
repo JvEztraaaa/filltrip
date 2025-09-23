@@ -59,7 +59,7 @@ const Header = () => {
     };
 
     return (
-    <div className="fixed top-0 left-0 right-0 z-[45] bg-gray-900/95 backdrop-blur-md border-b border-gray-800 flex items-center px-2 sm:px-3 py-2 sm:py-2.5 shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-[45] bg-gray-900/95 backdrop-blur-md border-b border-gray-800 flex items-center px-2 sm:px-3 h-16 shadow-lg">
             {/* Mobile burger */}
             <div className="w-10 md:hidden flex-shrink-0 flex justify-start">
                 {!sidebarOpen && (
