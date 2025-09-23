@@ -44,7 +44,20 @@ export const AuthProvider = ({ children }) => {
     (async () => {
       try {
         const { user } = await fetchJSON(`${API_BASE}/me.php`, { method: 'GET' });
-        if (!cancelled) setCurrentUser(user || null);
+        if (!cancelled) {
+          const overridesStr = safeGetLocal('userOverrides');
+          let withOverrides = user || null;
+          if (withOverrides && overridesStr) {
+            try {
+              const map = JSON.parse(overridesStr);
+              const ov = map?.[String(withOverrides.id)] || null;
+              if (ov && typeof ov === 'object') {
+                withOverrides = { ...withOverrides, ...ov };
+              }
+            } catch { /* ignore */ }
+          }
+          setCurrentUser(withOverrides);
+        }
       } catch {
         if (!cancelled) setCurrentUser(null);
       } finally {
@@ -77,6 +90,57 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const value = { currentUser, signup, login, logout, loading };
+  function safeGetLocal(key) {
+    try { return localStorage.getItem(key); } catch { return null; }
+  }
+
+  function safeSetLocal(key, val) {
+    try { localStorage.setItem(key, val); } catch { /* ignore */ }
+  }
+
+  const persistOverrides = (id, updates) => {
+    if (!id) return;
+    const raw = safeGetLocal('userOverrides');
+    let map = {};
+    try { map = raw ? JSON.parse(raw) : {}; } catch { map = {}; }
+    map[String(id)] = { ...(map[String(id)] || {}), ...updates };
+    safeSetLocal('userOverrides', JSON.stringify(map));
+  };
+
+  const updateProfile = async (updates) => {
+    // Client-side optimistic update; backend wiring added later
+    setCurrentUser((u) => {
+      if (!u) return u;
+      const merged = { ...u, ...updates };
+      persistOverrides(u.id, updates);
+      return merged;
+    });
+    return { success: true };
+  };
+
+  const updateAvatar = async (file) => {
+    if (!file) return { success: false, error: 'No file' };
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    setCurrentUser((u) => {
+      if (!u) return u;
+      const merged = { ...u, avatarDataUrl: dataUrl };
+      persistOverrides(u.id, { avatarDataUrl: dataUrl });
+      return merged;
+    });
+    return { success: true };
+  };
+
+  const updatePassword = async ({ currentPassword, newPassword }) => {
+    // Stubbed success; hook to backend later
+    if (!newPassword) return { success: false, error: 'New password required' };
+    return { success: true };
+  };
+
+  const value = { currentUser, signup, login, logout, updateProfile, updateAvatar, updatePassword, loading };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
