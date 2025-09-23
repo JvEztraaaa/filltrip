@@ -29,3 +29,9 @@
 .nav-item:hover:not(.active) {
   background-color: rgba(79, 209, 197, 0.1);
 }
+
+/* Light separators for nav list (optional if using rounded links) */
+.nav-sep {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(75,85,99,0.5), rgba(75,85,99,0));
+}

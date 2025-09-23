@@ -33,9 +33,9 @@ const SidePanel = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const linkBase = "flex items-center px-4 py-3 transition-all duration-200";
-    const inactive = "text-gray-300 hover:bg-gray-800 hover:text-teal-400";
-    const active = "text-teal-400 bg-gray-800";
+    const linkBase = "flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-400/30";
+    const inactive = "text-gray-300 hover:bg-gray-800/70 hover:text-teal-300";
+    const active = "text-teal-300 bg-gray-800/70 border border-gray-700";
 
     const isActive = (path) => location.pathname === path;
 
@@ -45,7 +45,7 @@ const SidePanel = () => {
     };
 
     return (
-        <div className={`fixed left-0 top-0 h-full bg-gray-900 bg-opacity-95 text-gray-300 z-60 border-r border-gray-800 transition-all duration-300 overflow-visible flex flex-col
+    <div className={`fixed left-0 top-0 h-full bg-gray-900/95 backdrop-blur-md text-gray-300 z-60 border-r border-gray-800 transition-all duration-300 overflow-visible flex flex-col
         ${sidebarOpen ? 'w-64' : 'w-0 pointer-events-none'} md:w-64 md:pointer-events-auto`}>
             { }
             {sidebarOpen && (
@@ -72,36 +72,43 @@ const SidePanel = () => {
                 </Link>
 
                 {/* Navigation Section */}
-                <div className="py-4">
+                <div className="py-3">
                     <nav>
                         { }
                         <Link to="/map" className={`${linkBase} ${isActive('/map') ? active : inactive}`} onClick={() => { if (window.innerWidth < 768) toggleSidebar(); }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 3v15M15 6v15" />
                             </svg>
                             <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>Map</span>
                         </Link>
                         <Link to="/fuel-calculator" className={`${linkBase} ${isActive('/fuel-calculator') ? active : inactive}`} onClick={() => { if (window.innerWidth < 768) toggleSidebar(); }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h7l2 3h9v13a2 2 0 01-2 2H5a2 2 0 01-2-2V3z" />
+                                <rect x="4" y="3" width="16" height="18" rx="2" ry="2" strokeWidth="2" />
+                                <path strokeWidth="2" d="M8 7h8M8 11h8M8 15h4" />
                             </svg>
                             <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>Fuel Calculator</span>
                         </Link>
                         <Link to="/my-trips" className={`${linkBase} ${isActive('/my-trips') ? active : inactive}`} onClick={() => { if (window.innerWidth < 768) toggleSidebar(); }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m6 13l4.553 2.276A1 1 0 0021 20.382V9.618a1 1 0 00-.553-.894L15 6m0 14V6m0 0L9 7" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 19a2 2 0 112 0M17 19a2 2 0 112 0" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6h10l4 4v9H3z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 6v4h4" />
                             </svg>
                             <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>My Trips</span>
                         </Link>
                         <Link to="/refuel-history" className={`${linkBase} ${isActive('/refuel-history') ? active : inactive}`} onClick={() => { if (window.innerWidth < 768) toggleSidebar(); }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7h10v10H3z" />
+                                <circle cx="8" cy="12" r="1" strokeWidth="2" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h2a3 3 0 013 3v5a2 2 0 01-2 2h-1" />
                             </svg>
                             <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>Fuel History</span>
                         </Link>
                         <Link to="/statistics" className={`${linkBase} ${isActive('/statistics') ? active : inactive}`} onClick={() => { if (window.innerWidth < 768) toggleSidebar(); }}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h10M4 18h6" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 19V9m6 10V5m6 14v-7" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 19h18" />
                             </svg>
                             <span className={`ml-3 whitespace-nowrap ${sidebarOpen ? 'inline-block' : 'hidden md:inline-block'}`}>Statistics</span>
                         </Link>
