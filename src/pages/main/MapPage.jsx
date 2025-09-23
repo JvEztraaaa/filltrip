@@ -9,14 +9,27 @@ import { useAuth } from "../../context/AuthContext";
 
 // Small internal component to render a labeled search field with suggestions dropdown.
 // Preserves exact DOM ids and classes so the imperative logic continues to work.
-const SearchField = ({ inputId, suggestionsId, labelId, labelText, placeholder }) => (
-  <div className="mb-5 relative">
-    <label htmlFor={inputId} className="block text-xs font-medium text-gray-400 mb-1">{labelText}</label>
-    <input id={inputId} className="w-full custom-input px-3 py-2 text-sm" placeholder={placeholder} autoComplete="off" />
-    <div id={suggestionsId} className="hidden absolute left-0 right-0 top-full mt-1 z-50 border border-gray-700 rounded-md bg-gray-800 text-white shadow-lg suggestions-box" />
-    <div id={labelId} className="text-xs text-gray-400 mt-1">{labelText.split(' ')[0]}: (none)</div>
-  </div>
-);
+const SearchField = ({ inputId, suggestionsId, labelId, labelText, placeholder }) => {
+  const isStart = /start/i.test(labelText || '');
+  const iconColor = isStart ? 'text-teal-400' : 'text-rose-400';
+  return (
+    <div className="mb-4 relative">
+      <label htmlFor={inputId} className="block text-[11px] font-semibold text-gray-300 mb-1 tracking-wide">
+        {labelText}
+      </label>
+      <div className="relative">
+        <svg className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" />
+        </svg>
+        <input id={inputId} className="w-full custom-input pl-9 pr-3 py-2 text-sm placeholder:text-gray-400/80" placeholder={placeholder} autoComplete="off" />
+  <div id={suggestionsId} className="hidden absolute left-0 right-0 top-full -mt-px z-[80] border border-gray-700 rounded-md bg-gray-900/95 text-white shadow-xl ring-1 ring-white/10 overflow-hidden suggestions-box" />
+      </div>
+      <div id={labelId} className="text-[11px] text-gray-400 mt-1 truncate whitespace-nowrap">
+        {labelText.split(' ')[0]}: (none)
+      </div>
+    </div>
+  );
+};
 
 // Main map page: interactive routing, gas station overlay, saved places, and handoff to fuel calculator
 const MapPage = () => {
@@ -122,7 +135,7 @@ const MapPage = () => {
           results.forEach((r) => {
             const div = document.createElement("div");
             div.textContent = r.display_name;
-            div.className = "px-3 py-2 hover:bg-gray-700 cursor-pointer text-sm border-b border-gray-700 last:border-0";
+            div.className = "px-3 py-2 text-sm text-gray-100 bg-gray-900/80 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-0";
             div.addEventListener("click", () => {
               lockedAfterSelect = true;
               inputEl.value = r.display_name;
@@ -676,25 +689,33 @@ const MapPage = () => {
     function renderSaved() {
       if (!savedList) return;
       savedList.innerHTML = '';
+      const countEl = document.getElementById('savedCount');
+      if (countEl) countEl.textContent = String(savedPlaces.length);
       if (!savedPlaces.length) {
         const empty = document.createElement('div');
-        empty.className = 'text-xs text-gray-400 py-4 text-center';
-        empty.textContent = 'No saved places yet.';
+        empty.className = 'py-6 text-center text-gray-300';
+        empty.innerHTML = `
+          <div class="mx-auto w-10 h-10 rounded-full bg-gray-800/80 flex items-center justify-center mb-2">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s-6-5.686-6-11A6 6 0 0 1 12 4a6 6 0 0 1 6 6c0 5.314-6 11-6 11z"/></svg>
+          </div>
+          <div class="text-sm font-medium">No saved places yet.</div>
+          <div class="text-[11px] text-gray-400 mt-0.5">Use the buttons above to save your current Start/End.</div>
+        `;
         savedList.appendChild(empty);
         return;
       }
       savedPlaces.forEach(p => {
         const row = document.createElement('div');
-        row.className = 'flex items-start gap-2 py-2 border-b border-gray-800 last:border-0';
+        row.className = 'flex items-center gap-2 py-2.5 border-b border-gray-800 last:border-0';
         row.innerHTML = `
           <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium truncate">${p.name}</div>
+            <div class="text-[13px] font-medium text-white truncate">${p.name}</div>
             <div class="text-[10px] text-gray-400">${p.coords[1].toFixed(4)}, ${p.coords[0].toFixed(4)}</div>
           </div>
-          <div class="flex items-center gap-1">
-            <button data-action="use-start" data-id="${p.id}" class="px-2 py-1 rounded bg-teal-600 hover:bg-teal-500 text-[10px] text-white">Start</button>
-            <button data-action="use-end" data-id="${p.id}" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-[10px] text-white">End</button>
-            <button data-action="delete" data-id="${p.id}" class="px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-[10px] text-white">Del</button>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button data-action="use-start" data-id="${p.id}" class="px-2.5 py-1 rounded-md bg-teal-600 hover:bg-teal-500 text-[10px] text-white ring-1 ring-white/10">Start</button>
+            <button data-action="use-end" data-id="${p.id}" class="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-[10px] text-white ring-1 ring-white/10">End</button>
+            <button data-action="delete" data-id="${p.id}" class="px-2.5 py-1 rounded-md bg-red-600 hover:bg-red-500 text-[10px] text-white ring-1 ring-white/10">Del</button>
           </div>`;
         savedList.appendChild(row);
       });
@@ -921,17 +942,28 @@ const MapPage = () => {
       {/* Saved places panel */}
       <div
         id="savedPlacesPanel"
-        className="hidden fixed z-[65] bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-lg shadow-xl text-white w-[280px] max-h-[60vh] overflow-hidden flex flex-col right-4 top-[288px] md:top-[288px]"
+        className="hidden fixed z-[65] bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl shadow-2xl text-white w-[86vw] sm:w-[340px] max-h-[65vh] overflow-hidden flex flex-col right-4 top-[288px] md:top-[288px]"
       >
-        <div className="p-3 border-b border-gray-800 flex items-center justify-between">
-          <div className="text-sm font-semibold">Saved Places</div>
-          <div className="flex gap-1">
-            <button id="saveStartBtn" className="px-2 py-1 text-[10px] bg-teal-600 hover:bg-teal-500 rounded cursor-pointer">Save Start</button>
-            <button id="saveEndBtn" className="px-2 py-1 text-[10px] bg-indigo-600 hover:bg-indigo-500 rounded cursor-pointer">Save End</button>
+        <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-semibold bg-gradient-to-r from-teal-400 to-indigo-400 bg-clip-text text-transparent">Saved Places</div>
+            <span id="savedCount" className="text-[10px] text-gray-300 bg-gray-800/70 border border-gray-700 px-2 py-0.5 rounded-full">0</span>
+          </div>
+          <div className="flex gap-2">
+            <button id="saveStartBtn" className="px-2.5 py-1 text-[11px] rounded-md bg-teal-600 hover:bg-teal-500 shadow-sm ring-1 ring-white/10 cursor-pointer flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 2v20m0 0l-4-4m4 4l4-4"/></svg>
+              <span>Save Start</span>
+            </button>
+            <button id="saveEndBtn" className="px-2.5 py-1 text-[11px] rounded-md bg-indigo-600 hover:bg-indigo-500 shadow-sm ring-1 ring-white/10 cursor-pointer flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 22V2m0 0l-4 4m4-4l4 4"/></svg>
+              <span>Save End</span>
+            </button>
           </div>
         </div>
-        <div id="savedPlacesList" className="flex-1 overflow-y-auto px-3 pb-2 text-xs"></div>
-        <div className="p-2 text-[10px] text-gray-400 border-t border-gray-800 bg-gray-900/80">Tap a place to set Start/End.</div>
+        <div id="savedPlacesList" className="flex-1 overflow-y-auto px-3 pb-2 text-xs panel-scroll"></div>
+        <div className="px-3 py-2 text-[11px] text-gray-300 border-t border-gray-800 bg-gray-900/80">
+          <span className="text-teal-300 font-medium">Tip:</span> Use Start/End to apply a place to your route.
+        </div>
       </div>
 
       {/* Saved places toast */}
@@ -952,32 +984,32 @@ const MapPage = () => {
 
       <aside
         id="sidebar"
-        className={`fixed top-0 right-0 h-full bg-gray-900 text-white p-4 overflow-y-auto transition-all duration-300 z-[60] w-full md:w-80 transform ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} pt-12 md:pt-20 closed-${!isSidebarOpen}`}
+        className={`fixed top-0 right-0 h-full bg-gray-900/95 backdrop-blur-md border-l border-gray-800 text-white p-4 overflow-y-auto transition-all duration-300 z-[60] w-full md:w-80 transform ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} pt-10 md:pt-16 closed-${!isSidebarOpen}`}
       >
-        <div className="pt-2 md:pt-5 mb-2"></div>
+        <div className="pt-1 md:pt-4 mb-1"></div>
 
         {/* Refactored: search fields extracted to reusable component */}
         <SearchField inputId="searchStart" suggestionsId="suggestionsStart" labelId="start-label" labelText="Start Location" placeholder="Enter starting point" />
         <SearchField inputId="searchEnd" suggestionsId="suggestionsEnd" labelId="end-label" labelText="End Location" placeholder="Enter destination" />
 
-        <div className="grid grid-cols-2 gap-4 mb-3 bg-gray-800 rounded-lg p-3">
+        <div className="grid grid-cols-2 gap-4 mb-3 bg-gray-800/70 border border-gray-700/60 rounded-xl p-3 ring-1 ring-white/10">
           <div className="text-center">
             <div id="distance" className="text-xl font-bold gradient-text">--</div>
-            <div className="text-xs text-gray-400">Distance</div>
+            <div className="text-[11px] text-gray-400">Distance</div>
           </div>
           <div className="text-center">
             <div id="duration" className="text-xl font-bold gradient-text">--</div>
-            <div className="text-xs text-gray-400">Duration</div>
+            <div className="text-[11px] text-gray-400">Duration</div>
           </div>
         </div>
 
-        <div className="mb-7">
-          <div className="flex gap-3 mb-5 bg-gray-800 rounded-lg p-3">
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <div className="mb-5">
+          <div className="flex gap-3 mb-4 bg-gray-800/70 border border-gray-700/60 rounded-xl p-3">
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
               <input type="radio" name="pickMode" value="start" defaultChecked className="accent-[#4FD1C5]" />
               <span>Pick Start</span>
             </label>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
               <input type="radio" name="pickMode" value="end" className="accent-[#4FD1C5]" />
               <span>Pick End</span>
             </label>
@@ -996,18 +1028,18 @@ const MapPage = () => {
               Clear
             </button>
           </div>
-          <div className="text-xs text-gray-400 mt-4 bg-gray-800/50 p-2 rounded border-l-2 border-[#4FD1C5]">
-            <span className="font-medium text-[#4FD1C5]">Tip:</span> Search above or click map to set locations.
+          <div className="text-[12px] text-gray-300 mt-3 bg-gray-800/60 p-2 rounded-lg border-l-2 border-[#4FD1C5]">
+            <span className="font-semibold text-[#4FD1C5]">Tip:</span> Search above or click the map to set locations.
           </div>
         </div>
 
         <div id="stepsCard" className="hidden">
           <div className="flex items-center gap-2 mb-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#4FD1C5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-            <span className="text-sm font-medium text-[#4FD1C5]">Turn-by-turn directions</span>
+            <span className="text-sm font-semibold text-[#4FD1C5]">Turn-by-turn directions</span>
           </div>
-          <div className="bg-gray-800 rounded-lg p-3">
-            <ol id="steps" className="list-decimal list-inside text-sm max-h-60 overflow-y-auto space-y-2 pl-2"></ol>
+          <div className="bg-gray-800/70 border border-gray-700/60 rounded-xl p-2.5 ring-1 ring-white/10">
+            <ol id="steps" className="list-decimal list-inside text-[12px] max-h-44 overflow-y-auto space-y-1.5 pl-2"></ol>
           </div>
         </div>
       </aside>

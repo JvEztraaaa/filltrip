@@ -168,14 +168,16 @@ const MyTripsPage = () => {
                 </h1>
                 <p className="text-gray-400">Your calculated trips are saved here. Grouped by month.</p>
               </div>
-              {groups.length > 0 && (
-                <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
-                  <span>Total Entries: <span className="text-teal-400 font-semibold">
+              <div className="flex items-center gap-4">
+                <div className="bg-gray-800/50 rounded-lg px-4 py-2 border border-gray-700/50">
+                  <div className="text-xs text-gray-400 uppercase tracking-wide">
+                    Total Entries
+                  </div>
+                  <div className="text-xl font-bold text-teal-400">
                     {groups.reduce((total, g) => total + g.items.length, 0)}
-                  </span></span>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           </header>
 
