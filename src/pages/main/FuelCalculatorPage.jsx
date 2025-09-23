@@ -90,7 +90,6 @@ const FuelCalculatorPage = () => {
   const [vehicleLoading, setVehicleLoading] = useState(false);
   const [vehicleError, setVehicleError] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [includeMotorcycles, setIncludeMotorcycles] = useState(false);
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false);
   const lastAppliedQueryRef = useRef('');
   const [showFuelTypeDropdown, setShowFuelTypeDropdown] = useState(false);
@@ -152,7 +151,7 @@ const FuelCalculatorPage = () => {
     const tokens = q.split(/\s+/).filter(Boolean);
     const pool = [
       ...carModelsPH.map(c => ({ ...c, category: 'Car' })),
-      ...(includeMotorcycles ? motorcycleModelsPH.map(m => ({ ...m, category: 'Moto' })) : [])
+      ...motorcycleModelsPH.map(m => ({ ...m, category: 'Moto' }))
     ];
     const localMatches = pool.map(item => {
       const hay = `${item.make} ${item.model}`.toLowerCase();
@@ -213,7 +212,7 @@ const FuelCalculatorPage = () => {
       }
     }, 450);
     return () => { clearTimeout(timeout); controller.abort(); };
-  }, [vehicleQuery, includeMotorcycles]);
+  }, [vehicleQuery]);
 
   // Apply selected vehicle and prefill efficiency from dataset
   const applyVehicle = (veh) => {
@@ -407,10 +406,7 @@ const FuelCalculatorPage = () => {
                       className="px-4 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm font-medium flex-shrink-0 transition-colors duration-200 cursor-pointer"
                     >Clear</button>
                   </div>
-                  <label className="flex items-center gap-2 text-[11px] text-gray-400 select-none">
-                    <input type="checkbox" className="accent-indigo-500" checked={includeMotorcycles} onChange={e => setIncludeMotorcycles(e.target.checked)} />
-                    Include motorcycles
-                  </label>
+                  {/* Motorcycles are now included by default in search suggestions */}
                   {vehicleLoading && <p className="text-xs text-indigo-400">Loading vehicles...</p>}
                   {vehicleError && !selectedVehicle && <p className="text-xs text-rose-400">{vehicleError}</p>}
                   {selectedVehicle && (
