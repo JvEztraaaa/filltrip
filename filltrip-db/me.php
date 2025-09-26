@@ -32,7 +32,7 @@ try {
 } catch (Throwable $e) { http_response_code(500); echo json_encode(['success'=>false,'error'=>'DB connection failed']); exit; }
 
 /* ------------------------------ Fetch current user -------------------------------------*/
-$sel = $pdo->prepare("SELECT id, full_name AS fullName, username, email, user_icon AS avatarUrl, created_at AS createdAt FROM users WHERE id = ? LIMIT 1");
+$sel = $pdo->prepare("SELECT id, first_name AS firstName, last_name AS lastName, full_name AS fullName, username, email, user_icon AS avatarUrl, created_at AS createdAt FROM user WHERE id = ? LIMIT 1");
 $sel->execute([ (int)$_SESSION['uid'] ]);
 $user = $sel->fetch() ?: null;
 

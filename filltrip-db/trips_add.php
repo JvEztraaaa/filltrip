@@ -93,7 +93,7 @@ if ($startLoc==='' || $endLoc==='' || $distanceKm<=0 || $litersNeeded<0 || $fuel
 }
 
 /* ------------------------------- Insert --------------------------------- */
-$ins = $pdo->prepare("INSERT INTO trips
+$ins = $pdo->prepare("INSERT INTO user_trips
   (user_id, start_location_name, end_location_name, distance_km,
    efficiency_km_per_l, liters_needed, price_per_liter,
    fuel_cost, currency, fuel_type, vehicle_label, created_at)
@@ -117,7 +117,7 @@ $sel = $pdo->prepare("SELECT id,
   fuel_cost           AS fuelCost,
   currency, fuel_type AS fuelType, vehicle_label AS vehicleLabel,
   created_at          AS createdAt
-  FROM trips WHERE id=?");
+  FROM user_trips WHERE id=?");
 $sel->execute([$id]);
 $trip = $sel->fetch();
 

@@ -29,6 +29,6 @@ try{
 $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 if ($id<=0){ http_response_code(400); echo json_encode(['success'=>false,'error'=>'Invalid id']); exit; }
 
-$del = $pdo->prepare("DELETE FROM trips WHERE id=? AND user_id=?");
+$del = $pdo->prepare("DELETE FROM user_trips WHERE id=? AND user_id=?");
 $del->execute([$id,$uid]);
 echo json_encode(['success'=>true,'deleted'=>$del->rowCount()>0]);

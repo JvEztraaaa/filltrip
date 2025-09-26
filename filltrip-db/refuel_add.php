@@ -85,7 +85,7 @@ if ($vehicleName==='' || $odometerKm<=0 || $liters<=0 || $pricePerLiter<=0) {
 }
 
 /* ------------------------------ Insert ------------------------------------*/
-$ins = $pdo->prepare("INSERT INTO refuel_history
+$ins = $pdo->prepare("INSERT INTO fuel_history
   (user_id, vehicle_name, odometer_km, distance_unit, liters, fuel_unit,
    price_per_liter, total_cost, fuel_type, station, currency, created_at)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -109,7 +109,7 @@ $sel = $pdo->prepare("SELECT
   fuel_type       AS fuelType,
   station,
   currency
-FROM refuel_history WHERE id=? AND user_id=?");
+FROM fuel_history WHERE id=? AND user_id=?");
 $sel->execute([$id, $uid]);
 $row = $sel->fetch();
 

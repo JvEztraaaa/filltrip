@@ -42,29 +42,32 @@ function read_in(): array {
 }
 $in = read_in();
 
-$fullName = trim($in['fullName'] ?? '');
+$firstName = trim($in['firstName'] ?? '');
+$lastName = trim($in['lastName'] ?? '');
+$fullName = trim($firstName . ' ' . $lastName);
 $username = trim($in['username'] ?? '');
 $email    = trim($in['email'] ?? '');
 
 $missing = [];
-if ($fullName === '') $missing[] = 'fullName';
+if ($firstName === '') $missing[] = 'firstName';
+if ($lastName === '') $missing[] = 'lastName';
 if ($username === '') $missing[] = 'username';
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $missing[] = 'email';
 if ($missing) { http_response_code(400); echo json_encode(['success'=>false,'error'=>'Invalid input','missing'=>$missing]); exit; }
 
 // Uniqueness check excluding self
-$dup = $pdo->prepare('SELECT id FROM users WHERE (email = :email OR username = :username) AND id <> :id LIMIT 1');
+$dup = $pdo->prepare('SELECT id FROM user WHERE (email = :email OR username = :username) AND id <> :id LIMIT 1');
 $dup->execute([':email'=>$email, ':username'=>$username, ':id'=>$uid]);
 if ($dup->fetch()) { http_response_code(409); echo json_encode(['success'=>false,'error'=>'Email or username already in use']); exit; }
 
 // Update
-$upd = $pdo->prepare('UPDATE users SET full_name = ?, username = ?, email = ? WHERE id = ?');
-$upd->execute([$fullName, $username, $email, $uid]);
+$upd = $pdo->prepare('UPDATE user SET first_name = ?, last_name = ?, full_name = ?, username = ?, email = ? WHERE id = ?');
+$upd->execute([$firstName, $lastName, $fullName, $username, $email, $uid]);
 
 // Update session email if changed
 $_SESSION['email'] = $email;
 
-$sel = $pdo->prepare('SELECT id, full_name AS fullName, username, email, user_icon AS avatarUrl, created_at AS createdAt FROM users WHERE id = ?');
+$sel = $pdo->prepare('SELECT id, first_name AS firstName, last_name AS lastName, full_name AS fullName, username, email, user_icon AS avatarUrl, created_at AS createdAt FROM user WHERE id = ?');
 $sel->execute([$uid]);
 $user = $sel->fetch();
 

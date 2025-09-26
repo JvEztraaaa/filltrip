@@ -55,20 +55,23 @@ function read_input(): array {
 }
 
 $in = read_input();
-$fullName = trim($in['fullName'] ?? '');
+$firstName = trim($in['firstName'] ?? '');
+$lastName = trim($in['lastName'] ?? '');
+$fullName = trim($firstName . ' ' . $lastName);
 $username = trim($in['username'] ?? '');
 $email    = trim($in['email'] ?? '');
 $password = (string)($in['password'] ?? '');
 
 $missing = [];
-if ($fullName === '') $missing[] = 'fullName';
+if ($firstName === '') $missing[] = 'firstName';
+if ($lastName === '') $missing[] = 'lastName';
 if ($username === '') $missing[] = 'username';
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $missing[] = 'email';
 if (strlen($password) < 6) $missing[] = 'password (min 6 chars)';
 if ($missing) { http_response_code(400); echo json_encode(['success'=>false,'error'=>'Invalid input','missing'=>$missing]); exit; }
 
 /* ------------------------------ duplicates? (users has UNIQUE on email & username) --------------------------------- */
-$check = $pdo->prepare("SELECT 1 FROM users WHERE email = ? OR username = ? LIMIT 1");
+$check = $pdo->prepare("SELECT 1 FROM user WHERE email = ? OR username = ? LIMIT 1");
 $check->execute([$email, $username]);
 if ($check->fetch()) {
   http_response_code(409);
@@ -78,11 +81,11 @@ if ($check->fetch()) {
 
 /* ----------------------------------------insert ------------------------------------------------- */
 $hash = password_hash($password, PASSWORD_DEFAULT);
-$ins = $pdo->prepare("INSERT INTO users (full_name, username, email, password_hash, created_at) VALUES (?, ?, ?, ?, NOW())");
-$ins->execute([$fullName, $username, $email, $hash]);
+$ins = $pdo->prepare("INSERT INTO user (first_name, last_name, full_name, username, email, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+$ins->execute([$firstName, $lastName, $fullName, $username, $email, $hash]);
 
 $userId = (int)$pdo->lastInsertId();
-$select = $pdo->prepare("SELECT id, full_name AS fullName, username, email, created_at AS createdAt FROM users WHERE id = ?");
+$select = $pdo->prepare("SELECT id, first_name AS firstName, last_name AS lastName, full_name AS fullName, username, email, created_at AS createdAt FROM user WHERE id = ?");
 $select->execute([$userId]);
 $user = $select->fetch();
 

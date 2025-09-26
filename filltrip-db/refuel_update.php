@@ -99,7 +99,7 @@ if (!$fields){ echo json_encode(['success'=>true,'updated'=>0]); exit; }
 $args[] = $id;
 $args[] = $uid;
 
-$sql = "UPDATE refuel_history SET ".implode(', ',$fields)." WHERE id=? AND user_id=?";
+$sql = "UPDATE fuel_history SET ".implode(', ',$fields)." WHERE id=? AND user_id=?";
 $st = $pdo->prepare($sql);
 $st->execute($args);
 

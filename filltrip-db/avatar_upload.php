@@ -61,7 +61,7 @@ if (!@move_uploaded_file($f['tmp_name'], $destAbs)){
 $relative = 'uploads/' . $uid . '/' . $name;
 
 /* ----------------------------- Update user record ----------------------------- */
-$upd = $pdo->prepare('UPDATE users SET user_icon = ? WHERE id = ?');
+$upd = $pdo->prepare('UPDATE user SET user_icon = ? WHERE id = ?');
 $upd->execute([$relative, $uid]);
 
 echo json_encode(['success'=>true, 'avatarUrl'=>$relative]);

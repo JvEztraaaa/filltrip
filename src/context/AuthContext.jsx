@@ -27,10 +27,15 @@ async function fetchJSON(url, init = {}) {
     credentials: 'include',
     ...init,
   });
-  const data = await res.json().catch(() => ({}));
+  let data = {};
+  try { data = await res.json(); } catch {}
   if (!res.ok || data?.success === false) {
-    const msg = data?.error || `Request failed (${res.status})`;
-    throw new Error(msg);
+    const err = new Error(data?.error || `Request failed (${res.status})`);
+    err.status = res.status;
+    if (data && typeof data === 'object') {
+      Object.keys(data).forEach(k => { if (k !== 'success') err[k] = data[k]; });
+    }
+    throw err;
   }
   return data;
 }
@@ -50,6 +55,9 @@ function makeAbsoluteUrl(relativeOrAbsolute) {
 function normalizeUser(user) {
   if (!user) return user;
   const u = { ...user };
+  if (!u.fullName && (u.firstName || u.lastName)) {
+    u.fullName = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
+  }
   if (u.avatarUrl) u.avatarUrl = makeAbsoluteUrl(u.avatarUrl);
   return u;
 }
@@ -77,10 +85,10 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const signup = async ({ fullName, username, email, password }) => {
-    const body = toForm({ fullName, username, email, password });
+  const signup = async ({ firstName, lastName, username, email, password }) => {
+    const body = toForm({ firstName, lastName, username, email, password });
     const { user } = await fetchJSON(`${API_BASE}/signup.php`, { method: 'POST', body });
-    return { success: true, user };
+    return { success: true, user: normalizeUser(user) };
   };
 
   const login = async ({ email, password }) => {

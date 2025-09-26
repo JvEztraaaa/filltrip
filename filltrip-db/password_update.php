@@ -43,13 +43,13 @@ $current = (string)($in['currentPassword'] ?? '');
 $new = (string)($in['newPassword'] ?? '');
 if (strlen($new) < 6) { http_response_code(400); echo json_encode(['success'=>false,'error'=>'New password too short']); exit; }
 
-$sel = $pdo->prepare('SELECT password_hash FROM users WHERE id = ?');
+$sel = $pdo->prepare('SELECT password_hash FROM user WHERE id = ?');
 $sel->execute([$uid]);
 $row = $sel->fetch();
 if (!$row || !password_verify($current, $row['password_hash'])) { http_response_code(401); echo json_encode(['success'=>false,'error'=>'Current password incorrect']); exit; }
 
 $hash = password_hash($new, PASSWORD_DEFAULT);
-$upd = $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+$upd = $pdo->prepare('UPDATE user SET password_hash = ? WHERE id = ?');
 $upd->execute([$hash, $uid]);
 
 echo json_encode(['success'=>true]);

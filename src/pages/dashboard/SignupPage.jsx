@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function SignupPage() {
     const [formData, setFormData] = useState({
-        fullName: '',
+        firstName: '',
+        lastName: '',
         username: '',
         email: '',
         password: '',
@@ -37,8 +38,12 @@ export default function SignupPage() {
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.fullName.trim()) {
-            newErrors.fullName = 'Full name is required';
+        if (!formData.firstName.trim()) {
+            newErrors.firstName = 'First name is required';
+        }
+
+        if (!formData.lastName.trim()) {
+            newErrors.lastName = 'Last name is required';
         }
 
         if (!formData.username.trim()) {
@@ -81,7 +86,8 @@ export default function SignupPage() {
 
         try {
             const result = await signup({
-                fullName: formData.fullName,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
                 username: formData.username,
                 email: formData.email,
                 password: formData.password
@@ -148,43 +154,62 @@ export default function SignupPage() {
                     <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="fullName" className="block text-sm font-medium text-gray-100">
-                                    Full Name
+                                <label htmlFor="firstName" className="block text-sm font-medium text-gray-100">
+                                    First Name
                                 </label>
                                 <input
-                                    id="fullName"
-                                    name="fullName"
+                                    id="firstName"
+                                    name="firstName"
                                     type="text"
-                                    value={formData.fullName}
+                                    value={formData.firstName}
                                     onChange={handleChange}
-                                    autoComplete="name"
+                                    autoComplete="given-name"
                                     required
-                                    className={`mt-1 block w-full rounded-md bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4FD1C5] border transition ${errors.fullName ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#168A8A]'
+                                    className={`mt-1 block w-full rounded-md bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4FD1C5] border transition ${errors.firstName ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#168A8A]'
                                         }`}
                                 />
-                                {errors.fullName && (
-                                    <p className="mt-1 text-sm text-red-400">{errors.fullName}</p>
+                                {errors.firstName && (
+                                    <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>
                                 )}
                             </div>
                             <div>
-                                <label htmlFor="username" className="block text-sm font-medium text-gray-100">
-                                    Username
+                                <label htmlFor="lastName" className="block text-sm font-medium text-gray-100">
+                                    Last Name
                                 </label>
                                 <input
-                                    id="username"
-                                    name="username"
+                                    id="lastName"
+                                    name="lastName"
                                     type="text"
-                                    value={formData.username}
+                                    value={formData.lastName}
                                     onChange={handleChange}
-                                    autoComplete="username"
+                                    autoComplete="family-name"
                                     required
-                                    className={`mt-1 block w-full rounded-md bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4FD1C5] border transition ${errors.username ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#168A8A]'
+                                    className={`mt-1 block w-full rounded-md bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4FD1C5] border transition ${errors.lastName ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#168A8A]'
                                         }`}
                                 />
-                                {errors.username && (
-                                    <p className="mt-1 text-sm text-red-400">{errors.username}</p>
+                                {errors.lastName && (
+                                    <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>
                                 )}
                             </div>
+                        </div>
+                        <div>
+                            <label htmlFor="username" className="block text-sm font-medium text-gray-100">
+                                Username
+                            </label>
+                            <input
+                                id="username"
+                                name="username"
+                                type="text"
+                                value={formData.username}
+                                onChange={handleChange}
+                                autoComplete="username"
+                                required
+                                className={`mt-1 block w-full rounded-md bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4FD1C5] border transition ${errors.username ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-[#168A8A]'
+                                    }`}
+                            />
+                            {errors.username && (
+                                <p className="mt-1 text-sm text-red-400">{errors.username}</p>
+                            )}
                         </div>
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-100">

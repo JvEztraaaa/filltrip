@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 export default function AccountSettingsModal({ open, onClose }) {
   const { currentUser, updateProfile, updateAvatar, updatePassword } = useAuth();
   const [tab, setTab] = useState('profile');
-  const [form, setForm] = useState({ fullName: '', username: '', email: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', username: '', email: '' });
   const [pw, setPw] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState('');
@@ -16,7 +16,7 @@ export default function AccountSettingsModal({ open, onClose }) {
   useEffect(() => {
     if (open) {
       setTab('profile');
-      setForm({ fullName: currentUser?.fullName || '', username: currentUser?.username || '', email: currentUser?.email || '' });
+      setForm({ firstName: currentUser?.firstName || '', lastName: currentUser?.lastName || '', username: currentUser?.username || '', email: currentUser?.email || '' });
       setPw({ currentPassword: '', newPassword: '', confirm: '' });
       setNotice('');
       setError('');
@@ -49,13 +49,12 @@ export default function AccountSettingsModal({ open, onClose }) {
   const saveProfile = async () => {
     setSaving(true);
     try {
-      const res = await updateProfile({ fullName: form.fullName, username: form.username, email: form.email });
+      const res = await updateProfile({ firstName: form.firstName, lastName: form.lastName, username: form.username, email: form.email });
       const u = res?.user || null;
-      if (u) setForm({ fullName: u.fullName || '', username: u.username || '', email: u.email || '' });
+      if (u) setForm({ firstName: u.firstName || '', lastName: u.lastName || '', username: u.username || '', email: u.email || '' });
       showNotice('Account details updated');
-    } catch (err) {
-      showError((err && err.message) || 'Update failed');
-    } finally { setSaving(false); }
+    } catch (err) { showError((err && err.message) || 'Update failed'); }
+    finally { setSaving(false); }
   };
 
   const savePassword = async () => {
@@ -130,19 +129,20 @@ export default function AccountSettingsModal({ open, onClose }) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-400 mb-1">Full name</label>
-      <input className="w-full rounded-lg bg-gray-900/60 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/40 placeholder:text-gray-500"
-                       value={form.fullName} onChange={e=>setForm({...form, fullName:e.target.value})} />
+                <label className="block text-xs text-gray-400 mb-1">First name</label>
+                <input className="w-full rounded-lg bg-gray-900/60 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/40 placeholder:text-gray-500" value={form.firstName} onChange={e=>setForm({...form, firstName:e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Last name</label>
+                <input className="w-full rounded-lg bg-gray-900/60 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/40 placeholder:text-gray-500" value={form.lastName} onChange={e=>setForm({...form, lastName:e.target.value})} />
               </div>
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Username</label>
-      <input className="w-full rounded-lg bg-gray-900/60 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/40 placeholder:text-gray-500"
-                       value={form.username} onChange={e=>setForm({...form, username:e.target.value})} />
+                <input className="w-full rounded-lg bg-gray-900/60 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/40 placeholder:text-gray-500" value={form.username} onChange={e=>setForm({...form, username:e.target.value})} />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-xs text-gray-400 mb-1">Email</label>
-      <input type="email" className="w-full rounded-lg bg-gray-900/60 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/40 placeholder:text-gray-500"
-                       value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
+                <input type="email" className="w-full rounded-lg bg-gray-900/60 border border-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/40 placeholder:text-gray-500" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
               </div>
             </div>
 

@@ -39,6 +39,7 @@ export default function LoginPage() {
         [name]: ''
       }));
     }
+    if (submitError) setSubmitError(''); // clear global error when user edits
   };
 
   const validateForm = () => {
@@ -57,6 +58,31 @@ export default function LoginPage() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  function mapError(err) {
+    if (!err) return 'An unexpected error occurred. Please try again.';
+    const raw = (err.message || '').toLowerCase();
+    switch (err.status) {
+      case 400:
+        if (err.missing && Array.isArray(err.missing) && err.missing.length) {
+          return 'Please fill in: ' + err.missing.join(', ');
+        }
+        if (raw.includes('invalid credentials')) return 'Please enter a valid email and password.';
+        return 'Invalid request. Please review your input.';
+      case 401:
+        if (raw.includes('invalid password')) return 'The password you entered is incorrect.';
+        return 'Unauthorized. Please check your password.';
+      case 404:
+        if (raw.includes('user not found')) return 'No account exists with that email.';
+        return 'Account not found.';
+      case 500:
+        return 'Server error. Please try again shortly.';
+      default:
+        if (raw.includes('user not found')) return 'No account exists with that email.';
+        if (raw.includes('invalid password')) return 'The password you entered is incorrect.';
+        return 'An unexpected error occurred. Please try again.';
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,10 +103,10 @@ export default function LoginPage() {
       if (result.success) {
         navigate('/map');
       } else {
-        setSubmitError(result.error);
+        setSubmitError(mapError(result.error));
       }
     } catch (error) {
-      setSubmitError('An unexpected error occurred. Please try again.');
+      setSubmitError(mapError(error));
     } finally {
       setIsLoading(false);
     }

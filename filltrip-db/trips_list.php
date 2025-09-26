@@ -35,7 +35,7 @@ $sql = "SELECT id,
   fuel_cost           AS fuelCost,
   currency, fuel_type AS fuelType, vehicle_label AS vehicleLabel,
   created_at          AS createdAt
-  FROM trips WHERE user_id=? ORDER BY created_at DESC, id DESC";
+  FROM user_trips WHERE user_id=? ORDER BY created_at DESC, id DESC";
 $st = $pdo->prepare($sql);
 $st->execute([$uid]);
 $trips = $st->fetchAll();

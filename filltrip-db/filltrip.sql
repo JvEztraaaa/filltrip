@@ -6,12 +6,15 @@
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
+CREATE DATABASE IF NOT EXISTS `filltrip` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
+USE `filltrip`;
+
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
--- Table structure for table `refuel_history`
-CREATE TABLE `refuel_history` (
+-- Table structure for table `fuel_history`
+CREATE TABLE `fuel_history` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
@@ -37,8 +40,8 @@ CREATE TABLE `saved_places` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Table structure for table `trips`
-CREATE TABLE `trips` (
+-- Table structure for table `user_trips`
+CREATE TABLE `user_trips` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `start_location_name` varchar(255) NOT NULL,
@@ -54,10 +57,12 @@ CREATE TABLE `trips` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Table structure for table `users`
-CREATE TABLE `users` (
+-- Table structure for table `user`
+CREATE TABLE `user` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `full_name` varchar(100) NOT NULL,
+  `first_name` varchar(60) DEFAULT NULL,
+  `last_name` varchar(60) DEFAULT NULL,
+  `full_name` varchar(120) NOT NULL,
   `username` varchar(50) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
@@ -65,8 +70,8 @@ CREATE TABLE `users` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Indexes for table `refuel_history`
-ALTER TABLE `refuel_history`
+-- Indexes for table `fuel_history`
+ALTER TABLE `fuel_history`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_user_time` (`user_id`,`created_at`);
 
@@ -76,43 +81,42 @@ ALTER TABLE `saved_places`
   ADD UNIQUE KEY `uniq_user_name` (`user_id`,`place_name`),
   ADD KEY `idx_user_created` (`user_id`,`created_at`);
 
--- Indexes for table `trips`
-ALTER TABLE `trips`
+-- Indexes for table `user_trips`
+ALTER TABLE `user_trips`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_user_created` (`user_id`,`created_at`);
 
--- Indexes for table `users`
-ALTER TABLE `users`
+-- Indexes for table `user`
+ALTER TABLE `user`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `unique_username` (`username`),
   ADD UNIQUE KEY `unique_email` (`email`);
 
--- AUTO_INCREMENT for table `refuel_history`
-ALTER TABLE `refuel_history`
+-- AUTO_INCREMENT for table `fuel_history`
+ALTER TABLE `fuel_history`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 -- AUTO_INCREMENT for table `saved_places`
 ALTER TABLE `saved_places`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
--- AUTO_INCREMENT for table `trips`
-ALTER TABLE `trips`
+-- AUTO_INCREMENT for table `user_trips`
+ALTER TABLE `user_trips`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
--- AUTO_INCREMENT for table `users`
-ALTER TABLE `users`
+-- AUTO_INCREMENT for table `user`
+ALTER TABLE `user`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
--- Constraints for table `refuel_history`
-ALTER TABLE `refuel_history`
-  ADD CONSTRAINT `fk_refuel_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+-- Constraints for table `fuel_history`
+ALTER TABLE `fuel_history`
+  ADD CONSTRAINT `fk_fuel_history_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
--- Constraints for table `saved_places`
 ALTER TABLE `saved_places`
-  ADD CONSTRAINT `fk_saved_places_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_saved_places_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE;
 
--- Constraints for table `trips`
-ALTER TABLE `trips`
-  ADD CONSTRAINT `fk_trips_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+-- Constraints for table `user_trips`
+ALTER TABLE `user_trips`
+  ADD CONSTRAINT `fk_user_trips_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE;
 
 COMMIT;

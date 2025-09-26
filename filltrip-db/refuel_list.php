@@ -38,7 +38,7 @@ $sql = "SELECT
   fuel_type       AS fuelType,
   station,
   currency
-FROM refuel_history
+FROM fuel_history
 WHERE user_id=?
 ORDER BY created_at DESC, id DESC";
 $st = $pdo->prepare($sql);
