@@ -10,10 +10,7 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
-----------------------------------------------------------
-
 -- Table structure for table `refuel_history`
-
 CREATE TABLE `refuel_history` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
@@ -30,10 +27,7 @@ CREATE TABLE `refuel_history` (
   `currency` char(3) NOT NULL DEFAULT 'PHP'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-----------------------------------------------------------
-
 -- Table structure for table `saved_places`
-
 CREATE TABLE `saved_places` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
@@ -43,10 +37,7 @@ CREATE TABLE `saved_places` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-----------------------------------------------------------
-
 -- Table structure for table `trips`
-
 CREATE TABLE `trips` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
@@ -63,12 +54,7 @@ CREATE TABLE `trips` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- (No seed data)
-
-----------------------------------------------------------
-
 -- Table structure for table `users`
-
 CREATE TABLE `users` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `full_name` varchar(100) NOT NULL,
@@ -79,67 +65,54 @@ CREATE TABLE `users` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-----------------------------------------------------------
-
 -- Indexes for table `refuel_history`
-
 ALTER TABLE `refuel_history`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_user_time` (`user_id`,`created_at`);
 
 -- Indexes for table `saved_places`
-
 ALTER TABLE `saved_places`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uniq_user_name` (`user_id`,`place_name`),
   ADD KEY `idx_user_created` (`user_id`,`created_at`);
 
 -- Indexes for table `trips`
-
 ALTER TABLE `trips`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_user_created` (`user_id`,`created_at`);
 
 -- Indexes for table `users`
-
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `unique_username` (`username`),
   ADD UNIQUE KEY `unique_email` (`email`);
 
 -- AUTO_INCREMENT for table `refuel_history`
-
 ALTER TABLE `refuel_history`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
-
 -- AUTO_INCREMENT for table `saved_places`
-
 ALTER TABLE `saved_places`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 -- AUTO_INCREMENT for table `trips`
-
 ALTER TABLE `trips`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 -- AUTO_INCREMENT for table `users`
-
 ALTER TABLE `users`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 -- Constraints for table `refuel_history`
-
 ALTER TABLE `refuel_history`
   ADD CONSTRAINT `fk_refuel_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Constraints for table `saved_places`
-
 ALTER TABLE `saved_places`
   ADD CONSTRAINT `fk_saved_places_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 -- Constraints for table `trips`
-
 ALTER TABLE `trips`
   ADD CONSTRAINT `fk_trips_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
 COMMIT;
