@@ -9,44 +9,58 @@ import {
 } from "react-native";
 import { Link } from "expo-router";
 
+// --- updated sections with icon + color ---
 const sections = [
     {
         id: 1,
-        title: "Mission",
+        title: "Our Mission",
         description:
             "To make travel smarter, cheaper, and more sustainable by helping drivers understand and manage their fuel expenses.",
+        icon: "🎯",
+        color: "#10B981",
     },
     {
         id: 2,
-        title: "Vision",
+        title: "Our Vision",
         description:
             "A future where every trip is planned with ease, fuel is used efficiently, and drivers save both money and the environment.",
+        icon: "🌟",
+        color: "#8B5CF6",
     },
     {
         id: 3,
         title: "What is FillTrip?",
         description:
             "Filltrip is your all-in-one fuel calculator. Choose your start and end points, pick your vehicle, and instantly know how much fuel and money your trip will take.",
+        icon: "⛽",
+        color: "#F59E0B",
     },
     {
         id: 4,
-        title: "Why Use FillTrip?",
+        title: "Why Choose Us?",
         description:
             "No more guessing. With real-time fuel prices, vehicle efficiency data, and accurate distances, Filltrip helps you budget smarter and drive with confidence.",
+        icon: "✨",
+        color: "#EF4444",
     },
     {
         id: 5,
         title: "Track & Save",
         description:
             "Record your trips and fuel history to see where your money goes. Get insights, spot trends, and take control of your driving expenses.",
+        icon: "📊",
+        color: "#06B6D4",
     },
     {
         id: 6,
-        title: "Practical Value",
+        title: "Real Value",
         description:
             "Filltrip gives you the tools to plan better trips, cut down on costs, and get the most out of every liter.",
+        icon: "💰",
+        color: "#84CC16",
     },
 ];
+
 
 const people = [
     {
@@ -148,24 +162,34 @@ export default function AboutPage() {
                 </Text>
             </View>
 
-            {/* Sections */}
-            <View className="self-center mt-6 w-full px-5 gap-3">
-                {sections.map((s) => (
-                    <View
-                        key={s.id}
-                        className="bg-gray-800 border border-gray-700 rounded-lg p-5"
-                    >
-                        <Text
-                            className={`text-white font-bold mb-1 ${sectionTitleSize}`}
+            {/* Features Grid */}
+            <View className="px-5 mb-10">
+                <Text className="text-2xl font-bold text-white text-center mb-6">
+                    Why FillTrip?
+                </Text>
+                <View className="flex-row flex-wrap justify-between">
+                    {sections.map((section, index) => (
+                        <View
+                            key={section.id}
+                            className="w-[48%] bg-gray-800 border border-gray-700 rounded-xl p-4 mb-4 items-center"
                         >
-                            {s.title}
-                        </Text>
-                        <Text className={`text-gray-200 ${sectionDescSize}`}>
-                            {s.description}
-                        </Text>
-                    </View>
-                ))}
+                            <View
+                                className="w-14 h-14 rounded-full justify-center items-center mb-3"
+                                style={{ backgroundColor: section.color + "20" }}
+                            >
+                                <Text className="text-xl">{section.icon}</Text>
+                            </View>
+                            <Text className="text-white font-semibold text-center mb-2">
+                                {section.title}
+                            </Text>
+                            <Text className="text-gray-300 text-sm text-center">
+                                {section.description}
+                            </Text>
+                        </View>
+                    ))}
+                </View>
             </View>
+
 
             {/* Team Section */}
             <View className={`mt-12 mb-12 px-4 ${teamsize}`}>

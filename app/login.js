@@ -51,13 +51,13 @@ export default function LoginPageLayout() {
                 }}
             >
                 {/* Back Button */}
-                <View style={{ position: "absolute", top: 40, left: 16, zIndex: 10 }}>
+                <View style={{ position: "absolute", top: 85, left: 16, zIndex: 10 }}>
                     <Pressable
                         onPress={() => navigation.navigate("AboutPageScreen")}
                         style={{ flexDirection: "row", alignItems: "center", padding: 8 }}
                     >
                         <Ionicons name="arrow-back" size={24} color="#fff" />
-                        <Text style={{ color: "#fff", marginLeft: 4, fontSize: 16 }}>Back</Text>
+                        <Text style={{ color: "#fff", marginLeft: 4, fontSize: 17, marginTop: 0 }}>Back</Text>
                     </Pressable>
                 </View>
 
