@@ -659,20 +659,29 @@ const MapPage = () => {
       }, 2200);
     }
 
-    async function syncFromServer() {
+    async function syncFromServer(primary = false) {
       try {
-  const mod = await import('../../others/services/savedPlaces');
+        const mod = await import('../../others/services/savedPlaces');
         const serverItems = await mod.listSavedPlaces();
-        // Map server items to local shape { id, name, coords:[lng,lat] }
-        const mapped = serverItems.map(it => ({ id: String(it.id), name: it.name, coords: [Number(it.longitude)||0, Number(it.latitude)||0] }))
-          .filter(p => !isNaN(p.coords[0]) && !isNaN(p.coords[1]) && (p.coords[0]!==0 || p.coords[1]!==0));
-        // Merge: prefer server; keep any local entries missing server id
-        const byId = new Map(mapped.map(p=>[p.id,p]));
+        // Map server items to local shape { id, name, coords:[lng,lat]|null }
+        const mapped = serverItems.map(it => {
+          const hasLon = typeof it.longitude === 'number' && !isNaN(it.longitude);
+            const hasLat = typeof it.latitude === 'number' && !isNaN(it.latitude);
+            return {
+              id: String(it.id),
+              name: it.name || 'Unnamed',
+              coords: (hasLon && hasLat) ? [it.longitude, it.latitude] : null,
+              raw: it
+            };
+        });
         savedPlaces = mapped;
-        // Persist merged list locally for quick UI
         persistSaved();
+        renderSaved();
       } catch(e) {
-        // no-op; fall back to local cache
+        if (primary) {
+          // If initial (primary) server load fails, fallback to cache already loaded
+          renderSaved();
+        }
       }
     }
     function loadSaved() {
@@ -707,10 +716,11 @@ const MapPage = () => {
       savedPlaces.forEach(p => {
         const row = document.createElement('div');
         row.className = 'flex items-center gap-2 py-2.5 border-b border-gray-800 last:border-0';
+        const coordsHtml = p.coords ? `${p.coords[1].toFixed(4)}, ${p.coords[0].toFixed(4)}` : '—';
         row.innerHTML = `
           <div class="flex-1 min-w-0">
-            <div class="text-[13px] font-medium text-white truncate">${p.name}</div>
-            <div class="text-[10px] text-gray-400">${p.coords[1].toFixed(4)}, ${p.coords[0].toFixed(4)}</div>
+            <div class="text-[13px] font-medium text-white truncate" title="${p.name}">${p.name}</div>
+            <div class="text-[10px] text-gray-400">${coordsHtml}</div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
             <button data-action="use-start" data-id="${p.id}" class="px-2.5 py-1 rounded-md bg-teal-600 hover:bg-teal-500 text-[10px] text-white ring-1 ring-white/10">Start</button>
@@ -749,10 +759,19 @@ const MapPage = () => {
       }
     }
 
+  // New strategy: attempt server first; if it fails, show cache.
+  // Load cache in memory regardless (for fallback / offline), but don't render it until server call fails or completes.
   loadSaved();
-  // Try to sync from server on open
-  syncFromServer();
-    renderSaved();
+  // Kick off server fetch but if it takes >600ms, show cache so panel isn't empty.
+  let renderedCache = false;
+  const cacheRenderTimer = setTimeout(() => {
+    if (!renderedCache) { renderSaved(); renderedCache = true; }
+  }, 600);
+  (async () => {
+    await syncFromServer(true);
+    clearTimeout(cacheRenderTimer);
+    renderedCache = true; // server render already done inside sync
+  })();
 
     if (saveStartBtn) {
       saveStartBtn.addEventListener('click', () => {
@@ -792,10 +811,14 @@ const MapPage = () => {
             } catch {}
           })();
         } else if (action === 'use-start') {
+          if (!place.coords) { toast('No coordinates stored for this place'); return; }
           setStart(place.coords.slice(), place.name);
+          try { map.easeTo({ center: place.coords, zoom: Math.max(map.getZoom(), 13) }); } catch {}
           toast('Set as start');
         } else if (action === 'use-end') {
+          if (!place.coords) { toast('No coordinates stored for this place'); return; }
           setEnd(place.coords.slice(), place.name);
+          try { map.easeTo({ center: place.coords, zoom: Math.max(map.getZoom(), 13) }); } catch {}
           toast('Set as end');
         }
       });

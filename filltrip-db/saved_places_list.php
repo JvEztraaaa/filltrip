@@ -18,6 +18,22 @@ try {
   $st = $pdo->prepare($sql);
   $st->execute([$uid]);
   $items = $st->fetchAll();
+  // Backfill coordinates for legacy rows where columns exist but values are null by parsing name if it looks like "lat, lon"
+  if ($schema['hasLat'] && $schema['hasLon']) {
+    foreach ($items as &$it) {
+      if ((($it['latitude'] ?? null) === null || ($it['longitude'] ?? null) === null) && isset($it['name'])) {
+        if (preg_match('/^\s*(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/', $it['name'], $m)) {
+          $maybeLat = (float)$m[1];
+          $maybeLon = (float)$m[2];
+          if ($maybeLat <= 90 && $maybeLat >= -90 && $maybeLon <= 180 && $maybeLon >= -180) {
+            $it['latitude'] = $maybeLat;
+            $it['longitude'] = $maybeLon;
+          }
+        }
+      }
+    }
+    unset($it);
+  }
   echo json_encode(['success'=>true,'items'=>$items]);
 } catch (Throwable $e) {
   http_response_code(500);

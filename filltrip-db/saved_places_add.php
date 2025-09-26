@@ -8,8 +8,8 @@ $uid = sp_session_require();
 
 $x = sp_in();
 $name = trim(($x['name'] ?? $x['place_name'] ?? ''));
-$lat = isset($x['latitude']) ? (float)$x['latitude'] : null;
-$lon = isset($x['longitude']) ? (float)$x['longitude'] : null;
+$lat = isset($x['latitude']) && $x['latitude'] !== '' ? (float)$x['latitude'] : null;
+$lon = isset($x['longitude']) && $x['longitude'] !== '' ? (float)$x['longitude'] : null;
 if ($name===''){ http_response_code(400); echo json_encode(['success'=>false,'error'=>'Missing name']); exit; }
 
 try {
@@ -25,7 +25,20 @@ try {
     exit;
   }
 
-  if ($schema['hasLat'] && $schema['hasLon']){
+  // If table supports latitude/longitude but they were not provided, try to parse from name
+  if ($schema['hasLat'] && $schema['hasLon'] && ($lat===null || $lon===null)) {
+    // Accept formats like: "14.5995, 120.9842" OR "14.5995,120.9842"
+    if (preg_match('/^\s*(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/', $name, $m)) {
+      $maybeLat = (float)$m[1];
+      $maybeLon = (float)$m[2];
+      if ($maybeLat <= 90 && $maybeLat >= -90 && $maybeLon <= 180 && $maybeLon >= -180) {
+        if ($lat===null) $lat = $maybeLat;
+        if ($lon===null) $lon = $maybeLon;
+      }
+    }
+  }
+
+  if ($schema['hasLat'] && $schema['hasLon']) {
     $ins = $pdo->prepare("INSERT INTO saved_places (user_id, {$nameCol}, latitude, longitude".($schema['hasCreated']?", created_at":"").") VALUES (?, ?, ?, ?".($schema['hasCreated']?", NOW()":"").")");
     $ins->execute([$uid, $name, $lat, $lon]);
   } else {
