@@ -49,15 +49,15 @@ function num($v): float {
 /* ------------------------------------ Input -------------------------------------------- */
 $x = in();
 
-$startLoc = trim($x['startLocationName'] ?? $x['startName'] ?? '');
-$endLoc   = trim($x['endLocationName']   ?? $x['endName']   ?? '');
+$startLoc = trim($x['startLocationName'] ?? $x['startLocation'] ?? $x['startName'] ?? '');
+$endLoc   = trim($x['endLocationName']   ?? $x['endLocation']   ?? $x['endName']   ?? '');
 
 $distanceKm    = num($x['distanceKm']      ?? 0);
 $litersNeeded  = num($x['litersNeeded']    ?? 0);
 $fuelCost      = num($x['fuelCost']        ?? 0);
 
 /*----------------------------- May or may not be provided by the frontend ------------------------------------ */
-$effKmPerL     = num($x['efficiencyKmPerL']   ?? ($x['efficiency'] ?? 0));
+$effKmPerL     = num($x['efficiencyKmPerL']   ?? ($x['efficiencyKpl'] ?? ($x['efficiency'] ?? 0)));
 $pricePerLiter = num($x['pricePerLiter']      ?? ($x['fuelPricePerLiter'] ?? 0));
 
 $currency = ($x['currency'] ?? 'PHP') ?: 'PHP';
@@ -94,8 +94,8 @@ if ($startLoc==='' || $endLoc==='' || $distanceKm<=0 || $litersNeeded<0 || $fuel
 
 /* ------------------------------- Insert --------------------------------- */
 $ins = $pdo->prepare("INSERT INTO user_trips
-  (user_id, start_location_name, end_location_name, distance_km,
-   efficiency_km_per_l, liters_needed, price_per_liter,
+  (user_id, start_location, end_location, distance_km,
+   efficiency_kpl, liters_needed, price_per_liter,
    fuel_cost, currency, fuel_type, vehicle_label, created_at)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
 
@@ -108,15 +108,15 @@ $ins->execute([
 /* ------------------ Return the created row ------------------------------- */
 $id  = (int)$pdo->lastInsertId();
 $sel = $pdo->prepare("SELECT id,
-  start_location_name AS startLocationName,
-  end_location_name   AS endLocationName,
-  distance_km         AS distanceKm,
-  efficiency_km_per_l AS efficiencyKmPerL,
-  liters_needed       AS litersNeeded,
-  price_per_liter     AS pricePerLiter,
-  fuel_cost           AS fuelCost,
+  start_location AS startLocationName,
+  end_location   AS endLocationName,
+  distance_km    AS distanceKm,
+  efficiency_kpl AS efficiencyKmPerL,
+  liters_needed  AS litersNeeded,
+  price_per_liter AS pricePerLiter,
+  fuel_cost      AS fuelCost,
   currency, fuel_type AS fuelType, vehicle_label AS vehicleLabel,
-  created_at          AS createdAt
+  created_at     AS createdAt
   FROM user_trips WHERE id=?");
 $sel->execute([$id]);
 $trip = $sel->fetch();

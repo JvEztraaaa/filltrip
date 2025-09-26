@@ -17,7 +17,7 @@ SET time_zone = "+00:00";
 CREATE TABLE `fuel_history` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `date` datetime NOT NULL DEFAULT current_timestamp(),
   `vehicle_name` varchar(120) NOT NULL,
   `odometer_km` decimal(10,1) NOT NULL,
   `distance_unit` enum('km','miles','meters') NOT NULL DEFAULT 'km',
@@ -44,10 +44,10 @@ CREATE TABLE `saved_places` (
 CREATE TABLE `user_trips` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
-  `start_location_name` varchar(255) NOT NULL,
-  `end_location_name` varchar(255) NOT NULL,
+  `start_location` varchar(255) NOT NULL,
+  `end_location` varchar(255) NOT NULL,
   `distance_km` decimal(10,2) NOT NULL,
-  `efficiency_km_per_l` decimal(10,2) DEFAULT NULL,
+  `efficiency_kpl` decimal(10,2) DEFAULT NULL,
   `liters_needed` decimal(10,2) NOT NULL,
   `price_per_liter` decimal(10,2) DEFAULT NULL,
   `fuel_cost` decimal(10,2) NOT NULL,
@@ -73,7 +73,7 @@ CREATE TABLE `user` (
 -- Indexes for table `fuel_history`
 ALTER TABLE `fuel_history`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_user_time` (`user_id`,`created_at`);
+  ADD KEY `idx_user_time` (`user_id`,`date`);
 
 -- Indexes for table `saved_places`
 ALTER TABLE `saved_places`

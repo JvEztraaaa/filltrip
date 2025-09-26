@@ -49,7 +49,7 @@ $x = in();
 $id = (int)($x['id'] ?? 0);
 if ($id<=0){ http_response_code(400); echo json_encode(['success'=>false,'error'=>'Missing id']); exit; }
 
-// If client passes createdAt, parse and update created_at in UTC
+// If client passes createdAt/date, parse and update date in UTC
 $entryAt = null;
 if (array_key_exists('createdAt',$x)){
   $raw = trim((string)$x['createdAt']);
@@ -82,7 +82,7 @@ if (($totalCost===null || $totalCost<=0) && $liters!==null && $liters>0 && $pric
 /* --------------------------------  UPDATE ------------------------------------ */
 $fields = [];
 $args = [];
-if ($entryAt!==null)      { $fields[]='created_at=?';      $args[]=$entryAt; }
+if ($entryAt!==null)      { $fields[]='date=?';            $args[]=$entryAt; }
 if ($vehicleName!==null)   { $fields[]='vehicle_name=?';    $args[]=$vehicleName; }
 if ($odometerKm!==null)    { $fields[]='odometer_km=?';     $args[]=$odometerKm; }
 if ($distanceUnit!==null)  { $fields[]='distance_unit=?';   $args[]=$distanceUnit; }

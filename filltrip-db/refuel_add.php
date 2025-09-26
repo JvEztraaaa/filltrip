@@ -47,7 +47,7 @@ function num($v): float {
 
 /* ------------------------------ Input --------------------------------------- */
 $x = in();
-$entryAtClient = trim($x['createdAt'] ?? '');
+$entryAtClient = trim($x['createdAt'] ?? $x['date'] ?? '');
 // Parse client-provided ISO datetime (expected UTC 'Z') and store as UTC; fallback to current UTC
 $createdAtUtc = null;
 if ($entryAtClient !== '') {
@@ -87,7 +87,7 @@ if ($vehicleName==='' || $odometerKm<=0 || $liters<=0 || $pricePerLiter<=0) {
 /* ------------------------------ Insert ------------------------------------*/
 $ins = $pdo->prepare("INSERT INTO fuel_history
   (user_id, vehicle_name, odometer_km, distance_unit, liters, fuel_unit,
-   price_per_liter, total_cost, fuel_type, station, currency, created_at)
+   price_per_liter, total_cost, fuel_type, station, currency, date)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 $ins->execute([
@@ -98,7 +98,7 @@ $ins->execute([
 $id = (int)$pdo->lastInsertId();
 $sel = $pdo->prepare("SELECT
   id,
-  CONCAT(DATE_FORMAT(created_at, '%Y-%m-%dT%H:%i:%s'), 'Z') AS createdAt,
+  CONCAT(DATE_FORMAT(date, '%Y-%m-%dT%H:%i:%s'), 'Z') AS createdAt,
   vehicle_name    AS vehicleName,
   odometer_km     AS odometerKm,
   distance_unit   AS distanceUnit,

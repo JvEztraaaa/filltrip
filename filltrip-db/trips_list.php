@@ -26,15 +26,15 @@ try{
 }catch(Throwable $e){ http_response_code(500); echo json_encode(['success'=>false,'error'=>'DB connection failed']); exit; }
 
 $sql = "SELECT id,
-  start_location_name AS startLocationName,
-  end_location_name   AS endLocationName,
-  distance_km         AS distanceKm,
-  efficiency_km_per_l AS efficiencyKmPerL,
-  liters_needed       AS litersNeeded,
-  price_per_liter     AS pricePerLiter,
-  fuel_cost           AS fuelCost,
+  start_location AS startLocationName,
+  end_location   AS endLocationName,
+  distance_km    AS distanceKm,
+  efficiency_kpl AS efficiencyKmPerL,
+  liters_needed  AS litersNeeded,
+  price_per_liter AS pricePerLiter,
+  fuel_cost      AS fuelCost,
   currency, fuel_type AS fuelType, vehicle_label AS vehicleLabel,
-  created_at          AS createdAt
+  created_at     AS createdAt
   FROM user_trips WHERE user_id=? ORDER BY created_at DESC, id DESC";
 $st = $pdo->prepare($sql);
 $st->execute([$uid]);

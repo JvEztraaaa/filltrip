@@ -27,7 +27,7 @@ try{
 
 $sql = "SELECT
   id,
-  CONCAT(DATE_FORMAT(created_at, '%Y-%m-%dT%H:%i:%s'), 'Z') AS createdAt,
+  CONCAT(DATE_FORMAT(date, '%Y-%m-%dT%H:%i:%s'), 'Z') AS createdAt,
   vehicle_name    AS vehicleName,
   odometer_km     AS odometerKm,
   distance_unit   AS distanceUnit,
@@ -40,7 +40,7 @@ $sql = "SELECT
   currency
 FROM fuel_history
 WHERE user_id=?
-ORDER BY created_at DESC, id DESC";
+ORDER BY date DESC, id DESC";
 $st = $pdo->prepare($sql);
 $st->execute([$uid]);
 $items = $st->fetchAll();
