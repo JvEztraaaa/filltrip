@@ -7,7 +7,8 @@ import {
   groupRefuelsByMonth,
   listRefuels,
   updateRefuel,
-} from "../../services/refuel";
+} from "../../others/services/refuel";
+
 import "./DropdownStyling.css";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -123,7 +124,7 @@ const RefuelHistoryPage = () => {
   const [editForm, setEditForm] = useState({});
   const [validationErrors, setValidationErrors] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null });
-  
+
   const nowMax = useMemo(() => {
     const d = new Date();
     const tzOffset = d.getTimezoneOffset() * 60000;
@@ -166,7 +167,7 @@ const RefuelHistoryPage = () => {
     const items = await listRefuels();
     setGroups(groupRefuelsByMonth(items));
   };
-  
+
   // Toggle month collapse state
   const toggleMonthCollapse = (monthKey) => {
     setCollapsedMonths(prev => {
@@ -179,13 +180,13 @@ const RefuelHistoryPage = () => {
       return newSet;
     });
   };
-  
+
   useEffect(() => {
     refresh();
   }, []);
 
   const symbol = currencySymbols[form.currency] || "";
-  
+
   const autoTotal = useMemo(() => {
     const l = parseFloat(form.liters) || 0;
     const p = parseFloat(form.pricePerLiter) || 0;
@@ -195,7 +196,7 @@ const RefuelHistoryPage = () => {
   // Validation function: ensures required numeric/text fields are present and valid
   const validateForm = (formData) => {
     const errors = {};
-    
+
     if (!formData.vehicleName.trim()) {
       errors.vehicleName = true;
     }
@@ -208,7 +209,7 @@ const RefuelHistoryPage = () => {
     if (!formData.pricePerLiter || parseFloat(formData.pricePerLiter) <= 0) {
       errors.pricePerLiter = true;
     }
-    
+
     return errors;
   };
 
@@ -216,7 +217,7 @@ const RefuelHistoryPage = () => {
   const submit = async () => {
     const errors = validateForm(form);
     setValidationErrors(errors);
-    
+
     if (Object.keys(errors).length > 0) {
       return;
     }
@@ -281,9 +282,9 @@ const RefuelHistoryPage = () => {
   const saveEdit = async () => {
     const errors = validateForm(editForm);
     setValidationErrors(errors);
-    
+
     if (Object.keys(errors).length > 0) {
-      return; 
+      return;
     }
 
     const entry = {
@@ -534,9 +535,8 @@ const RefuelHistoryPage = () => {
                       className="flex items-center gap-3 hover:bg-gray-800/50 rounded-lg p-2 -ml-2 transition-colors cursor-pointer group"
                     >
                       <svg
-                        className={`w-5 h-5 text-gray-400 transition-transform ${
-                          collapsedMonths.has(g.key) ? '-rotate-90' : ''
-                        }`}
+                        className={`w-5 h-5 text-gray-400 transition-transform ${collapsedMonths.has(g.key) ? '-rotate-90' : ''
+                          }`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -561,82 +561,62 @@ const RefuelHistoryPage = () => {
 
                   {!collapsedMonths.has(g.key) && (
                     <div className="space-y-4">
-                    {g.items.map((e, index) => {
-                      const sym = currencySymbols[e.currency] || "";
-                      const isLatest = index === 0 && g === groups[0];
+                      {g.items.map((e, index) => {
+                        const sym = currencySymbols[e.currency] || "";
+                        const isLatest = index === 0 && g === groups[0];
 
-                      return (
-                        <div
-                          key={e.id}
-                          className={`group relative bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl border transition-all duration-300 hover:shadow-lg hover:scale-[1.01] ${
-                            isLatest
+                        return (
+                          <div
+                            key={e.id}
+                            className={`group relative bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl border transition-all duration-300 hover:shadow-lg hover:scale-[1.01] ${isLatest
                               ? "border-teal-500/50 shadow-lg shadow-teal-500/10"
                               : "border-gray-700/50 hover:border-gray-600/80"
-                          }`}
-                        >
-                          {isLatest && (
-                            <div className="absolute -top-1 -right-1 bg-gradient-to-r from-teal-500 to-indigo-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
-                              Latest
-                            </div>
-                          )}
+                              }`}
+                          >
+                            {isLatest && (
+                              <div className="absolute -top-1 -right-1 bg-gradient-to-r from-teal-500 to-indigo-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md">
+                                Latest
+                              </div>
+                            )}
 
-                          <div className="p-4">
-                            {/* Header */}
-                            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 mb-4">
-                              <div className="flex-1">
-                                {/* Vehicle Name */}
-                                {e.vehicleName && (
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-base font-semibold text-teal-300">
-                                      {e.vehicleName}
-                                    </span>
-                                  </div>
-                                )}
+                            <div className="p-4">
+                              {/* Header */}
+                              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 mb-4">
+                                <div className="flex-1">
+                                  {/* Vehicle Name */}
+                                  {e.vehicleName && (
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="text-base font-semibold text-teal-300">
+                                        {e.vehicleName}
+                                      </span>
+                                    </div>
+                                  )}
 
-                                <div className="flex items-center gap-3 mb-2">
-                                  <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
-                                  <div className="text-base font-semibold text-white">
-                                    {new Date(e.createdAt).toLocaleDateString(
-                                      "en-US",
-                                      {
-                                        weekday: "long",
-                                        year: "numeric",
-                                        month: "long",
-                                        day: "numeric",
-                                      }
-                                    )}
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
+                                    <div className="text-base font-semibold text-white">
+                                      {new Date(e.createdAt).toLocaleDateString(
+                                        "en-US",
+                                        {
+                                          weekday: "long",
+                                          year: "numeric",
+                                          month: "long",
+                                          day: "numeric",
+                                        }
+                                      )}
+                                    </div>
+                                    <div className="text-sm text-gray-400">
+                                      {new Date(e.createdAt).toLocaleTimeString(
+                                        "en-US",
+                                        {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        }
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="text-sm text-gray-400">
-                                    {new Date(e.createdAt).toLocaleTimeString(
-                                      "en-US",
-                                      {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      }
-                                    )}
-                                  </div>
-                                </div>
 
-                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
-                                  <div className="flex items-center gap-1">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                                      />
-                                    </svg>
-                                    <span className="text-teal-300 font-medium">
-                                      {e.fuelType}
-                                    </span>
-                                  </div>
-                                  {e.station && (
+                                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
                                     <div className="flex items-center gap-1">
                                       <svg
                                         className="w-4 h-4"
@@ -648,26 +628,144 @@ const RefuelHistoryPage = () => {
                                           strokeLinecap="round"
                                           strokeLinejoin="round"
                                           strokeWidth="2"
-                                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                        />
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth="2"
-                                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                          d="M13 10V3L4 14h7v7l9-11h-7z"
                                         />
                                       </svg>
-                                      <span>{e.station}</span>
+                                      <span className="text-teal-300 font-medium">
+                                        {e.fuelType}
+                                      </span>
                                     </div>
-                                  )}
+                                    {e.station && (
+                                      <div className="flex items-center gap-1">
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                          />
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                          />
+                                        </svg>
+                                        <span>{e.station}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Desktop Action Buttons */}
+                                <div className="hidden lg:flex items-center gap-2">
+                                  <button
+                                    onClick={() => startEdit(e)}
+                                    className="px-3 py-1.5 text-sm rounded-lg bg-teal-500/20 text-teal-400 hover:bg-teal-500/30 transition-colors duration-200 flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                      />
+                                    </svg>
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => remove(e.id)}
+                                    className="px-3 py-1.5 text-sm rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors duration-200 flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                    Delete
+                                  </button>
                                 </div>
                               </div>
 
-                              {/* Desktop Action Buttons */}
-                              <div className="hidden lg:flex items-center gap-2">
+                              {/* Stats Grid */}
+                              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                                <div className="bg-gray-700/20 rounded-lg p-3 text-center">
+                                  <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                                    Odometer
+                                  </div>
+                                  <div className="text-base font-bold text-teal-400">
+                                    {parseFloat(e.odometerKm).toLocaleString()}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {e.distanceUnit || "km"}
+                                  </div>
+                                </div>
+
+                                <div className="bg-gray-700/20 rounded-lg p-3 text-center">
+                                  <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                                    Fuel Amount
+                                  </div>
+                                  <div className="text-base font-bold text-indigo-400">
+                                    {e.liters}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {e.fuelUnit || "liters"}
+                                  </div>
+                                </div>
+
+                                <div className="bg-gray-700/20 rounded-lg p-3 text-center">
+                                  <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                                    Price per{" "}
+                                    {(e.fuelUnit || "liters") === "liters"
+                                      ? "Liter"
+                                      : "Gallon"}
+                                  </div>
+                                  <div className="text-base font-bold text-white">
+                                    {sym}
+                                    {e.pricePerLiter}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {e.currency}
+                                  </div>
+                                </div>
+
+                                <div className="bg-gray-700/20 rounded-lg p-3 text-center border border-teal-500/20">
+                                  <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                                    Total Cost
+                                  </div>
+                                  <div className="text-lg font-bold text-teal-400">
+                                    {sym}
+                                    {e.totalCost}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {e.currency}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Mobile Action Buttons */}
+                              <div className="lg:hidden grid grid-cols-2 gap-2">
                                 <button
                                   onClick={() => startEdit(e)}
-                                  className="px-3 py-1.5 text-sm rounded-lg bg-teal-500/20 text-teal-400 hover:bg-teal-500/30 transition-colors duration-200 flex items-center gap-1.5 cursor-pointer"
+                                  className="w-full px-3 py-2 text-sm rounded-lg bg-teal-500/20 text-teal-400 hover:bg-teal-500/30 transition-colors duration-200 flex items-center justify-center gap-2 font-medium cursor-pointer"
                                 >
                                   <svg
                                     className="w-3.5 h-3.5"
@@ -682,11 +780,11 @@ const RefuelHistoryPage = () => {
                                       d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                                     />
                                   </svg>
-                                  Edit
+                                  Edit Entry
                                 </button>
                                 <button
                                   onClick={() => remove(e.id)}
-                                  className="px-3 py-1.5 text-sm rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors duration-200 flex items-center gap-1.5 cursor-pointer"
+                                  className="w-full px-3 py-2 text-sm rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors duration-200 flex items-center justify-center gap-2 font-medium cursor-pointer"
                                 >
                                   <svg
                                     className="w-3.5 h-3.5"
@@ -705,108 +803,9 @@ const RefuelHistoryPage = () => {
                                 </button>
                               </div>
                             </div>
-
-                            {/* Stats Grid */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                              <div className="bg-gray-700/20 rounded-lg p-3 text-center">
-                                <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                                  Odometer
-                                </div>
-                                <div className="text-base font-bold text-teal-400">
-                                  {parseFloat(e.odometerKm).toLocaleString()}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {e.distanceUnit || "km"}
-                                </div>
-                              </div>
-
-                              <div className="bg-gray-700/20 rounded-lg p-3 text-center">
-                                <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                                  Fuel Amount
-                                </div>
-                                <div className="text-base font-bold text-indigo-400">
-                                  {e.liters}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {e.fuelUnit || "liters"}
-                                </div>
-                              </div>
-
-                              <div className="bg-gray-700/20 rounded-lg p-3 text-center">
-                                <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                                  Price per{" "}
-                                  {(e.fuelUnit || "liters") === "liters"
-                                    ? "Liter"
-                                    : "Gallon"}
-                                </div>
-                                <div className="text-base font-bold text-white">
-                                  {sym}
-                                  {e.pricePerLiter}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {e.currency}
-                                </div>
-                              </div>
-
-                              <div className="bg-gray-700/20 rounded-lg p-3 text-center border border-teal-500/20">
-                                <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                                  Total Cost
-                                </div>
-                                <div className="text-lg font-bold text-teal-400">
-                                  {sym}
-                                  {e.totalCost}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {e.currency}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Mobile Action Buttons */}
-                            <div className="lg:hidden grid grid-cols-2 gap-2">
-                              <button
-                                onClick={() => startEdit(e)}
-                                className="w-full px-3 py-2 text-sm rounded-lg bg-teal-500/20 text-teal-400 hover:bg-teal-500/30 transition-colors duration-200 flex items-center justify-center gap-2 font-medium cursor-pointer"
-                              >
-                                <svg
-                                  className="w-3.5 h-3.5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                  />
-                                </svg>
-                                Edit Entry
-                              </button>
-                              <button
-                                onClick={() => remove(e.id)}
-                                className="w-full px-3 py-2 text-sm rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors duration-200 flex items-center justify-center gap-2 font-medium cursor-pointer"
-                              >
-                                <svg
-                                  className="w-3.5 h-3.5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                  />
-                                </svg>
-                                Delete
-                              </button>
-                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                     </div>
                   )}
                 </section>
@@ -884,9 +883,8 @@ const RefuelHistoryPage = () => {
                     onChange={e => setEditForm(f => ({ ...f, vehicleName: e.target.value }))}
                     onFocus={() => clearFieldError('vehicleName')}
                     placeholder="Enter vehicle name or model (e.g. Toyota Vios, Honda Click 125)"
-                    className={`w-full px-4 py-3 rounded-lg bg-gray-700/60 border ${
-                      validationErrors.vehicleName ? 'border-red-500' : 'border-gray-600'
-                    } focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200`}
+                    className={`w-full px-4 py-3 rounded-lg bg-gray-700/60 border ${validationErrors.vehicleName ? 'border-red-500' : 'border-gray-600'
+                      } focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200`}
                   />
                 </div>
 
@@ -1208,9 +1206,8 @@ const RefuelHistoryPage = () => {
                     onChange={e => setForm(f => ({ ...f, vehicleName: e.target.value }))}
                     onFocus={() => clearFieldError('vehicleName')}
                     placeholder="Enter vehicle name or model (e.g. Toyota Vios, Honda Click 125)"
-                    className={`w-full px-4 py-3 rounded-lg bg-gray-700/60 border ${
-                      validationErrors.vehicleName ? 'border-red-500' : 'border-gray-600'
-                    } focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200`}
+                    className={`w-full px-4 py-3 rounded-lg bg-gray-700/60 border ${validationErrors.vehicleName ? 'border-red-500' : 'border-gray-600'
+                      } focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200`}
                   />
                 </div>
 
@@ -1269,9 +1266,8 @@ const RefuelHistoryPage = () => {
                         setForm((f) => ({ ...f, odometerKm: e.target.value }))
                       }
                       onFocus={() => clearFieldError('odometerKm')}
-                      className={`flex-1 px-4 py-3 rounded-l-lg bg-gray-700/60 border ${
-                        validationErrors.odometerKm ? 'border-red-500' : 'border-gray-600'
-                      } border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                      className={`flex-1 px-4 py-3 rounded-l-lg bg-gray-700/60 border ${validationErrors.odometerKm ? 'border-red-500' : 'border-gray-600'
+                        } border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                       placeholder="0.0"
                     />
                     <div className="border-l border-gray-600"></div>
@@ -1306,9 +1302,8 @@ const RefuelHistoryPage = () => {
                         setForm((f) => ({ ...f, liters: e.target.value }))
                       }
                       onFocus={() => clearFieldError('liters')}
-                      className={`flex-1 px-4 py-3 rounded-l-lg bg-gray-700/60 border ${
-                        validationErrors.liters ? 'border-red-500' : 'border-gray-600'
-                      } border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                      className={`flex-1 px-4 py-3 rounded-l-lg bg-gray-700/60 border ${validationErrors.liters ? 'border-red-500' : 'border-gray-600'
+                        } border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                       placeholder="0.00"
                     />
                     <div className="border-l border-gray-600"></div>
@@ -1346,9 +1341,8 @@ const RefuelHistoryPage = () => {
                         }))
                       }
                       onFocus={() => clearFieldError('pricePerLiter')}
-                      className={`flex-1 px-4 py-3 rounded-l-lg bg-gray-700/60 border ${
-                        validationErrors.pricePerLiter ? 'border-red-500' : 'border-gray-600'
-                      } border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                      className={`flex-1 px-4 py-3 rounded-l-lg bg-gray-700/60 border ${validationErrors.pricePerLiter ? 'border-red-500' : 'border-gray-600'
+                        } border-r-0 focus:border-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                       placeholder="0.00"
                     />
                     <div className="border-l border-gray-600"></div>
@@ -1491,7 +1485,7 @@ const RefuelHistoryPage = () => {
                   <p className="text-sm text-gray-400">This action cannot be undone</p>
                 </div>
               </div>
-              
+
               <p className="text-gray-300 mb-6">
                 Are you sure you want to delete this fuel log entry? This will permanently remove the entry from your history.
               </p>

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { addTrip } from '../../services/trips';
-import { motorcycleModelsPH, carModelsPH } from '../../data/fuelEfficiency';
+import { addTrip } from '../../others/services/trips';
+import { motorcycleModelsPH, carModelsPH } from '../../others/data/fuelEfficiency';
 import SidePanel from '../../components/SidePanel';
 import Header from '../../components/Header';
 import "./DropdownStyling.css";

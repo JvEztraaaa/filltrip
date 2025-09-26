@@ -661,7 +661,7 @@ const MapPage = () => {
 
     async function syncFromServer() {
       try {
-        const mod = await import('../../services/savedPlaces');
+  const mod = await import('../../others/services/savedPlaces');
         const serverItems = await mod.listSavedPlaces();
         // Map server items to local shape { id, name, coords:[lng,lat] }
         const mapped = serverItems.map(it => ({ id: String(it.id), name: it.name, coords: [Number(it.longitude)||0, Number(it.latitude)||0] }))
@@ -733,7 +733,7 @@ const MapPage = () => {
       toast('Place saved');
       // Push to server in background
       try {
-        const mod = await import('../../services/savedPlaces');
+  const mod = await import('../../others/services/savedPlaces');
         const place = await mod.addSavedPlace({ name, latitude: coords[1], longitude: coords[0] });
         if (place) {
           // Replace temp with server id
@@ -787,7 +787,7 @@ const MapPage = () => {
           // Delete on server (best-effort)
           (async()=>{
             try {
-              const mod = await import('../../services/savedPlaces');
+              const mod = await import('../../others/services/savedPlaces');
               await mod.deleteSavedPlace(id);
             } catch {}
           })();

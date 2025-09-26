@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import SidePanel from '../../components/SidePanel';
 import Header from '../../components/Header';
-import { listTrips, groupTripsByMonth, deleteTrip } from '../../services/trips';
+import { listTrips, groupTripsByMonth, deleteTrip } from '../../others/services/trips';
 
 const currencySymbols = { PHP: '₱', USD: '$', EUR: '€', JPY: '¥' };
 
