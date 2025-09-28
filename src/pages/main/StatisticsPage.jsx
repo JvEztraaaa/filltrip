@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Table, THead, TBody, TR, TH, TD } from '../../components/ui/table';
 import {
     ResponsiveContainer,
-    BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line, AreaChart, Area,
+    BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line, AreaChart, Area, ReferenceLine,
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, computeTrendPercent } from '../../components/ui/chart';
 import { TrendingUp } from 'lucide-react';
@@ -24,9 +24,8 @@ const tooltipStyle = { background: '#111827', border: '1px solid #374151', borde
 const kpiDefs = [
     { key: 'totalTrips', label: 'Total Trips', color: 'text-teal-300', fmt: v => fmt(v, 0) },
     { key: 'totalDistance', label: 'Total Distance (km)', color: 'text-indigo-300', fmt: fmt },
-    { key: 'totalFuelConsumed', label: 'Fuel Consumed (L)', color: 'text-fuchsia-300', fmt: fmt },
-    { key: 'totalFuelCost', label: 'Fuel Cost (₱)', color: 'text-emerald-300', fmt: v => '₱' + fmt(v) },
-    { key: 'avgCostPer100Km', label: 'Avg Cost /100km', color: 'text-amber-300', fmt: v => '₱' + fmt(v) },
+    { key: 'totalFuelConsumed', label: 'Total Fuel Consumed (L)', color: 'text-fuchsia-300', fmt: fmt },
+    { key: 'totalFuelCost', label: 'Total Fuel Cost Spent (₱)', color: 'text-emerald-300', fmt: v => '₱' + fmt(v) },
     { key: 'mostUsedVehicle', label: 'Most Used Vehicle', color: 'text-sky-300', fmt: v => v || '—' },
 ];
 
@@ -57,11 +56,43 @@ const StatisticsPage = () => {
         // Derived datasets (memoized for performance).
     const kpis = useMemo(() => computeKpis(trips, refuels), [trips, refuels]);
     const monthly = useMemo(() => buildMonthlyDatasets(trips, refuels), [trips, refuels]);
-    const frequentRoutes = useMemo(() => buildFrequentRoutes(trips, 8), [trips]);
+    const frequentRoutes = useMemo(() => buildFrequentRoutes(trips, 5), [trips]);
     const dailyActivity = useMemo(() => buildDailyActivity(trips, refuels), [trips, refuels]);
 
-    // Overall trend dataset (distance, liters, fuelCost) aggregated monthly (reuse monthly array)
-    const overallTrend = monthly.map(m => ({ label: m.label, distance: m.distance, liters: m.liters, cost: m.fuelCost }));
+    // Overall trend dataset - percentage changes from previous month
+    const overallTrend = useMemo(() => {
+        if (monthly.length === 0) return [];
+        
+        return monthly.map((month, index) => {
+            if (index === 0) {
+                // First month - no previous month to compare, show as 0% change
+                return {
+                    label: month.label,
+                    distance: 0,
+                    liters: 0,
+                    cost: 0,
+                    // Keep raw values for tooltip
+                    rawDistance: month.distance,
+                    rawLiters: month.liters,
+                    rawCost: month.fuelCost
+                };
+            }
+            
+            const prevMonth = monthly[index - 1];
+            
+            return {
+                label: month.label,
+                // Calculate percentage change from previous month
+                distance: prevMonth.distance === 0 ? 0 : ((month.distance - prevMonth.distance) / prevMonth.distance) * 100,
+                liters: prevMonth.liters === 0 ? 0 : ((month.liters - prevMonth.liters) / prevMonth.liters) * 100,
+                cost: prevMonth.fuelCost === 0 ? 0 : ((month.fuelCost - prevMonth.fuelCost) / prevMonth.fuelCost) * 100,
+                // Keep raw values for tooltip
+                rawDistance: month.distance,
+                rawLiters: month.liters,
+                rawCost: month.fuelCost
+            };
+        });
+    }, [monthly]);
 
     return (
         <div className="relative min-h-screen w-full bg-gray-900 text-white overflow-x-hidden">
@@ -74,14 +105,6 @@ const StatisticsPage = () => {
                         <div className="flex flex-col">
                             <h1 className="text-2xl font-semibold tracking-tight text-white">Statistics & Analytics</h1>
                             <p className="text-gray-400 text-sm">Data-driven insights for your trips & fuel usage</p>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-400">
-                            <span>Filter stats</span>
-                            <button className="p-1.5 rounded-md border border-gray-600 hover:border-gray-500 transition-colors">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                </svg>
-                            </button>
                         </div>
                     </div>
 
@@ -121,7 +144,20 @@ const StatisticsPage = () => {
                                                     tickLine={false}
                                                     dy={10}
                                                 />
-                                                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                                                <YAxis 
+                                                    tick={{ fontSize: 11, fill: '#9ca3af' }} 
+                                                    axisLine={false} 
+                                                    tickLine={false}
+                                                    tickFormatter={(value) => `${value > 0 ? '+' : ''}${Math.round(value)}%`}
+                                                    label={{ 
+                                                        value: 'Change from Previous Month (%)', 
+                                                        angle: -90, 
+                                                        position: 'insideLeft',
+                                                        style: { textAnchor: 'middle', fill: '#9ca3af', fontSize: '12px' }
+                                                    }}
+                                                />
+                                                {/* Reference line at 0% (no change) */}
+                                                <ReferenceLine y={0} stroke="#6b7280" strokeDasharray="2 2" />
                                                 <Tooltip 
                                                     contentStyle={{ 
                                                         background: '#1f2937', 
@@ -129,16 +165,43 @@ const StatisticsPage = () => {
                                                         borderRadius: '8px',
                                                         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                                                     }} 
-                                                    formatter={(v, n) => {
-                                                        if (n === 'distance') return [fmt(v)+' km','Distance'];
-                                                        if (n === 'liters') return [fmt(v)+' L','Fuel'];
-                                                        if (n === 'cost') return ['₱'+fmt(v),'Cost'];
-                                                        return [v, n];
+                                                    formatter={(value, name, props) => {
+                                                        const data = props.payload;
+                                                        const isFirstMonth = props.payload.label === overallTrend[0]?.label;
+                                                        
+                                                        if (name === 'distance') {
+                                                            if (isFirstMonth) {
+                                                                return [`${fmt(data.rawDistance)} km (baseline)`, 'Distance'];
+                                                            }
+                                                            return [
+                                                                `${fmt(data.rawDistance)} km (${value > 0 ? '+' : ''}${Math.round(value)}% vs prev month)`,
+                                                                'Distance'
+                                                            ];
+                                                        }
+                                                        if (name === 'liters') {
+                                                            if (isFirstMonth) {
+                                                                return [`${fmt(data.rawLiters)} L (baseline)`, 'Fuel'];
+                                                            }
+                                                            return [
+                                                                `${fmt(data.rawLiters)} L (${value > 0 ? '+' : ''}${Math.round(value)}% vs prev month)`,
+                                                                'Fuel'
+                                                            ];
+                                                        }
+                                                        if (name === 'cost') {
+                                                            if (isFirstMonth) {
+                                                                return [`₱${fmt(data.rawCost)} (baseline)`, 'Cost'];
+                                                            }
+                                                            return [
+                                                                `₱${fmt(data.rawCost)} (${value > 0 ? '+' : ''}${Math.round(value)}% vs prev month)`,
+                                                                'Cost'
+                                                            ];
+                                                        }
+                                                        return [value, name];
                                                     }} 
                                                 />
-                                                <Line type="monotone" dataKey="distance" stroke="#f59e0b" strokeWidth={2} dot={false} />
-                                                <Line type="monotone" dataKey="liters" stroke="#38bdf8" strokeWidth={2} dot={false} />
-                                                <Line type="monotone" dataKey="cost" stroke="#6366f1" strokeWidth={2} dot={false} />
+                                                <Line type="monotone" dataKey="distance" stroke="#f59e0b" strokeWidth={2} dot={false} name="distance" />
+                                                <Line type="monotone" dataKey="liters" stroke="#38bdf8" strokeWidth={2} dot={false} name="liters" />
+                                                <Line type="monotone" dataKey="cost" stroke="#6366f1" strokeWidth={2} dot={false} name="cost" />
                                             </LineChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -149,9 +212,9 @@ const StatisticsPage = () => {
                                     {/* Monthly Fuel Consumption */}
                                     <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-6">
                                         <div className="mb-4">
-                                            <h3 className="text-lg font-medium text-white">Monthly Fuel Consumption</h3>
+                                            <h3 className="text-lg font-medium text-white">Fuel Consumed Per Month</h3>
                                             <p className="text-sm text-gray-400">
-                                                {monthly.length ? `${monthly[0].label} – ${monthly[monthly.length-1].label}` : 'No data'}
+                                                Monthly fuel consumption in liters
                                             </p>
                                         </div>
                                         <div className="h-64">
@@ -200,8 +263,8 @@ const StatisticsPage = () => {
                                     {/* Monthly Fuel Cost */}
                                     <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-6">
                                         <div className="mb-4">
-                                            <h3 className="text-lg font-medium text-white">Monthly Fuel Cost</h3>
-                                            <p className="text-sm text-gray-400">Total PHP cost per month</p>
+                                            <h3 className="text-lg font-medium text-white">Total Spent (₱) on Fuel Per Month</h3>
+                                            <p className="text-sm text-gray-400">Monthly fuel expenditure in Philippine pesos</p>
                                         </div>
                                         <div className="h-64">
                                             <ResponsiveContainer width="100%" height="100%">
@@ -301,12 +364,9 @@ const StatisticsPage = () => {
                                 </div>
                             </div>
 
-                            {/* Right Sidebar: Personal */}
+                            {/* Right Sidebar */}
                             <div className="w-80 flex-shrink-0">
                                 <div className="sticky top-24">
-                                    <div className="mb-6">
-                                        <h2 className="text-xl font-semibold text-white">Personal</h2>
-                                    </div>
 
                                     {/* Calendar Section - No border */}
                                     <div className="mb-6">
