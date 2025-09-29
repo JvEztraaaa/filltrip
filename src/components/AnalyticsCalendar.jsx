@@ -2,9 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 
 // Helper function to truncate location names
-const truncateLocation = (location, maxLength = 12) => {
+const truncateLocation = (location, maxLength = 14) => {
   if (!location) return '';
-  return location.length > maxLength ? location.substring(0, maxLength) + '..' : location;
+  return location.length > maxLength ? location.substring(0, maxLength) + '...' : location;
 };
 
 // Calendar component: month grid with trip + refuel highlights.
@@ -79,42 +79,48 @@ export default function AnalyticsCalendar({ activityMap = {}, initialDate = new 
             {/* Hover Tooltip */}
             {hoverDay === cell.iso && (cell.trips.length > 0 || cell.refuels.length > 0) && (
               <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 -translate-y-full z-50 pointer-events-none">
-                <div className="bg-gray-900/95 backdrop-blur-sm border border-gray-600/60 rounded-lg p-3 shadow-xl transition-all duration-200 ease-out opacity-100 scale-100">
+                <div className="bg-gray-900/95 backdrop-blur-sm border border-gray-600/60 rounded-lg px-4 py-3 shadow-xl transition-all duration-200 ease-out opacity-100 scale-100">
                   {/* Arrow */}
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px">
                     <div className="w-2 h-2 bg-gray-900/95 border-r border-b border-gray-600/60 transform rotate-45"></div>
                   </div>
                   
                   {/* Content */}
-                  <div className="text-[10px] leading-tight space-y-1 min-w-[120px] max-w-[200px]">
-                    <div className="font-semibold text-gray-200 text-center mb-1">
+                  <div className="text-sm leading-normal space-y-2 min-w-[160px] max-w-[240px]">
+                    <div className="font-semibold text-gray-100 text-center mb-2">
                       {new Date(cell.iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </div>
                     
                     {cell.trips.length > 0 && (
-                      <div className="space-y-0.5">
-                        <div className="text-orange-300 font-medium">{cell.trips.length} Trip{cell.trips.length > 1 ? 's' : ''}:</div>
+                      <div className="space-y-1">
+                        <div className="text-orange-300 font-semibold text-sm flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
+                          {cell.trips.length} Trip{cell.trips.length > 1 ? 's' : ''}:
+                        </div>
                         {cell.trips.slice(0, 2).map(trip => (
-                          <div key={'t'+trip.id} className="text-teal-300 text-[9px]">
-                            {truncateLocation(trip.startLocationName || trip.startName, 10)} → {truncateLocation(trip.endLocationName || trip.endName, 10)}
+                          <div key={'t'+trip.id} className="text-teal-200 text-xs font-medium pl-3">
+                            {truncateLocation(trip.startLocationName || trip.startName, 12)} → {truncateLocation(trip.endLocationName || trip.endName, 12)}
                           </div>
                         ))}
                         {cell.trips.length > 2 && (
-                          <div className="text-gray-400 text-[9px]">+{cell.trips.length - 2} more</div>
+                          <div className="text-gray-400 text-xs pl-3">+{cell.trips.length - 2} more</div>
                         )}
                       </div>
                     )}
                     
                     {cell.refuels.length > 0 && (
-                      <div className="space-y-0.5">
-                        <div className="text-purple-300 font-medium">{cell.refuels.length} Refuel{cell.refuels.length > 1 ? 's' : ''}:</div>
+                      <div className="space-y-1">
+                        <div className="text-purple-300 font-semibold text-sm flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+                          {cell.refuels.length} Refuel{cell.refuels.length > 1 ? 's' : ''}:
+                        </div>
                         {cell.refuels.slice(0, 2).map(refuel => (
-                          <div key={'r'+refuel.id} className="text-purple-300 text-[9px]">
+                          <div key={'r'+refuel.id} className="text-purple-200 text-xs font-medium pl-3">
                             {refuel.liters}L @ ₱{refuel.pricePerLiter}/L
                           </div>
                         ))}
                         {cell.refuels.length > 2 && (
-                          <div className="text-gray-400 text-[9px]">+{cell.refuels.length - 2} more</div>
+                          <div className="text-gray-400 text-xs pl-3">+{cell.refuels.length - 2} more</div>
                         )}
                       </div>
                     )}

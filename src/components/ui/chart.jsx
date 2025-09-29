@@ -21,12 +21,12 @@ export function ChartTooltip({ active, payload, label, content }) {
   if (!active) return null;
   if (content) return React.cloneElement(content, { payload, label });
   return (
-    <div className="text-xs bg-gray-900 border border-gray-700 rounded-md px-3 py-2 shadow-xl">
-      <div className="font-medium text-gray-300 mb-1">{label}</div>
+    <div className="text-sm bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 shadow-2xl min-w-[200px]">
+      <div className="font-semibold text-gray-100 mb-2 text-[15px]">{label}</div>
       {(payload||[]).map(p => (
-        <div key={p.dataKey} className="flex items-center gap-2 text-gray-400">
-          <span className="inline-block w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span>{p.name}: {p.value}</span>
+        <div key={p.dataKey} className="flex items-center gap-3 text-gray-300 py-1">
+          <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ background: p.color }} />
+          <span className="font-medium">{p.name}: <span className="font-semibold text-white">{p.value}</span></span>
         </div>
       ))}
     </div>
@@ -35,14 +35,14 @@ export function ChartTooltip({ active, payload, label, content }) {
 
 export function ChartTooltipContent({ payload, label, hideLabel, formatter }) {
   return (
-    <div className="text-xs bg-gray-900 border border-gray-700 rounded-md px-3 py-2 shadow-xl">
-      {!hideLabel && <div className="font-medium text-gray-300 mb-1">{label}</div>}
+    <div className="text-sm bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 shadow-2xl min-w-[200px]">
+      {!hideLabel && <div className="font-semibold text-gray-100 mb-2 text-[15px]">{label}</div>}
       {(payload||[]).map(p => {
         const val = formatter ? formatter(p.value, p) : p.value;
         return (
-          <div key={p.dataKey} className="flex items-center gap-2 text-gray-400">
-            <span className="inline-block w-2 h-2 rounded-full" style={{ background: p.color }} />
-            <span>{p.name || p.dataKey}: {val}</span>
+          <div key={p.dataKey} className="flex items-center gap-3 text-gray-300 py-1">
+            <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ background: p.color }} />
+            <span className="font-medium">{p.name || p.dataKey}: <span className="font-semibold text-white">{val}</span></span>
           </div>
         );
       })}

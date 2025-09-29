@@ -18,8 +18,16 @@ import AnalyticsCalendar from '../../components/AnalyticsCalendar';
 // Formatting helper for KPI + axis numbers.
 function fmt(num, digits = 2) { if (num === 0) return '0'; if (!num) return '—'; return Number(num).toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits }); }
 
-// Shared tooltip style
-const tooltipStyle = { background: '#111827', border: '1px solid #374151', borderRadius: '0.5rem', padding: '0.5rem 0.75rem' };
+// Shared tooltip style - enhanced for better readability
+const tooltipStyle = { 
+    background: '#111827', 
+    border: '1px solid #374151', 
+    borderRadius: '0.75rem', 
+    padding: '1rem 1.25rem',
+    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+    fontSize: '14px',
+    minWidth: '200px'
+};
 
 const kpiDefs = [
     { key: 'totalTrips', label: 'Total Trips', color: 'text-teal-300', fmt: v => fmt(v, 0) },
@@ -162,38 +170,62 @@ const StatisticsPage = () => {
                                                     contentStyle={{ 
                                                         background: '#1f2937', 
                                                         border: '1px solid #374151', 
-                                                        borderRadius: '8px',
-                                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                                                        borderRadius: '12px',
+                                                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                                                        padding: '1rem 1.25rem',
+                                                        fontSize: '14px',
+                                                        minWidth: '280px'
                                                     }} 
+                                                    labelStyle={{ 
+                                                        color: '#f3f4f6', 
+                                                        fontSize: '15px', 
+                                                        fontWeight: '600', 
+                                                        marginBottom: '8px'
+                                                    }}
                                                     formatter={(value, name, props) => {
                                                         const data = props.payload;
                                                         const isFirstMonth = props.payload.label === overallTrend[0]?.label;
                                                         
                                                         if (name === 'distance') {
                                                             if (isFirstMonth) {
-                                                                return [`${fmt(data.rawDistance)} km (baseline)`, 'Distance'];
+                                                                return [
+                                                                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{fmt(data.rawDistance)} km</span>, 
+                                                                    <span style={{ fontSize: '14px', color: '#e5e7eb', fontWeight: '500' }}>Distance (baseline)</span>
+                                                                ];
                                                             }
                                                             return [
-                                                                `${fmt(data.rawDistance)} km (${value > 0 ? '+' : ''}${Math.round(value)}% vs prev month)`,
-                                                                'Distance'
+                                                                <span style={{ fontSize: '14px', fontWeight: '600' }}>
+                                                                    {fmt(data.rawDistance)} km ({value > 0 ? '+' : ''}{Math.round(value)}%)
+                                                                </span>,
+                                                                <span style={{ fontSize: '14px', color: '#e5e7eb', fontWeight: '500' }}>Distance</span>
                                                             ];
                                                         }
                                                         if (name === 'liters') {
                                                             if (isFirstMonth) {
-                                                                return [`${fmt(data.rawLiters)} L (baseline)`, 'Fuel'];
+                                                                return [
+                                                                    <span style={{ fontSize: '14px', fontWeight: '600' }}>{fmt(data.rawLiters)} L</span>, 
+                                                                    <span style={{ fontSize: '14px', color: '#e5e7eb', fontWeight: '500' }}>Fuel (baseline)</span>
+                                                                ];
                                                             }
                                                             return [
-                                                                `${fmt(data.rawLiters)} L (${value > 0 ? '+' : ''}${Math.round(value)}% vs prev month)`,
-                                                                'Fuel'
+                                                                <span style={{ fontSize: '14px', fontWeight: '600' }}>
+                                                                    {fmt(data.rawLiters)} L ({value > 0 ? '+' : ''}{Math.round(value)}%)
+                                                                </span>,
+                                                                <span style={{ fontSize: '14px', color: '#e5e7eb', fontWeight: '500' }}>Fuel</span>
                                                             ];
                                                         }
                                                         if (name === 'cost') {
                                                             if (isFirstMonth) {
-                                                                return [`₱${fmt(data.rawCost)} (baseline)`, 'Cost'];
+                                                                return [
+                                                                    <span style={{ fontSize: '14px', fontWeight: '600' }}>₱{fmt(data.rawCost)}</span>, 
+                                                                    <span style={{ fontSize: '14px', color: '#e5e7eb', fontWeight: '500' }}>Cost (baseline)</span>
+                                                                ];
                                                             }
                                                             return [
-                                                                `₱${fmt(data.rawCost)} (${value > 0 ? '+' : ''}${Math.round(value)}% vs prev month)`,
-                                                                'Cost'
+                                                                <span style={{ fontSize: '14px', fontWeight: '600' }}>
+                                                                    ₱{fmt(data.rawCost)} ({value > 0 ? '+' : ''}{Math.round(value)}%)
+                                                                </span>,
+                                                                <span style={{ fontSize: '14px', color: '#e5e7eb', fontWeight: '500' }}>Cost</span>
                                                             ];
                                                         }
                                                         return [value, name];
@@ -235,7 +267,7 @@ const StatisticsPage = () => {
                                                         />
                                                         <Tooltip 
                                                             cursor={false} 
-                                                            content={<ChartTooltipContent hideLabel formatter={(v)=>fmt(v) + ' L'} />} 
+                                                            content={<ChartTooltipContent hideLabel formatter={(v) => <span style={{ fontSize: '14px', fontWeight: '600' }}>{fmt(v)} L</span>} />} 
                                                         />
                                                         <Bar dataKey="liters" name="Liters" fill="#38bdf8" radius={[6,6,0,0]} />
                                                     </BarChart>
@@ -288,9 +320,20 @@ const StatisticsPage = () => {
                                                         tickLine={false}
                                                     />
                                                     <Tooltip 
-                                                        contentStyle={tooltipStyle} 
-                                                        labelStyle={{ color: '#9ca3af' }} 
-                                                        formatter={(v)=>['₱'+fmt(v),'Cost']} 
+                                                        contentStyle={{
+                                                            ...tooltipStyle,
+                                                            minWidth: '220px'
+                                                        }} 
+                                                        labelStyle={{ 
+                                                            color: '#f3f4f6', 
+                                                            fontSize: '15px', 
+                                                            fontWeight: '600', 
+                                                            marginBottom: '8px'
+                                                        }} 
+                                                        formatter={(v) => [
+                                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>₱{fmt(v)}</span>, 
+                                                            <span style={{ fontSize: '14px', color: '#d1d5db' }}>Cost</span>
+                                                        ]} 
                                                     />
                                                     <Area 
                                                         type="monotone" 
