@@ -30,7 +30,7 @@ const initialState = {
   lastCalculated: null,
 };
 const currencySymbols = { PHP: '₱', USD: '$' };
-const sectionCard = 'bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-xl border border-gray-700/50 backdrop-blur-sm shadow-2xl px-6 py-6 flex flex-col gap-4 w-full';
+const sectionCard = 'bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-xl border border-gray-700/50 backdrop-blur-sm shadow-2xl px-4 sm:px-6 py-5 sm:py-6 flex flex-col gap-4 w-full';
 const labelCls = 'block text-sm font-medium text-gray-300 mb-2';
 const inputBase = 'w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-gray-600 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-white placeholder-gray-400 transition-all duration-200';
 // Convert US mpg to km/L
@@ -319,31 +319,31 @@ const FuelCalculatorPage = () => {
       <div className={`pt-20 w-full transition-all duration-300 ${
         sidebarOpen ? 'pl-0 md:pl-64' : 'pl-0 md:pl-20'
       }`}>
-        <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="px-4 sm:px-6 max-w-7xl mx-auto">
           {showErrors && (
             <div className="mb-4">
               <p className="text-red-500 text-sm">Please fill in all required fields.</p>
             </div>
           )}
-          <header className="mb-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-teal-400 to-indigo-400 bg-clip-text text-transparent">
-                  Fuel Calculator
-                </h1>
-                <p className="text-gray-400 text-base mt-2 max-w-2xl">
+          
+          <div className="flex flex-col xl:flex-row gap-6 items-start">
+            <div className="flex-1 space-y-5 xl:pr-4 max-w-2xl w-full mx-auto">
+              
+              {/* Header Section - Aligned with form components */}
+              <div className="mb-2 sm:mb-4">
+                <div className="mb-2">
+                  <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
+                    Fuel Calculator
+                  </h1>
+                </div>
+                <p className="text-gray-400 text-sm">
                   Follow the numbered steps, then press Calculate to estimate your fuel consumption patterns and fuel costs over time.
                 </p>
               </div>
-            </div>
-          </header>
-          <div className="flex flex-col xl:flex-row gap-6 items-start">
-            { }
-            <div className="flex-1 space-y-6 xl:pr-4 max-w-2xl w-full mx-auto">
 
               {/* Step 1: Vehicle Selection */}
               <section className={sectionCard + ' relative z-40'} aria-labelledby="stepVehicle">
-                <div className="bg-gradient-to-r from-teal-500/10 to-indigo-500/10 px-6 py-4 -mx-6 -mt-6 mb-4 border-b border-gray-700/50 rounded-t-xl">
+                <div className="bg-gradient-to-r from-teal-500/10 to-indigo-500/10 px-4 sm:px-6 py-4 -mx-4 sm:-mx-6 -mt-5 sm:-mt-6 mb-4 border-b border-gray-700/50 rounded-t-xl">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-teal-500/20 rounded-lg flex items-center justify-center">
                       <svg
@@ -571,7 +571,7 @@ const FuelCalculatorPage = () => {
             </div>
 
             {/* Right column: combined actions + results + tips */}
-            <aside className="xl:w-[25rem] w-full flex-shrink-0 xl:sticky xl:top-24 mt-0 sm:mt-2 xl:mt-0">
+            <aside className="xl:w-[25rem] w-full flex-shrink-0 xl:sticky xl:top-30 mt-0 sm:mt-2 xl:mt-24">
               <div className={sectionCard}>
                 <div className="bg-gradient-to-r from-teal-500/10 to-indigo-500/10 px-6 py-4 -mx-6 -mt-6 mb-4 border-b border-gray-700/50 rounded-t-xl">
                   <div className="flex items-center gap-3">

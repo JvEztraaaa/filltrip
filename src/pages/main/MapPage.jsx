@@ -212,16 +212,29 @@ const MapPage = () => {
         if (toast) {
           if (distKm >= 25) {
             toast.innerHTML = `
-              <div class="text-sm font-semibold">Long trip (~${distKm.toFixed(1)} km)</div>
-              <ul class="mt-1 text-[11px] leading-5 list-disc pl-4 text-indigo-100/90">
-                <li>Check tires, brakes, lights, oil, and coolant.</li>
-                <li>Fuel up fully; stations can be sparse in rural areas.</li>
-              </ul>`;
-            toast.classList.remove('opacity-0', 'translate-y-2');
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-5 h-5 bg-yellow-500/80 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="w-3 h-3 text-yellow-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div class="text-sm font-semibold text-white">Long Trip Alert (~${distKm.toFixed(1)} km)</div>
+              </div>
+              <div class="space-y-1.5 text-xs text-gray-300">
+                <div class="flex items-start gap-2">
+                  <div class="w-1 h-1 bg-gray-400 rounded-full flex-shrink-0 mt-1.5"></div>
+                  <span>Check tires, brakes, lights, oil, and coolant</span>
+                </div>
+                <div class="flex items-start gap-2">
+                  <div class="w-1 h-1 bg-gray-400 rounded-full flex-shrink-0 mt-1.5"></div>
+                  <span>Fuel up fully; stations can be sparse in rural areas</span>
+                </div>
+              </div>`;
+            toast.classList.remove('opacity-0', 'translate-y-[-20px]');
             clearTimeout(toast._hideTimer);
             toast._hideTimer = setTimeout(() => {
-              toast.classList.add('opacity-0', 'translate-y-2');
-            }, 3600);
+              toast.classList.add('opacity-0', 'translate-y-[-20px]');
+            }, 5000);
           }
         }
       } catch {}
@@ -961,8 +974,8 @@ const MapPage = () => {
       {/* Fuel status toast (progress) */}
       <div id="fuelStatus" className="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-[70] bg-gray-800/90 backdrop-blur px-4 py-2 rounded shadow-lg text-white text-xs font-medium max-w-xs text-center"></div>
 
-    {/* Long trip toast */}
-  <div id="longTripToast" className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[70] bg-indigo-700/90 backdrop-blur px-4 py-3 rounded-lg shadow-xl text-white text-xs max-w-sm w-[92vw] sm:w-auto text-left transition transform opacity-0 translate-y-2 ring-1 ring-white/10"></div>
+    {/* Long trip notice - Positioned at center top */}
+    <div id="longTripToast" className="fixed top-24 sm:top-28 left-1/2 -translate-x-1/2 z-[80] bg-gray-800/95 backdrop-blur-md px-4 py-3 sm:px-5 sm:py-4 rounded-lg shadow-xl text-white text-sm max-w-sm sm:max-w-md w-[88vw] sm:w-auto text-left transition-all duration-500 transform opacity-0 translate-y-[-20px] ring-1 ring-gray-600/50 border border-gray-700/50"></div>
 
       {/* Saved places panel */}
       <div
@@ -1079,13 +1092,13 @@ const MapPage = () => {
             const endName = eEl?.getAttribute('title')?.replace(/^End:\s*/, '') || eEl?.textContent?.replace(/^End:\s*/, '') || null;
             navigate('/fuel-calculator', { state: { distanceKm: parseFloat(routeDistanceKm.toFixed(2)), startName, endName } });
           }}
-          className="fixed z-[58] md:z-[65] bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 hover:brightness-110 text-white font-medium shadow-lg shadow-indigo-900/40 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-[13px] sm:text-sm flex items-center gap-2 transition cursor-pointer bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 ring-1 ring-white/10 whitespace-nowrap"
+          className="fixed z-[60] bg-gray-800/90 hover:bg-gray-700/95 backdrop-blur-sm text-white font-medium shadow-lg rounded-lg px-4 sm:px-5 py-2.5 sm:py-3 text-sm flex items-center gap-2.5 transition-all duration-200 cursor-pointer bottom-20 sm:bottom-16 left-1/2 -translate-x-1/2 ring-1 ring-gray-600/50 border border-gray-700/50 whitespace-nowrap hover:shadow-xl"
           aria-label="Proceed to Fuel Calculator"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-          <span className="sm:hidden">Calculator</span>
-          <span className="hidden sm:inline">Fuel Calculator</span>
-          <span className="text-indigo-100/80 font-normal text-xs sm:text-sm ml-1 sm:ml-2">{routeDistanceKm.toFixed(1)} km</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          <span className="sm:hidden font-medium">Calculator</span>
+          <span className="hidden sm:inline font-medium">Fuel Calculator</span>
+          <span className="text-gray-300 font-medium text-sm bg-gray-700/80 px-2 py-0.5 rounded">{routeDistanceKm.toFixed(1)} km</span>
         </button>
       )}
 
