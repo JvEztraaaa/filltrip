@@ -283,7 +283,7 @@ const StatisticsPage = () => {
                                                         <span className={up? 'text-teal-300':'text-red-300'}>
                                                             {up? '+' : ''}{fmt(Math.abs(change),2)}%
                                                         </span> 
-                                                        vs prev month 
+                                                        {up ? 'higher' : 'lower'} than prev month 
                                                         <TrendingUp className="h-3.5 w-3.5 opacity-70" />
                                                     </div>
                                                 ); 
@@ -354,7 +354,7 @@ const StatisticsPage = () => {
                                                         <span className={up? 'text-red-300':'text-teal-300'}>
                                                             {up? '+' : ''}{fmt(Math.abs(change),2)}%
                                                         </span> 
-                                                        vs prev month 
+                                                        {up ? 'higher' : 'lower'} than prev month 
                                                         <TrendingUp className="h-3.5 w-3.5 opacity-70" />
                                                     </div>
                                                 ); 
