@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import SidePanel from "../../components/SidePanel";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import SidePanel, { SidePanelContext } from "../../components/SidePanel";
 import Header from "../../components/Header";
 import {
   addRefuel,
@@ -103,6 +103,7 @@ DropdownMenu.displayName = "DropdownMenu";
 
 // Main page component: shows fuel history, and add/edit/delete modals
 const RefuelHistoryPage = () => {
+  const { sidebarOpen } = useContext(SidePanelContext);
   const [groups, setGroups] = useState([]);
   const [collapsedMonths, setCollapsedMonths] = useState(new Set()); // Track collapsed months
   const [form, setForm] = useState({
@@ -441,7 +442,9 @@ const RefuelHistoryPage = () => {
     <div className="relative min-h-screen w-full bg-gray-900 text-white overflow-x-hidden">
       <SidePanel />
       <Header />
-      <div className="pt-20 pl-0 md:pl-64 w-full">
+      <div className={`pt-20 w-full transition-all duration-300 ${
+        sidebarOpen ? 'pl-0 md:pl-64' : 'pl-0 md:pl-20'
+      }`}>
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           {/* Hero Section */}
           <div className="mb-8">

@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import SidePanel from '../../components/SidePanel';
+import SidePanel, { SidePanelContext } from '../../components/SidePanel';
 import Header from '../../components/Header';
 import { listTrips, groupTripsByMonth, deleteTrip } from '../../others/services/trips';
 
@@ -111,6 +111,7 @@ const TripRow = ({ t, onDelete, isLatest = false }) => {
 };
 
 const MyTripsPage = () => {
+  const { sidebarOpen } = useContext(SidePanelContext);
   const [groups, setGroups] = useState([]);
   const [confirm, setConfirm] = useState(null); 
   const [loading, setLoading] = useState(true);
@@ -245,7 +246,9 @@ const MyTripsPage = () => {
     <div className="relative min-h-screen w-full bg-gray-900 text-white overflow-x-hidden">
       <SidePanel />
       <Header />
-      <div className="pt-20 pl-0 md:pl-64 w-full">
+      <div className={`pt-20 w-full transition-all duration-300 ${
+        sidebarOpen ? 'pl-0 md:pl-64' : 'pl-0 md:pl-20'
+      }`}>
         <div className="px-4 sm:px-6 max-w-7xl mx-auto">
           <header className="mb-8">
             <div className="flex items-center justify-between mb-6">

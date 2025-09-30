@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import SidePanel from '../../components/SidePanel';
+import React, { useEffect, useMemo, useState, useContext } from 'react';
+import SidePanel, { SidePanelContext } from '../../components/SidePanel';
 import Header from '../../components/Header';
 import { listTrips } from '../../others/services/trips';
 import { listRefuels } from '../../others/services/refuel';
@@ -39,6 +39,7 @@ const kpiDefs = [
 
 const StatisticsPage = () => {
     const { currentUser } = useAuth();
+    const { sidebarOpen } = useContext(SidePanelContext);
     const [trips, setTrips] = useState([]);
     const [refuels, setRefuels] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -106,7 +107,9 @@ const StatisticsPage = () => {
         <div className="relative min-h-screen w-full bg-gray-900 text-white overflow-x-hidden">
             <SidePanel />
             <Header />
-            <div className="pt-20 md:pt-20 pl-0 md:pl-64 pr-0 pb-10 flex gap-6 max-w-[1920px] mx-auto">
+            <div className={`pt-20 md:pt-20 pr-0 pb-10 flex gap-6 max-w-[1920px] mx-auto transition-all duration-300 ${
+                sidebarOpen ? 'pl-0 md:pl-64' : 'pl-0 md:pl-20'
+            }`}>
                 {/* Main Content Area */}
                 <div className="flex-1 flex flex-col gap-6 pr-6">
                     <div className="flex items-start justify-between gap-4">

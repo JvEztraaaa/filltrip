@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { addTrip } from '../../others/services/trips';
 import { motorcycleModelsPH, carModelsPH } from '../../others/data/fuelEfficiency';
-import SidePanel from '../../components/SidePanel';
+import SidePanel, { SidePanelContext } from '../../components/SidePanel';
 import Header from '../../components/Header';
 import "./DropdownStyling.css";
 
@@ -78,6 +78,7 @@ DropdownMenu.displayName = 'DropdownMenu';
 
 // Fuel calculator page: estimate liters and cost from distance, efficiency, and price
 const FuelCalculatorPage = () => {
+  const { sidebarOpen } = useContext(SidePanelContext);
   const [form, setForm] = useState(initialState);
   const location = useLocation();
   const navigate = useNavigate();
@@ -315,7 +316,9 @@ const FuelCalculatorPage = () => {
     <div key={reloadKey} className="relative min-h-screen w-full bg-gray-900 text-white overflow-x-hidden pb-12">
       <SidePanel />
       <Header />
-      <div className="pt-20 pl-0 md:pl-64 w-full">
+      <div className={`pt-20 w-full transition-all duration-300 ${
+        sidebarOpen ? 'pl-0 md:pl-64' : 'pl-0 md:pl-20'
+      }`}>
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           {showErrors && (
             <div className="mb-4">
