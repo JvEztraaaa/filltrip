@@ -107,14 +107,14 @@ const StatisticsPage = () => {
         <div className="relative min-h-screen w-full bg-gray-900 text-white overflow-x-hidden">
             <SidePanel />
             <Header />
-            <div className={`pt-20 md:pt-20 pr-0 pb-10 flex gap-6 max-w-[1920px] mx-auto transition-all duration-300 ${
-                sidebarOpen ? 'pl-0 md:pl-64' : 'pl-0 md:pl-20'
+            <div className={`pt-20 md:pt-20 px-4 md:px-0 pb-10 flex flex-col xl:flex-row gap-4 md:gap-6 max-w-[1920px] mx-auto transition-all duration-300 ${
+                sidebarOpen ? 'md:pl-64' : 'md:pl-20'
             }`}>
                 {/* Main Content Area */}
-                <div className="flex-1 flex flex-col gap-6 pr-6">
-                    <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 flex flex-col gap-4 md:gap-6 xl:pr-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         <div className="flex flex-col">
-                            <h1 className="text-2xl font-semibold tracking-tight text-white">Statistics & Analytics</h1>
+                            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">Statistics & Analytics</h1>
                             <p className="text-gray-400 text-sm">Data-driven insights for your trips & fuel usage</p>
                         </div>
                     </div>
@@ -128,23 +128,23 @@ const StatisticsPage = () => {
                 )}
 
                     {!loading && !error && (
-                        <div className="flex gap-6">
+                        <div className="flex flex-col xl:flex-row gap-4 md:gap-6">
                             {/* Left Side: Main Content */}
-                            <div className="flex-1">
+                            <div className="flex-1 order-2 xl:order-1">
                                 {/* Overall Trends Section */}
-                                <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-6 mb-6">
-                                    <div className="flex items-center justify-between mb-4">
+                                <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                                         <div>
-                                            <h2 className="text-lg font-medium text-white">Overall Trends</h2>
-                                            <p className="text-sm text-gray-400">Distance, fuel & cost over time</p>
+                                            <h2 className="text-base md:text-lg font-medium text-white">Overall Trends</h2>
+                                            <p className="text-xs md:text-sm text-gray-400">Distance, fuel & cost over time</p>
                                         </div>
-                                        <div className="text-sm text-gray-400">
+                                        <div className="text-xs md:text-sm text-gray-400">
                                             {monthly.length > 0 && (
-                                                <span>from <span className="text-gray-300">{monthly[0].label}</span> to <span className="text-gray-300">{monthly[monthly.length-1].label}</span></span>
+                                                <span className="hidden sm:inline">from <span className="text-gray-300">{monthly[0].label}</span> to <span className="text-gray-300">{monthly[monthly.length-1].label}</span></span>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="h-80">
+                                    <div className="h-64 md:h-80">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <LineChart data={overallTrend} margin={{ top: 20, right: 20, left: 0, bottom: 40 }}>
                                                 <CartesianGrid strokeDasharray="1 1" stroke="#374151" opacity={0.3} />
@@ -243,16 +243,16 @@ const StatisticsPage = () => {
                                 </div>
 
                                 {/* Monthly Charts Section */}
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
                                     {/* Monthly Fuel Consumption */}
-                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-6">
+                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 md:p-6">
                                         <div className="mb-4">
-                                            <h3 className="text-lg font-medium text-white">Fuel Consumed Per Month</h3>
-                                            <p className="text-sm text-gray-400">
+                                            <h3 className="text-base md:text-lg font-medium text-white">Fuel Consumed Per Month</h3>
+                                            <p className="text-xs md:text-sm text-gray-400">
                                                 Monthly fuel consumption in liters
                                             </p>
                                         </div>
-                                        <div className="h-64">
+                                        <div className="h-48 md:h-64">
                                             <ChartContainer config={{ liters: { label: 'Liters', color: 'var(--color-liters, #14b8a6)' }}} className="h-full">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart data={monthly} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
@@ -296,12 +296,12 @@ const StatisticsPage = () => {
                                     </div>
 
                                     {/* Monthly Fuel Cost */}
-                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-6">
+                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 md:p-6">
                                         <div className="mb-4">
-                                            <h3 className="text-lg font-medium text-white">Total Spent (₱) on Fuel Per Month</h3>
-                                            <p className="text-sm text-gray-400">Monthly fuel expenditure in Philippine pesos</p>
+                                            <h3 className="text-base md:text-lg font-medium text-white">Total Spent (₱) on Fuel Per Month</h3>
+                                            <p className="text-xs md:text-sm text-gray-400">Monthly fuel expenditure in Philippine pesos</p>
                                         </div>
-                                        <div className="h-64">
+                                        <div className="h-48 md:h-64">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <AreaChart data={monthly} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                                     <defs>
@@ -368,10 +368,10 @@ const StatisticsPage = () => {
                                 </div>
 
                                 {/* Most Frequent Routes Table */}
-                                <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-6">
+                                <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 md:p-6">
                                     <div className="mb-4">
-                                        <h3 className="text-lg font-medium text-white">Most Frequent Routes</h3>
-                                        <p className="text-sm text-gray-400">Top routes by trip count</p>
+                                        <h3 className="text-base md:text-lg font-medium text-white">Most Frequent Routes</h3>
+                                        <p className="text-xs md:text-sm text-gray-400">Top routes by trip count</p>
                                     </div>
                                     {frequentRoutes.length === 0 ? (
                                         <div className="text-sm text-gray-400 py-8 text-center">No routes recorded yet.</div>
@@ -411,21 +411,21 @@ const StatisticsPage = () => {
                             </div>
 
                             {/* Right Sidebar */}
-                            <div className="w-80 flex-shrink-0">
-                                <div className="sticky top-24">
+                            <div className="w-full xl:w-80 xl:flex-shrink-0 order-1 xl:order-2">
+                                <div className="xl:sticky xl:top-24">
 
                                     {/* Calendar Section - No border */}
-                                    <div className="mb-6">
+                                    <div className="mb-4 md:mb-6">
                                         <AnalyticsCalendar activityMap={dailyActivity} />
                                     </div>
 
                                     {/* Key Metrics Section */}
-                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-6">
+                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 md:p-6">
                                         <div className="mb-4">
-                                            <h3 className="text-lg font-medium text-white">Key Metrics</h3>
-                                            <p className="text-sm text-gray-400">Overview of your statistics</p>
+                                            <h3 className="text-base md:text-lg font-medium text-white">Key Metrics</h3>
+                                            <p className="text-xs md:text-sm text-gray-400">Overview of your statistics</p>
                                         </div>
-                                        <div className="space-y-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3 md:gap-4">
                                             {kpiDefs.map((metric, index) => {
                                                 const colors = ['text-teal-400', 'text-blue-400', 'text-purple-400', 'text-green-400', 'text-yellow-400', 'text-cyan-400'];
                                                 const bgColors = ['bg-teal-500/10', 'bg-blue-500/10', 'bg-purple-500/10', 'bg-green-500/10', 'bg-yellow-500/10', 'bg-cyan-500/10'];
