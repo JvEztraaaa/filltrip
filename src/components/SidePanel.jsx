@@ -88,7 +88,7 @@ const SidePanel = () => {
                             <img 
                                 src="/images/map.png" 
                                 alt="Map" 
-                                className={`${sidebarOpen ? 'w-5 h-5' : 'w-7 h-7 ml-3'} brightness-0 invert transition-all duration-200 flex-shrink-0`}
+                                className={`${sidebarOpen ? 'w-6 h-6' : 'w-8 h-7 ml-3'} brightness-0 invert transition-all duration-200 flex-shrink-0`}
                                 style={{ filter: isActive('/map') ? 'brightness(0) invert(0.7) sepia(1) saturate(5) hue-rotate(160deg)' : 'brightness(0) invert(0.7)' }}
                             />
                             <span className={`ml-3 whitespace-nowrap font-medium transition-all duration-300 ${sidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 md:opacity-0 w-0 md:w-0 overflow-hidden'}`}>Map</span>
