@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { Dialog, DialogPanel } from '@headlessui/react'
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { 
+    Bars3Icon, 
+    XMarkIcon,
+    RocketLaunchIcon,
+    EyeIcon,
+    CalculatorIcon,
+    LightBulbIcon,
+    ChartBarIcon,
+    CurrencyDollarIcon
+} from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
 
 const navigation = [
@@ -13,32 +22,38 @@ const sections = [
     {
         id: 1,
         title: 'Mission',
-        description: "To make travel smarter, cheaper, and more sustainable by helping drivers understand and manage their fuel expenses.",
+        description: "Making travel smarter and more sustainable through intelligent fuel management.",
+        icon: RocketLaunchIcon,
     },
     {
         id: 2,
         title: 'Vision',
-        description: "A future where every trip is planned with ease, fuel is used efficiently, and drivers save both money and the environment.",
+        description: "Every trip planned efficiently, saving money and protecting the environment.",
+        icon: EyeIcon,
     },
     {
         id: 3,
-        title: 'What is FillTrip?',
-        description: "Filltrip is your all-in-one fuel calculator. Choose your start and end points, pick your vehicle, and instantly know how much fuel and money your trip will take.",
+        title: 'Fuel Calculator',
+        description: "Instant trip cost estimates with real-time fuel prices and vehicle data.",
+        icon: CalculatorIcon,
     },
     {
         id: 4,
-        title: 'Why Use FillTrip?',
-        description: "No more guessing. With real-time fuel prices, vehicle efficiency data, and accurate distances, Filltrip helps you budget smarter and drive with confidence.",
+        title: 'Smart Planning',
+        description: "Budget confidently with accurate distances and efficiency calculations.",
+        icon: LightBulbIcon,
     },
     {
         id: 5,
-        title: 'Track & Save',
-        description: "Record your trips and fuel history to see where your money goes. Get insights, spot trends, and take control of your driving expenses.",
+        title: 'Track & Analyze',
+        description: "Monitor spending patterns and optimize your driving habits.",
+        icon: ChartBarIcon,
     },
     {
         id: 6,
-        title: 'Practical Value',
-        description: "Filltrip gives you the tools to plan better trips, cut down on costs, and get the most out of every liter.",
+        title: 'Save Money',
+        description: "Cut costs and maximize every liter with data-driven insights.",
+        icon: CurrencyDollarIcon,
     },
 ]
 
@@ -175,23 +190,36 @@ export default function AboutPage() {
                 </div>
 
                 {/* Responsive Articles Grid */}
-                <div className="mx-auto mt-6 w-full max-w-5xl px-2 sm:px-4 lg:px-0">
-                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
-                        {sections.map((s, index) => (
-                            <article
-                                key={s.id}
-                                className="flex flex-col justify-between rounded-lg border border-gray-700 bg-gray-800 p-3 sm:p-5 md:p-6 hover:bg-gray-700 transition-all duration-200 shadow-sm"
-                            >
-                                <div className="grow">
-                                    <h3 className="text-xs sm:text-sm md:text-base font-bold text-white hover:text-[#4FD1C5] text-balance">
-                                        {s.title}
-                                    </h3>
-                                    <p className="mt-1 text-[11px] sm:text-xs md:text-sm text-gray-200 text-pretty">
-                                        {s.description}
-                                    </p>
-                                </div>
-                            </article>
-                        ))}
+                <div className="mx-auto mt-8 w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+                    {/* Mobile: Single column, Tablet: 2 columns, Desktop: 3 columns */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                        {sections.map((section, index) => {
+                            const IconComponent = section.icon;
+                            return (
+                                <article
+                                    key={section.id}
+                                    className="group relative overflow-hidden rounded-xl border border-gray-700/50 bg-gradient-to-br from-gray-800/90 to-gray-900/90 p-6 sm:p-8 hover:border-blue-500/30 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-blue-500/10 backdrop-blur-sm"
+                                >
+                                    {/* Icon */}
+                                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500/20 to-green-500/20 group-hover:from-blue-500/30 group-hover:to-green-500/30 transition-all duration-300">
+                                        <IconComponent className="h-6 w-6 text-blue-400 group-hover:text-blue-300 transition-colors duration-300" />
+                                    </div>
+                                    
+                                    {/* Content */}
+                                    <div className="space-y-3">
+                                        <h3 className="text-lg sm:text-xl font-semibold text-white group-hover:text-blue-100 transition-colors duration-300">
+                                            {section.title}
+                                        </h3>
+                                        <p className="text-sm sm:text-base text-gray-300 leading-relaxed group-hover:text-gray-200 transition-colors duration-300">
+                                            {section.description}
+                                        </p>
+                                    </div>
+                                    
+                                    {/* Subtle accent border */}
+                                    <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-blue-500/0 via-blue-500/60 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                </article>
+                            );
+                        })}
                     </div>
                 </div>
 
