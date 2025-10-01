@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP:Origin} ^https?://(localhost|127\.0\.0\.1)(:\d+)?$ [NC]
+  RewriteRule ^ - [E=ORIGIN:%{HTTP:Origin}]
+  RewriteCond %{REQUEST_METHOD} =OPTIONS
+  RewriteRule ^ - [R=204,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header setifempty Access-Control-Allow-Origin "%{ORIGIN}e" env=ORIGIN
+  Header setifempty Vary "Origin"
+  Header setifempty Access-Control-Allow-Credentials "true"
+  Header setifempty Access-Control-Allow-Headers "Content-Type"
+  Header setifempty Access-Control-Allow-Methods "GET, POST, OPTIONS"
+  Header setifempty Content-Type "application/json"
+</IfModule>
