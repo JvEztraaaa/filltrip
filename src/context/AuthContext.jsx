@@ -103,7 +103,6 @@ const signup = async ({ fullName, username, email, password }) => {
   const safeFullName = fullName?.trim() || email.split('@')[0];
   const safeUsername = username?.trim() || email.split('@')[0];
 
-  // Split name into first/last
   const [firstName, ...lastParts] = safeFullName.split(' ');
   const lastName = lastParts.join(' ') || firstName;
 
