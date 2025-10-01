@@ -119,7 +119,7 @@ const signup = async ({ fullName, username, email, password }) => {
     await firebaseUpdateProfile(firebaseUser, { displayName: safeFullName });
 
     const body = toForm({ 
-      firstName, 
+      firstName,
       lastName, 
       username: safeUsername, 
       email, 
