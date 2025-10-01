@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // ------------------ EMAIL/PASSWORD SIGNUP ------------------
+  // ------------------ EMAIL/PASSWORD SIGNUP -----------------
 const signup = async ({ fullName, username, email, password }) => {
   if (!email || !password) {
     return { success: false, error: 'Email and password are required' };
