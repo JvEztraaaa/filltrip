@@ -67,6 +67,7 @@ CREATE TABLE `user` (
   `email` varchar(255) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `user_icon` varchar(255) DEFAULT NULL,
+  `role` enum('user','admin') NOT NULL DEFAULT 'user',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -75,7 +76,7 @@ CREATE TABLE `user` (
 
 -- Insert Test User (password = "password")
 INSERT INTO `user`
-(id, first_name, last_name, full_name, username, email, password_hash, user_icon, created_at)
+(id, first_name, last_name, full_name, username, email, password_hash, user_icon, role, created_at)
 VALUES
 (
   1,
@@ -86,6 +87,24 @@ VALUES
   'test@gmail.com',
   '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- bcrypt hash for "password"
   NULL,
+  'user',
+  NOW()
+);
+
+-- Insert Admin User (password = "password")
+INSERT INTO `user`
+(id, first_name, last_name, full_name, username, email, password_hash, user_icon, role, created_at)
+VALUES
+(
+  2,
+  'Admin',
+  'Test',
+  'Admin Test',
+  'admin',
+  'admin@gmail.com',
+  '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- bcrypt hash for "password"
+  NULL,
+  'admin',
   NOW()
 );
 

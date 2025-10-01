@@ -51,7 +51,7 @@ if ($password === '') $missing[] = 'password';
 if ($missing) { http_response_code(400); echo json_encode(['success'=>false,'error'=>'Invalid credentials','missing'=>$missing]); exit; }
 
 /* lookup */
-$sel = $pdo->prepare("SELECT id, first_name AS firstName, last_name AS lastName, full_name AS fullName, username, email, user_icon AS avatarUrl, password_hash, created_at AS createdAt FROM user WHERE email = ? LIMIT 1");
+$sel = $pdo->prepare("SELECT id, first_name AS firstName, last_name AS lastName, full_name AS fullName, username, email, user_icon AS avatarUrl, role, password_hash, created_at AS createdAt FROM user WHERE email = ? LIMIT 1");
 $sel->execute([$email]);
 $row = $sel->fetch();
 if (!$row) { http_response_code(404); echo json_encode(['success'=>false,'error'=>'User not found']); exit; }

@@ -81,11 +81,11 @@ if ($check->fetch()) {
 
 /* ----------------------------------------insert ------------------------------------------------- */
 $hash = password_hash($password, PASSWORD_DEFAULT);
-$ins = $pdo->prepare("INSERT INTO user (first_name, last_name, full_name, username, email, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+$ins = $pdo->prepare("INSERT INTO user (first_name, last_name, full_name, username, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?, ?, 'user', NOW())");
 $ins->execute([$firstName, $lastName, $fullName, $username, $email, $hash]);
 
 $userId = (int)$pdo->lastInsertId();
-$select = $pdo->prepare("SELECT id, first_name AS firstName, last_name AS lastName, full_name AS fullName, username, email, created_at AS createdAt FROM user WHERE id = ?");
+$select = $pdo->prepare("SELECT id, first_name AS firstName, last_name AS lastName, full_name AS fullName, username, email, role, created_at AS createdAt FROM user WHERE id = ?");
 $select->execute([$userId]);
 $user = $select->fetch();
 

@@ -67,7 +67,7 @@ $upd->execute([$firstName, $lastName, $fullName, $username, $email, $uid]);
 // Update session email if changed
 $_SESSION['email'] = $email;
 
-$sel = $pdo->prepare('SELECT id, first_name AS firstName, last_name AS lastName, full_name AS fullName, username, email, user_icon AS avatarUrl, created_at AS createdAt FROM user WHERE id = ?');
+$sel = $pdo->prepare('SELECT id, first_name AS firstName, last_name AS lastName, full_name AS fullName, username, email, user_icon AS avatarUrl, role, created_at AS createdAt FROM user WHERE id = ?');
 $sel->execute([$uid]);
 $user = $sel->fetch();
 

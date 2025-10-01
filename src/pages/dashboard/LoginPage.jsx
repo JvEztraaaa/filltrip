@@ -101,7 +101,12 @@ export default function LoginPage() {
       });
 
       if (result.success) {
-        navigate('/map');
+        // Check if user is admin and redirect accordingly
+        if (result.user && result.user.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/map');
+        }
       } else {
         setSubmitError(mapError(result.error));
       }

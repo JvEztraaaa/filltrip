@@ -11,6 +11,7 @@ import FuelCalculatorPage from './pages/main/FuelCalculatorPage';
 import MyTripsPage from './pages/main/MyTripsPage';
 import RefuelHistoryPage from './pages/main/FuelHistoryPage';
 import StatisticsPage from './pages/main/StatisticsPage';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import './App.css';
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/my-trips" element={<MyTripsPage />} />
             <Route path="/refuel-history" element={<RefuelHistoryPage />} />
             <Route path="/statistics" element={<StatisticsPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </SidePanelProvider>
       </Router>
