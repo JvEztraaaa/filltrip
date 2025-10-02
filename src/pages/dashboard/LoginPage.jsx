@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const { login } = useAuth();
+  const { login, continueWithGoogle, continueWithFacebook } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -258,6 +258,15 @@ export default function LoginPage() {
             <div className="flex justify-center gap-4 sm:gap-6">
               <button
                 type="button"
+                onClick={async () => {
+                  setSubmitError('');
+                  try {
+                    const r = await continueWithGoogle();
+                    if (r.success) {
+                      if (r.user && r.user.role === 'admin') navigate('/admin'); else navigate('/map');
+                    } else setSubmitError(r.error);
+                  } catch { setSubmitError('Google authentication failed. Please try again.'); }
+                }}
                 className="flex items-center justify-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-gray-600 hover:text-white cursor-pointer min-w-[120px] sm:min-w-[140px]"
               >
                 <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 48 48">
@@ -270,6 +279,15 @@ export default function LoginPage() {
               </button>
               <button
                 type="button"
+                onClick={async () => {
+                  setSubmitError('');
+                  try {
+                    const r = await continueWithFacebook();
+                    if (r.success) {
+                      if (r.user && r.user.role === 'admin') navigate('/admin'); else navigate('/map');
+                    } else setSubmitError(r.error);
+                  } catch { setSubmitError('Facebook authentication failed. Please try again.'); }
+                }}
                 className="flex items-center justify-center gap-2 rounded-md bg-[#1877F2] px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#1565c0] hover:text-white cursor-pointer min-w-[120px] sm:min-w-[140px]"
               >
                 <svg className="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
