@@ -30,7 +30,7 @@ export default function App() {
             <Route path="/my-trips" element={<MyTripsPage />} />
             <Route path="/refuel-history" element={<RefuelHistoryPage />} />
             <Route path="/statistics" element={<StatisticsPage />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/*" element={<AdminDashboard />} />
           </Routes>
         </SidePanelProvider>
       </Router>
