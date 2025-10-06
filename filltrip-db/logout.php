@@ -1,14 +1,7 @@
 <?php
 declare(strict_types=1);
 
-/**
- * logout.php
- * ------------------------------------------------------------------
- * Destroys the active session. POST only.
- * Returns success whether or not a session existed (idempotent style).
- */
-
-/* ----------------------------- CORS -------------------------------- */
+/* -------------------- CORS ----------------- */
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?$#', $origin)) {
   header("Access-Control-Allow-Origin: {$origin}");
@@ -21,18 +14,13 @@ header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['success'=>false,'error'=>'Method not allowed']); exit; }
 
-/* --------------------------- Session Start ------------------------- */
+/* -------------------- Sessions ---------------------*/
 $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
-if (PHP_VERSION_ID >= 70300) {
-  session_set_cookie_params([
-    'lifetime'=>0,'path'=>'/','domain'=>'','secure'=>$secure,'httponly'=>true,'samesite'=>'Lax'
-  ]);
-} else {
-  session_set_cookie_params(0, '/; samesite=Lax', '', $secure, true);
-}
+if (PHP_VERSION_ID >= 70300) { session_set_cookie_params(['lifetime'=>0,'path'=>'/','domain'=>'','secure'=>$secure,'httponly'=>true,'samesite'=>'Lax']); }
+else { session_set_cookie_params(0, '/; samesite=Lax', '', $secure, true); }
 session_start();
 
-/* --------------------------- Session Teardown ---------------------- */
+/* -------------------- Clear session ----------------------- */
 $_SESSION = [];
 if (ini_get('session.use_cookies')) {
   $p = session_get_cookie_params();
@@ -40,5 +28,4 @@ if (ini_get('session.use_cookies')) {
 }
 session_destroy();
 
-/* --------------------------- Response ------------------------------- */
 echo json_encode(['success'=>true]);
