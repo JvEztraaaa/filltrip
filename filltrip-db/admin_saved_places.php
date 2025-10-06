@@ -1,9 +1,14 @@
 <?php
+/**
+ * admin_saved_places.php
+ * ------------------------------------------------------------------
+ * Admin listing + update/delete for saved_places (search/pagination).
+ */
+
 session_start();
 header('Content-Type: application/json');
 if (file_exists(__DIR__ . '/cors.php')) require_once __DIR__ . '/cors.php';
 
-// Database connection
 $host = 'localhost';
 $dbname = 'filltrip';
 $username = 'root';
@@ -12,11 +17,8 @@ $password = '';
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch(PDOException $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database connection failed: ' . $e->getMessage()
-    ]);
+} catch (PDOException $e) {
+    echo json_encode(['success'=>false,'message'=>'Database connection failed: '.$e->getMessage()]);
     exit();
 }
 
@@ -26,96 +28,43 @@ try {
     switch ($method) {
         case 'GET':
             if (isset($_GET['id'])) {
-                $id = intval($_GET['id']);
-                $stmt = $pdo->prepare("SELECT * FROM saved_places WHERE id = ?");
+                $id = (int)$_GET['id'];
+                $stmt = $pdo->prepare('SELECT * FROM saved_places WHERE id = ?');
                 $stmt->execute([$id]);
                 $place = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                echo json_encode([
-                    'success' => true,
-                    'savedPlace' => $place
-                ]);
+                echo json_encode(['success'=>true,'savedPlace'=>$place]);
             } else {
-                $page = intval($_GET['page'] ?? 1);
-                $limit = intval($_GET['limit'] ?? 10);
+                $page   = (int)($_GET['page'] ?? 1);
+                $limit  = (int)($_GET['limit'] ?? 10);
                 $search = $_GET['search'] ?? '';
-                
                 $offset = ($page - 1) * $limit;
-                
-                // Build search query
-                $searchCondition = '';
-                $params = [];
-                if ($search) {
-                    $searchCondition = "WHERE place_name LIKE ?";
-                    $searchParam = "%$search%";
-                    $params = [$searchParam];
-                }
-                
-                // Get total count
-                $countStmt = $pdo->prepare("SELECT COUNT(*) as total FROM saved_places $searchCondition");
-                $countStmt->execute($params);
-                $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
-                $totalPages = ceil($total / $limit);
-                
-                // Get saved places
-                $limitInt = max(1, (int)$limit);
-                $offsetInt = max(0, (int)$offset);
+                $searchCondition=''; $params=[];
+                if ($search) { $searchCondition='WHERE place_name LIKE ?'; $searchParam="%$search%"; $params=[$searchParam]; }
+                $countStmt = $pdo->prepare("SELECT COUNT(*) AS total FROM saved_places $searchCondition");
+                $countStmt->execute($params); $total = (int)$countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+                $totalPages = (int)ceil($total / max(1,$limit));
+                $limitInt=max(1,(int)$limit); $offsetInt=max(0,(int)$offset);
                 $sql = "SELECT * FROM saved_places $searchCondition ORDER BY created_at DESC LIMIT $limitInt OFFSET $offsetInt";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute($params);
-                $places = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                
-                echo json_encode([
-                    'success' => true,
-                    'savedPlaces' => $places,
-                    'currentPage' => $page,
-                    'totalPages' => $totalPages,
-                    'total' => $total
-                ]);
+                $stmt = $pdo->prepare($sql); $stmt->execute($params); $places = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                echo json_encode(['success'=>true,'savedPlaces'=>$places,'currentPage'=>$page,'totalPages'=>$totalPages,'total'=>$total]);
             }
             break;
-
         case 'PUT':
             $input = json_decode(file_get_contents('php://input'), true);
             $id = $input['id'];
-            
-            $stmt = $pdo->prepare("UPDATE saved_places SET place_name = ?, latitude = ?, longitude = ? WHERE id = ?");
-            $stmt->execute([
-                $input['place_name'],
-                $input['latitude'],
-                $input['longitude'],
-                $id
-            ]);
-            
-            echo json_encode([
-                'success' => true,
-                'message' => 'Saved place updated successfully'
-            ]);
+            $stmt = $pdo->prepare('UPDATE saved_places SET place_name = ?, latitude = ?, longitude = ? WHERE id = ?');
+            $stmt->execute([$input['place_name'],$input['latitude'],$input['longitude'],$id]);
+            echo json_encode(['success'=>true,'message'=>'Saved place updated successfully']);
             break;
-
         case 'DELETE':
-            $input = json_decode(file_get_contents('php://input'), true);
-            $id = $input['id'];
-            
-            $stmt = $pdo->prepare("DELETE FROM saved_places WHERE id = ?");
-            $stmt->execute([$id]);
-            
-            echo json_encode([
-                'success' => true,
-                'message' => 'Saved place deleted successfully'
-            ]);
+            $input = json_decode(file_get_contents('php://input'), true); $id = $input['id'];
+            $stmt = $pdo->prepare('DELETE FROM saved_places WHERE id = ?'); $stmt->execute([$id]);
+            echo json_encode(['success'=>true,'message'=>'Saved place deleted successfully']);
             break;
-
         default:
-            echo json_encode([
-                'success' => false,
-                'message' => 'Method not allowed'
-            ]);
+            echo json_encode(['success'=>false,'message'=>'Method not allowed']);
     }
 } catch (Exception $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Server error: ' . $e->getMessage()
-    ]);
+    echo json_encode(['success'=>false,'message'=>'Server error: '.$e->getMessage()]);
 }
 ?>
