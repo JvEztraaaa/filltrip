@@ -116,9 +116,10 @@ export const adminUsers = {
 
 // Trips CRUD API
 export const adminTrips = {
-    // Get all trips with pagination
-    async getTrips(page = 1, limit = 10, search = '') {
+    // Get all trips with pagination (optionally filter by specific user when userId provided)
+    async getTrips(page = 1, limit = 10, search = '', userId) {
         const params = new URLSearchParams({ page, limit, search });
+        if (userId) params.append('userId', userId);
         return apiRequest(`admin_trips.php?${params}`);
     },
 
@@ -146,9 +147,10 @@ export const adminTrips = {
 
 // Saved Places CRUD API
 export const adminSavedPlaces = {
-    // Get all saved places with pagination
-    async getSavedPlaces(page = 1, limit = 10, search = '') {
+    // Get all saved places with pagination (optionally filter by specific user when userId provided)
+    async getSavedPlaces(page = 1, limit = 10, search = '', userId) {
         const params = new URLSearchParams({ page, limit, search });
+        if (userId) params.append('userId', userId);
         return apiRequest(`admin_saved_places.php?${params}`);
     },
 
@@ -176,9 +178,10 @@ export const adminSavedPlaces = {
 
 // Fuel History CRUD API
 export const adminFuelHistory = {
-    // Get all fuel history with pagination
-    async getFuelHistory(page = 1, limit = 10, search = '') {
+    // Get all fuel history with pagination (optionally filter by specific user when userId provided)
+    async getFuelHistory(page = 1, limit = 10, search = '', userId) {
         const params = new URLSearchParams({ page, limit, search });
+        if (userId) params.append('userId', userId);
         return apiRequest(`admin_fuel_history.php?${params}`);
     },
 

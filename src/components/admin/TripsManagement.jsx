@@ -28,7 +28,12 @@ const TripsManagement = () => {
         try {
             setLoading(true);
             const response = await adminTrips.getTrips(page, 10, search, filterUserId);
-            setTrips(response.trips || []);
+            let data = response.trips || [];
+            // Defensive client-side filter (in case backend filter not applied yet)
+            if (filterUserId) {
+                data = data.filter(t => String(t.user_id) === String(filterUserId));
+            }
+            setTrips(data);
             setCurrentPage(response.currentPage || 1);
             setTotalPages(response.totalPages || 1);
         } catch (err) {
@@ -40,7 +45,7 @@ const TripsManagement = () => {
 
     useEffect(() => {
         fetchTrips(currentPage, searchTerm);
-    }, [currentPage]);
+    }, [currentPage, filterUserId]);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -55,7 +60,11 @@ const TripsManagement = () => {
     };
 
     const clearUserFilter = () => {
-        navigate('/admin/trips');
+        navigate('/admin/trips', { replace: true });
+        setCurrentPage(1);
+        setSearchTerm('');
+        // refetch without user filter (filterUserId becomes null after navigation)
+        setTimeout(() => fetchTrips(1, ''), 0);
     };
 
     const handleEdit = (trip) => {
@@ -133,7 +142,7 @@ const TripsManagement = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                                 </svg>
                                 <span>Trips Management</span>
-                                <span className="text-sm font-normal text-gray-400">({trips.length} trips)</span>
+                                <span className="text-sm font-normal text-gray-400">({trips.length} trips{filterUserName ? ' for user' : ''})</span>
                             </CardTitle>
                             {filterUserName && (
                                 <div className="mt-2 flex items-center space-x-2">

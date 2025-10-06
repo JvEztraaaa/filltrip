@@ -25,7 +25,11 @@ const FuelHistoryManagement = () => {
         try {
             setLoading(true);
             const response = await adminFuelHistory.getFuelHistory(page, 10, search, filterUserId);
-            setFuelHistory(response.fuelHistory || []);
+            let data = response.fuelHistory || [];
+            if (filterUserId) {
+                data = data.filter(e => String(e.user_id) === String(filterUserId));
+            }
+            setFuelHistory(data);
             setCurrentPage(response.currentPage || 1);
             setTotalPages(response.totalPages || 1);
         } catch (err) {
@@ -37,7 +41,7 @@ const FuelHistoryManagement = () => {
 
     useEffect(() => {
         fetchFuelHistory(currentPage, searchTerm);
-    }, [currentPage]);
+    }, [currentPage, filterUserId]);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -52,7 +56,10 @@ const FuelHistoryManagement = () => {
     };
 
     const clearUserFilter = () => {
-        navigate('/admin/fuel-history');
+        navigate('/admin/fuel-history', { replace: true });
+        setCurrentPage(1);
+        setSearchTerm('');
+        setTimeout(() => fetchFuelHistory(1, ''), 0);
     };
 
     const handleEdit = (entry) => {
@@ -120,7 +127,7 @@ const FuelHistoryManagement = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                 </svg>
                                 <span>Fuel History Management</span>
-                                <span className="text-sm font-normal text-gray-400">({fuelHistory.length} entries)</span>
+                                <span className="text-sm font-normal text-gray-400">({fuelHistory.length} entries{filterUserName ? ' for user' : ''})</span>
                             </CardTitle>
                             {filterUserName && (
                                 <div className="mt-2 flex items-center space-x-2">

@@ -28,7 +28,11 @@ const SavedPlacesManagement = () => {
         try {
             setLoading(true);
             const response = await adminSavedPlaces.getSavedPlaces(page, 10, search, filterUserId);
-            setSavedPlaces(response.savedPlaces || []);
+            let data = response.savedPlaces || [];
+            if (filterUserId) {
+                data = data.filter(p => String(p.user_id) === String(filterUserId));
+            }
+            setSavedPlaces(data);
             setCurrentPage(response.currentPage || 1);
             setTotalPages(response.totalPages || 1);
         } catch (err) {
@@ -40,7 +44,7 @@ const SavedPlacesManagement = () => {
 
     useEffect(() => {
         fetchSavedPlaces(currentPage, searchTerm);
-    }, [currentPage]);
+    }, [currentPage, filterUserId]);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -55,7 +59,10 @@ const SavedPlacesManagement = () => {
     };
 
     const clearUserFilter = () => {
-        navigate('/admin/saved-places');
+        navigate('/admin/saved-places', { replace: true });
+        setCurrentPage(1);
+        setSearchTerm('');
+        setTimeout(() => fetchSavedPlaces(1, ''), 0);
     };
 
     const handleEdit = (place) => {
@@ -124,7 +131,7 @@ const SavedPlacesManagement = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                                 <span>Saved Places Management</span>
-                                <span className="text-sm font-normal text-gray-400">({savedPlaces.length} places)</span>
+                                <span className="text-sm font-normal text-gray-400">({savedPlaces.length} places{filterUserName ? ' for user' : ''})</span>
                             </CardTitle>
                             {filterUserName && (
                                 <div className="mt-2 flex items-center space-x-2">
