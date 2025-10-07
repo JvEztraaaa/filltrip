@@ -252,7 +252,7 @@ const TripsManagement = () => {
                                                     </svg>
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(trip.id)}
+                                                    onClick={() => handleDelete(trip)}
                                                     className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
                                                     title="Delete trip"
                                                 >

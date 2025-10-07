@@ -4,6 +4,16 @@ header('Content-Type: application/json');
 // Centralized CORS handling
 require_once __DIR__ . '/cors.php';
 
+if (!isset($_SESSION['uid'])) { echo json_encode(['success'=>false,'message'=>'Not authenticated']); exit(); }
+try {
+    $authPdo = new PDO('mysql:host=localhost;dbname=filltrip', 'root', '');
+    $authPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $rStmt = $authPdo->prepare('SELECT role FROM user WHERE id=? LIMIT 1');
+    $rStmt->execute([(int)$_SESSION['uid']]);
+    $row = $rStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row || ($row['role'] ?? '') !== 'admin') { echo json_encode(['success'=>false,'message'=>'Forbidden']); exit(); }
+} catch (Throwable $e) { echo json_encode(['success'=>false,'message'=>'Auth check failed']); exit(); }
+
 // Database connection
 $host = 'localhost';
 $dbname = 'filltrip';

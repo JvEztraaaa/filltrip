@@ -5,15 +5,16 @@ $allowedOrigins = [
     'http://localhost:5174',
     'http://localhost',
 ];
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (in_array($origin, $allowedOrigins)) {
+$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
     header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
 } else {
-    // Fallback (can be tightened later)
-    header("Access-Control-Allow-Origin: *");
+    // Deny credential sharing for unapproved origins
+    header('Access-Control-Allow-Origin: http://localhost');
+    // Do NOT send Allow-Credentials for non-whitelisted origins
 }
 header('Vary: Origin');
-header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
