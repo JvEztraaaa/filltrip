@@ -51,8 +51,11 @@ function sortMonthKeys(keys) {
   return keys.sort((a,b)=> a.localeCompare(b)); // chronological ascending
 }
 
+// Return only the month name (short) for display.
+// Previously we included a 2-digit year (e.g. "Jan 25"), which looked like a day (25) to users.
+// Keeping the underlying key (YYYY-MM) for uniqueness while simplifying the label.
 function monthLabel(key) {
-  try { return new Date(`${key}-01T00:00:00`).toLocaleString(undefined, { month: 'short', year: '2-digit' }); } catch { return key; }
+  try { return new Date(`${key}-01T00:00:00`).toLocaleString(undefined, { month: 'short' }); } catch { return key; }
 }
 
 export function buildMonthlyDatasets(trips = [], refuels = []) {
