@@ -85,9 +85,15 @@ $ins = $pdo->prepare("INSERT INTO user (first_name, last_name, full_name, userna
 $ins->execute([$firstName, $lastName, $fullName, $username, $email, $hash]);
 
 $userId = (int)$pdo->lastInsertId();
-$select = $pdo->prepare("SELECT id, first_name AS firstName, last_name AS lastName, full_name AS fullName, username, email, role, created_at AS createdAt FROM user WHERE id = ?");
+$select = $pdo->prepare("SELECT id, first_name AS firstName, last_name AS LastName, full_name AS fullName, username, email, role, created_at AS createdAt FROM user WHERE id = ?");
 $select->execute([$userId]);
 $user = $select->fetch();
 
-/* ------------------------------- DO NOT auto-login on signup (per your flow) ---------------------------------- */
-echo json_encode(['success'=>true,'user'=>$user]);
+/* Optional auto-login: if frontend sends autoLogin=1 we establish session immediately (needed for social auth provisioning) */
+$autoLogin = isset($in['autoLogin']) && (string)$in['autoLogin'] !== '' && $in['autoLogin'] !== '0' ? true : false;
+if ($autoLogin && $user) {
+  $_SESSION['uid'] = $user['id'];
+  $_SESSION['email'] = $user['email'];
+}
+
+echo json_encode(['success'=>true,'user'=>$user,'autoLogin'=>$autoLogin]);

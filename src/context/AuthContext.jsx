@@ -137,7 +137,7 @@ export const AuthProvider = ({ children }) => {
         try { await firebaseUpdateProfile(firebaseUser, { displayName }); } catch {}
       }
 
-      const body = toForm({ firstName, lastName, username, email, password });
+  const body = toForm({ firstName, lastName, username, email, password, autoLogin: 1 });
       const { user: backendUser } = await fetchJSON(`${API_BASE}/signup.php`, { method: 'POST', body });
       const normalizedUser = normalizeUser(backendUser);
       const mergedUser = { ...normalizedUser, firebaseUid: firebaseUser.uid };
@@ -214,6 +214,7 @@ export const AuthProvider = ({ children }) => {
             username: usernameBase,
             email: firebaseUser.email,
             password: firebaseUser.uid,
+            autoLogin: 1,
           });
           try {
             const { user: backendUser } = await fetchJSON(`${API_BASE}/signup.php`, { method: 'POST', body: signupBody });
