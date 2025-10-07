@@ -66,11 +66,16 @@ export async function addTrip(trip) {
     fuelType:         trip.fuelType || '',
     vehicleLabel:     trip.vehicleLabel || trip.vehicle || '',
   };
-  const data = await fetchJSON(`${API_BASE}/trips_add.php`, {
-    method: 'POST',
-    body: toForm(payload),
-  });
-  return { added: true, trip: data.trip };
+  try {
+    const data = await fetchJSON(`${API_BASE}/trips_add.php`, {
+      method: 'POST',
+      body: toForm(payload),
+    });
+    return { added: true, trip: data.trip };
+  } catch (e) {
+    console.error('addTrip failed payload=', payload, e);
+    throw e;
+  }
 }
 
 export async function deleteTrip(id) {

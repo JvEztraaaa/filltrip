@@ -274,27 +274,33 @@ const FuelCalculatorPage = () => {
     setResults({ litersNeeded, cost, currency: form.currency, timestamp: new Date().toISOString() });
     setForm((f) => ({ ...f, lastCalculated: Date.now() }));
 
-    // Save trip snapshot to localStorage ONLY if coming from Map Page (has start & end)
-    try {
+    // Persist trip to backend ONLY if coming from Map Page (we have start & end)
+    (async () => {
       const state = location.state || {};
-      const startName = state.startName || null;
-      const endName = state.endName || null;
-      if (startName && endName) {
-        const vehicleLabel = selectedVehicle?.label || (vehicleQuery ? vehicleQuery : null);
-        addTrip({
+      const startName = state.startName || state.startLocationName || null;
+      const endName = state.endName || state.endLocationName || null;
+      if (!startName || !endName) return; // Nothing to persist
+
+      const vehicleLabel = selectedVehicle?.label || (vehicleQuery ? vehicleQuery : null);
+      try {
+        await addTrip({
           startName,
           endName,
           distanceKm: Number(distanceKm?.toFixed?.(2) || distanceKm),
           litersNeeded: Number(litersNeeded?.toFixed?.(2) || litersNeeded) || 0,
+            // Provide efficiency + price so backend can derive missing fields if needed
+          efficiencyKmPerL: form.efficiencyUnit === 'km/L' ? Number(parseFloat(form.efficiency).toFixed(2)) : null,
+          pricePerLiter: Number(parseFloat(form.fuelPrice).toFixed(2)) || null,
           fuelCost: Number(cost?.toFixed?.(2) || cost) || 0,
           currency: form.currency,
           fuelType: form.fuelType,
           vehicleLabel,
         });
-        // Show saved toast (persistent until cleared/reloaded)
         setSavedToast(true);
+      } catch (e) {
+        console.error('Failed to save trip:', e);
       }
-    } catch { }
+    })();
   };
   // Reset form and results
   const clearAll = () => { setForm(initialState); setResults(null); setAttempted(false); };
