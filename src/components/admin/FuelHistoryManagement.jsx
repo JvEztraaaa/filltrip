@@ -168,10 +168,10 @@ const FuelHistoryManagement = () => {
                             <thead>
                                 <tr className="border-b border-gray-700">
                                     <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Vehicle</th>
+                                    {!filterUserId && <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">User</th>}
                                     <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Fuel Details</th>
                                     <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Cost</th>
                                     <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Station</th>
-                                    {!filterUserId && <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">User</th>}
                                     <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Date</th>
                                     <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Actions</th>
                                 </tr>
@@ -192,6 +192,13 @@ const FuelHistoryManagement = () => {
                                                 </div>
                                             </div>
                                         </td>
+                                        {!filterUserId && (
+                                            <td className="py-4">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
+                                                    User #{entry.user_id}
+                                                </span>
+                                            </td>
+                                        )}
                                         <td className="py-4">
                                             <div className="text-sm text-gray-300">
                                                 <p>{entry.liters} {entry.fuel_unit || 'L'}</p>
@@ -209,13 +216,7 @@ const FuelHistoryManagement = () => {
                                                 {entry.station || 'N/A'}
                                             </span>
                                         </td>
-                                        {!filterUserId && (
-                                            <td className="py-4">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
-                                                    User #{entry.user_id}
-                                                </span>
-                                            </td>
-                                        )}
+                                        {/* User column moved earlier */}
                                         <td className="py-4 text-sm text-gray-400">{formatDate(entry.date)}</td>
                                         <td className="py-4 text-right">
                                             <div className="flex justify-end space-x-2">

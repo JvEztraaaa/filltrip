@@ -170,8 +170,8 @@ const SavedPlacesManagement = () => {
                             <thead>
                                 <tr className="border-b border-gray-700">
                                     <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Place Name</th>
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Coordinates</th>
                                     {!filterUserId && <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">User</th>}
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Coordinates</th>
                                     <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Created</th>
                                     <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Actions</th>
                                 </tr>
@@ -193,12 +193,6 @@ const SavedPlacesManagement = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-4">
-                                            <div className="text-sm text-gray-300">
-                                                <p>Lat: {parseFloat(place.latitude).toFixed(6)}</p>
-                                                <p>Lng: {parseFloat(place.longitude).toFixed(6)}</p>
-                                            </div>
-                                        </td>
                                         {!filterUserId && (
                                             <td className="py-4">
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
@@ -206,6 +200,12 @@ const SavedPlacesManagement = () => {
                                                 </span>
                                             </td>
                                         )}
+                                        <td className="py-4">
+                                            <div className="text-sm text-gray-300">
+                                                <p>Lat: {parseFloat(place.latitude).toFixed(6)}</p>
+                                                <p>Lng: {parseFloat(place.longitude).toFixed(6)}</p>
+                                            </div>
+                                        </td>
                                         <td className="py-4 text-sm text-gray-400">{formatDate(place.created_at)}</td>
                                         <td className="py-4 text-right">
                                             <div className="flex justify-end space-x-2">
