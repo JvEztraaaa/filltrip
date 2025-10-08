@@ -202,17 +202,9 @@ const TripsManagement = () => {
                                         </td>
                                         {!filterUserId && (
                                             <td className="py-4">
-                                                <div className="flex items-center space-x-2">
-                                                    <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                                                        <span className="text-xs font-medium text-blue-300">
-                                                            {trip.user_name ? trip.user_name.charAt(0).toUpperCase() : 'U'}
-                                                        </span>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-200">{trip.user_name || 'Unknown'}</p>
-                                                        <p className="text-xs text-gray-400">{trip.user_email || 'N/A'}</p>
-                                                    </div>
-                                                </div>
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
+                                                    User #{trip.user_id}
+                                                </span>
                                             </td>
                                         )}
                                         <td className="py-4 text-sm text-gray-300">{trip.distance_km} km</td>
