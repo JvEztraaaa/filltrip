@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import DeleteConfirmationModal from '../ui/delete-confirmation-modal';
+// DeleteConfirmationModal not needed since using simple window.confirm for deletion
 import { adminFuelHistory } from '../../others/services/admin';
 
 const FuelHistoryManagement = () => {
@@ -13,8 +13,7 @@ const FuelHistoryManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [editingEntry, setEditingEntry] = useState(null);
-    const [showEditModal, setShowEditModal] = useState(false);
+    // Edit functionality removed per requirements (only users editable)
 
     // Extract user filter from URL parameters
     const urlParams = new URLSearchParams(location.search);
@@ -62,23 +61,7 @@ const FuelHistoryManagement = () => {
         setTimeout(() => fetchFuelHistory(1, ''), 0);
     };
 
-    const handleEdit = (entry) => {
-        setEditingEntry({ ...entry });
-        setShowEditModal(true);
-    };
-
-    const handleSaveEdit = async () => {
-        if (!editingEntry) return;
-        
-        try {
-            await adminFuelHistory.updateFuelHistoryEntry(editingEntry.id, editingEntry);
-            setShowEditModal(false);
-            setEditingEntry(null);
-            fetchFuelHistory(currentPage, searchTerm);
-        } catch (err) {
-            setError(err.message || 'Failed to update fuel history entry');
-        }
-    };
+    // Removed handleEdit / handleSaveEdit
 
     const handleDelete = async (entryId) => {
         if (!window.confirm('Are you sure you want to delete this fuel history entry?')) return;
@@ -236,15 +219,7 @@ const FuelHistoryManagement = () => {
                                         <td className="py-4 text-sm text-gray-400">{formatDate(entry.date)}</td>
                                         <td className="py-4 text-right">
                                             <div className="flex justify-end space-x-2">
-                                                <button
-                                                    onClick={() => handleEdit(entry)}
-                                                    className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-colors"
-                                                    title="Edit entry"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
-                                                </button>
+                                                {/* Edit button removed */}
                                                 <button
                                                     onClick={() => handleDelete(entry.id)}
                                                     className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
@@ -289,122 +264,7 @@ const FuelHistoryManagement = () => {
                 </CardContent>
             </Card>
 
-            {/* Edit Entry Modal */}
-            {showEditModal && editingEntry && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-gray-800 rounded-xl border border-gray-700 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-6">
-                            <h3 className="text-lg font-semibold text-gray-200 mb-4">Edit Fuel History Entry</h3>
-                            
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Vehicle Name</label>
-                                        <input
-                                            type="text"
-                                            value={editingEntry.vehicle_name || ''}
-                                            onChange={(e) => setEditingEntry({...editingEntry, vehicle_name: e.target.value})}
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                        />
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Odometer (km)</label>
-                                        <input
-                                            type="number"
-                                            value={editingEntry.odometer_km || ''}
-                                            onChange={(e) => setEditingEntry({...editingEntry, odometer_km: e.target.value})}
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Liters</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={editingEntry.liters || ''}
-                                            onChange={(e) => setEditingEntry({...editingEntry, liters: e.target.value})}
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                        />
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Price per Liter</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={editingEntry.price_per_liter || ''}
-                                            onChange={(e) => setEditingEntry({...editingEntry, price_per_liter: e.target.value})}
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                        />
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Total Cost</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={editingEntry.total_cost || ''}
-                                            onChange={(e) => setEditingEntry({...editingEntry, total_cost: e.target.value})}
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Fuel Type</label>
-                                        <input
-                                            type="text"
-                                            value={editingEntry.fuel_type || ''}
-                                            onChange={(e) => setEditingEntry({...editingEntry, fuel_type: e.target.value})}
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                        />
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Station</label>
-                                        <input
-                                            type="text"
-                                            value={editingEntry.station || ''}
-                                            onChange={(e) => setEditingEntry({...editingEntry, station: e.target.value})}
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">Date</label>
-                                    <input
-                                        type="date"
-                                        value={editingEntry.date ? new Date(editingEntry.date).toISOString().split('T')[0] : ''}
-                                        onChange={(e) => setEditingEntry({...editingEntry, date: e.target.value})}
-                                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div className="flex justify-end space-x-3 mt-6">
-                                <button
-                                    onClick={() => setShowEditModal(false)}
-                                    className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSaveEdit}
-                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
-                                >
-                                    Save Changes
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Edit fuel entry modal removed */}
         </>
     );
 };

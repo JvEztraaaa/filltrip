@@ -13,8 +13,7 @@ const TripsManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [editingTrip, setEditingTrip] = useState(null);
-    const [showEditModal, setShowEditModal] = useState(false);
+    // Edit functionality removed per requirements (only users editable)
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [tripToDelete, setTripToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -67,23 +66,7 @@ const TripsManagement = () => {
         setTimeout(() => fetchTrips(1, ''), 0);
     };
 
-    const handleEdit = (trip) => {
-        setEditingTrip({ ...trip });
-        setShowEditModal(true);
-    };
-
-    const handleSaveEdit = async () => {
-        if (!editingTrip) return;
-        
-        try {
-            await adminTrips.updateTrip(editingTrip.id, editingTrip);
-            setShowEditModal(false);
-            setEditingTrip(null);
-            fetchTrips(currentPage, searchTerm);
-        } catch (err) {
-            setError(err.message || 'Failed to update trip');
-        }
-    };
+    // Removed handleEdit / handleSaveEdit
 
     const handleDelete = (trip) => {
         setTripToDelete(trip);
@@ -242,15 +225,7 @@ const TripsManagement = () => {
                                         <td className="py-4 text-sm text-gray-400">{formatDate(trip.created_at)}</td>
                                         <td className="py-4 text-right">
                                             <div className="flex justify-end space-x-2">
-                                                <button
-                                                    onClick={() => handleEdit(trip)}
-                                                    className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-colors"
-                                                    title="Edit trip"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
-                                                </button>
+                                                {/* Edit button removed */}
                                                 <button
                                                     onClick={() => handleDelete(trip)}
                                                     className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
@@ -295,89 +270,15 @@ const TripsManagement = () => {
                 </CardContent>
             </Card>
 
-            {/* Edit Trip Modal */}
-            {showEditModal && editingTrip && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-gray-800 rounded-xl border border-gray-700 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                        <div className="p-6">
-                            <h3 className="text-lg font-semibold text-gray-200 mb-4">Edit Trip</h3>
-                            
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Start Location</label>
-                                        <input
-                                            type="text"
-                                            value={editingTrip.start_location || ''}
-                                            onChange={(e) => setEditingTrip({...editingTrip, start_location: e.target.value})}
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        />
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">End Location</label>
-                                        <input
-                                            type="text"
-                                            value={editingTrip.end_location || ''}
-                                            onChange={(e) => setEditingTrip({...editingTrip, end_location: e.target.value})}
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        />
-                                    </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Distance (km)</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={editingTrip.distance_km || ''}
-                                            onChange={(e) => setEditingTrip({...editingTrip, distance_km: e.target.value})}
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        />
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-1">Fuel Cost</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={editingTrip.fuel_cost || ''}
-                                            onChange={(e) => setEditingTrip({...editingTrip, fuel_cost: e.target.value})}
-                                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        />
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-1">Vehicle Label</label>
-                                    <input
-                                        type="text"
-                                        value={editingTrip.vehicle_label || ''}
-                                        onChange={(e) => setEditingTrip({...editingTrip, vehicle_label: e.target.value})}
-                                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div className="flex justify-end space-x-3 mt-6">
-                                <button
-                                    onClick={() => setShowEditModal(false)}
-                                    className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSaveEdit}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                                >
-                                    Save Changes
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Edit trip modal removed */}
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Trip"
+                message={`Are you sure you want to delete the trip from "${tripToDelete?.start_location}" to "${tripToDelete?.end_location}"? This action cannot be undone.`}
+                isLoading={isDeleting}
+            />
         </>
     );
 };
