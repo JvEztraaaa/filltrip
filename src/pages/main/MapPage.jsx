@@ -1092,13 +1092,25 @@ const MapPage = () => {
             const endName = eEl?.getAttribute('title')?.replace(/^End:\s*/, '') || eEl?.textContent?.replace(/^End:\s*/, '') || null;
             navigate('/fuel-calculator', { state: { distanceKm: parseFloat(routeDistanceKm.toFixed(2)), startName, endName } });
           }}
-          className="fixed z-[60] bg-gray-800/90 hover:bg-gray-700/95 backdrop-blur-sm text-white font-medium shadow-lg rounded-lg px-4 sm:px-5 py-2.5 sm:py-3 text-sm flex items-center gap-2.5 transition-all duration-200 cursor-pointer bottom-20 sm:bottom-16 left-1/2 -translate-x-1/2 ring-1 ring-gray-600/50 border border-gray-700/50 whitespace-nowrap hover:shadow-xl"
+          className="group fixed z-[60] bottom-20 sm:bottom-16 left-1/2 -translate-x-1/2
+            whitespace-nowrap cursor-pointer px-4 sm:px-5 py-2.5 sm:py-3 text-sm font-semibold
+            flex items-center gap-2.5 rounded-xl
+            bg-[radial-gradient(circle_at_20%_20%,rgba(34,197,188,0.18),transparent_60%),linear-gradient(110deg,#0f172a_0%,#0e2a38_45%,#073044_70%,#062636_100%)]
+            text-white shadow-lg shadow-teal-900/40 border border-cyan-400/10
+            ring-1 ring-cyan-300/10 backdrop-blur-md
+            hover:shadow-teal-500/30 hover:border-cyan-400/30 hover:ring-cyan-300/30
+            after:absolute after:inset-0 after:rounded-xl after:bg-gradient-to-r after:from-teal-500/10 after:via-cyan-400/5 after:to-blue-500/10 after:opacity-0 group-hover:after:opacity-100 after:transition-opacity after:duration-300
+            active:scale-[0.97] transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-teal-500/40"
           aria-label="Proceed to Fuel Calculator"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-          <span className="sm:hidden font-medium">Calculator</span>
-          <span className="hidden sm:inline font-medium">Fuel Calculator</span>
-          <span className="text-gray-300 font-medium text-sm bg-gray-700/80 px-2 py-0.5 rounded">{routeDistanceKm.toFixed(1)} km</span>
+          <span className="relative flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0 text-white drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          </span>
+          <span className="sm:hidden font-semibold tracking-wide">Calculator</span>
+          <span className="hidden sm:inline font-semibold tracking-wide">Fuel Calculator</span>
+          <span className="text-xs sm:text-sm font-semibold bg-teal-500/20 text-teal-100 px-2 py-0.5 rounded-md shadow-inner ring-1 ring-teal-400/30">
+            {routeDistanceKm.toFixed(1)} km
+          </span>
         </button>
       )}
 
