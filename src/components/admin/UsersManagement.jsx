@@ -17,6 +17,10 @@ const UsersManagement = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
+    // Date filter state
+    const [showDateFilter, setShowDateFilter] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     const fetchUsers = async (page = 1, search = '') => {
         try {
@@ -108,6 +112,22 @@ const UsersManagement = () => {
         });
     };
 
+    // Derived filtered data by date range
+    const filteredUsers = users.filter(u => {
+        if (!startDate && !endDate) return true;
+        const created = new Date(u.created_at);
+        if (startDate) {
+            const sd = new Date(startDate);
+            if (created < sd) return false;
+        }
+        if (endDate) {
+            const ed = new Date(endDate);
+            ed.setHours(23,59,59,999);
+            if (created > ed) return false;
+        }
+        return true;
+    });
+
     if (loading && users.length === 0) {
         return (
             <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
@@ -131,13 +151,74 @@ const UsersManagement = () => {
                 <CardHeader>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
                         <div>
-                            <CardTitle className="text-gray-200 flex items-center space-x-2">
-                                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                                </svg>
-                                <span>Users Management</span>
-                                <span className="text-sm font-normal text-gray-400">({users.length} users)</span>
-                            </CardTitle>
+                            <div className="flex items-center space-x-3 relative">
+                                <CardTitle className="text-gray-200 flex items-center space-x-2">
+                                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    <span>Users Management</span>
+                                    <span className="text-sm font-normal text-gray-400">({filteredUsers.length} users)</span>
+                                </CardTitle>
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDateFilter(o => !o)}
+                                        className="px-3 py-2 bg-gray-700/60 hover:bg-gray-700 border border-gray-600 rounded-lg text-xs text-gray-200 flex items-center space-x-1 transition-colors"
+                                        title="Filter by date range"
+                                    >
+                                        <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <span>Date Filter</span>
+                                        {(startDate || endDate) && (
+                                            <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-medium">ON</span>
+                                        )}
+                                    </button>
+                                    {showDateFilter && (
+                                        <div className="absolute z-50 mt-2 w-72 p-4 bg-gray-800 border border-gray-700 rounded-xl shadow-xl space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-xs font-semibold text-gray-300 tracking-wide">Date Range</h4>
+                                                <button
+                                                    className="text-gray-400 hover:text-gray-200 text-xs"
+                                                    onClick={() => setShowDateFilter(false)}
+                                                >✕</button>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex flex-col">
+                                                    <label className="text-[11px] font-medium text-gray-400 mb-1">Start Date</label>
+                                                    <input
+                                                        type="date"
+                    value={startDate}
+                    onChange={(e)=>setStartDate(e.target.value)}
+                                                        className="px-2 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <label className="text-[11px] font-medium text-gray-400 mb-1">End Date</label>
+                                                    <input
+                                                        type="date"
+                    value={endDate}
+                    onChange={(e)=>setEndDate(e.target.value)}
+                                                        className="px-2 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between pt-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={()=>{setStartDate('');setEndDate('');}}
+                                                    className="text-xs text-gray-400 hover:text-gray-200 underline"
+                                                >Clear</button>
+                                                <button
+                                                    type="button"
+                                                    onClick={()=>setShowDateFilter(false)}
+                                                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-xs font-medium"
+                                                >Apply</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                         
                         <form onSubmit={handleSearch} className="flex space-x-2">
@@ -188,7 +269,7 @@ const UsersManagement = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">
-                                {users.map((user) => (
+                                {filteredUsers.map((user) => (
                                     <tr key={user.id} className="hover:bg-gray-700/30 transition-colors">
                                         <td className="py-4">
                                             <div className="flex items-center space-x-3">

@@ -15,6 +15,10 @@ const SavedPlacesManagement = () => {
     const [totalPages, setTotalPages] = useState(1);
     // Removed delete confirmation modal state (using window.confirm)
     // Edit functionality removed per requirements (only users editable)
+    // Date filter state
+    const [showDateFilter, setShowDateFilter] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     // Extract user filter from URL parameters
     const urlParams = new URLSearchParams(location.search);
@@ -100,6 +104,21 @@ const SavedPlacesManagement = () => {
         );
     }
 
+    const filteredPlaces = savedPlaces.filter(p => {
+        if (!startDate && !endDate) return true;
+        const created = new Date(p.created_at);
+        if (startDate) {
+            const sd = new Date(startDate);
+            if (created < sd) return false;
+        }
+        if (endDate) {
+            const ed = new Date(endDate);
+            ed.setHours(23,59,59,999);
+            if (created > ed) return false;
+        }
+        return true;
+    });
+
     return (
         <>
             <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
@@ -112,7 +131,24 @@ const SavedPlacesManagement = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                                 <span>Saved Places Management</span>
-                                <span className="text-sm font-normal text-gray-400">({savedPlaces.length} places{filterUserName ? ' for user' : ''})</span>
+                                <span className="text-sm font-normal text-gray-400">({filteredPlaces.length} places{filterUserName ? ' for user' : ''})</span>
+                                <div className="relative ml-3">
+                                    <button type="button" onClick={()=>setShowDateFilter(o=>!o)} className="px-3 py-1.5 bg-gray-700/60 hover:bg-gray-700 border border-gray-600 rounded-lg text-xs text-gray-200 flex items-center space-x-1 transition-colors">
+                                        <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        <span>Date Filter</span>
+                                        {(startDate || endDate) && <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-medium">ON</span>}
+                                    </button>
+                                    {showDateFilter && (
+                                        <div className="absolute z-50 mt-2 right-0 w-72 p-4 bg-gray-800 border border-gray-700 rounded-xl shadow-xl space-y-3">
+                                            <div className="flex items-center justify-between"><h4 className="text-xs font-semibold text-gray-300 tracking-wide">Date Range</h4><button className="text-gray-400 hover:text-gray-200 text-xs" onClick={()=>setShowDateFilter(false)}>✕</button></div>
+                                            <div className="space-y-2">
+                                                <div className="flex flex-col"><label className="text-[11px] font-medium text-gray-400 mb-1">Start Date</label><input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} className="px-2 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                                                <div className="flex flex-col"><label className="text-[11px] font-medium text-gray-400 mb-1">End Date</label><input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} className="px-2 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                                            </div>
+                                            <div className="flex items-center justify-between pt-1"><button type="button" onClick={()=>{setStartDate('');setEndDate('');}} className="text-xs text-gray-400 hover:text-gray-200 underline">Clear</button><button type="button" onClick={()=>setShowDateFilter(false)} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-xs font-medium">Apply</button></div>
+                                        </div>
+                                    )}
+                                </div>
                             </CardTitle>
                             {filterUserName && (
                                 <div className="mt-2 flex items-center space-x-2">
@@ -177,7 +213,7 @@ const SavedPlacesManagement = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">
-                                {savedPlaces.map((place) => (
+                                {filteredPlaces.map((place) => (
                                     <tr key={place.id} className="hover:bg-gray-700/30 transition-colors">
                                         <td className="py-4">
                                             <div className="flex items-center space-x-3">
