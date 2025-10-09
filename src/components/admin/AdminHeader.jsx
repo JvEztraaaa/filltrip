@@ -21,7 +21,8 @@ const AdminHeader = ({ title = "Dashboard", solidBg = false }) => {
     return (
         <>
             <div className={`w-full border-b border-gray-800 transition-all duration-300 ${solidBg ? 'bg-gray-900/95 backdrop-blur-md' : 'bg-gray-900/80 backdrop-blur-md'}`}>
-                <div className={`flex items-center justify-between h-16 px-6 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0 md:ml-20'}`}>
+                {/* Header should not shift on mobile; only apply left margin at md+ when sidebar expanded */}
+                <div className={`flex items-center justify-between h-16 px-6 transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0 md:ml-20'}`}>
                     <div className="flex items-center space-x-4">
                         {/* Mobile menu button */}
                         <button

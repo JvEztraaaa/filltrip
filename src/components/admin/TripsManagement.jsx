@@ -138,7 +138,7 @@ const TripsManagement = () => {
         <>
             <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
                 <CardHeader>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 sm:gap-4 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-700/60 -mx-2 px-2 pb-1">
                         <div>
                             <CardTitle className="text-gray-200 flex items-center space-x-2">
                                 <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,7 +146,7 @@ const TripsManagement = () => {
                                 </svg>
                                 <span>Trips Management</span>
                                 <span className="text-sm font-normal text-gray-400">({filteredTrips.length} trips{filterUserName ? ' for user' : ''})</span>
-                                <div className="relative ml-3">
+                                <div className="relative ml-3 mr-3 sm:mr-4">
                                     <button
                                         type="button"
                                         onClick={() => setShowDateFilter(o=>!o)}
@@ -198,7 +198,7 @@ const TripsManagement = () => {
                             )}
                         </div>
                         
-                        <form onSubmit={handleSearch} className="flex space-x-2">
+                        <form onSubmit={handleSearch} className="flex flex-nowrap space-x-2">
                             <input
                                 type="text"
                                 placeholder="Search trips..."
@@ -234,44 +234,44 @@ const TripsManagement = () => {
                     )}
 
                     <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table className="w-full min-w-[720px] sm:min-w-[860px] md:min-w-[1000px]">
                             <thead>
                                 <tr className="border-b border-gray-700">
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Route</th>
-                                    {!filterUserId && <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">User</th>}
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Distance</th>
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Fuel Cost</th>
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Vehicle</th>
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Created</th>
-                                    <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Actions</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Route</th>
+                                    {!filterUserId && <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">User</th>}
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Distance</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Fuel Cost</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Vehicle</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Created</th>
+                                    <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">
                                 {filteredTrips.map((trip) => (
                                     <tr key={trip.id} className="hover:bg-gray-700/30 transition-colors">
-                                        <td className="py-4">
-                                            <div className="max-w-xs">
-                                                <p className="text-sm font-medium text-gray-200 truncate">{trip.start_location}</p>
-                                                <p className="text-xs text-gray-400 truncate">to {trip.end_location}</p>
+                                        <td className="py-3 sm:py-4">
+                                            <div className="max-w-[14rem] sm:max-w-xs">
+                                                <p className="text-[13px] sm:text-sm font-medium text-gray-200 truncate" title={trip.start_location}>{trip.start_location}</p>
+                                                <p className="text-[12px] sm:text-xs text-gray-400 truncate" title={`to ${trip.end_location}`}>to {trip.end_location}</p>
                                             </div>
                                         </td>
                                         {!filterUserId && (
-                                            <td className="py-4">
+                                            <td className="py-3 sm:py-4">
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
                                                     User #{trip.user_id}
                                                 </span>
                                             </td>
                                         )}
-                                        <td className="py-4 text-sm text-gray-300">{trip.distance_km} km</td>
-                                        <td className="py-4 text-sm text-gray-300">₱{parseFloat(trip.fuel_cost || 0).toLocaleString()}</td>
-                                        <td className="py-4">
+                                        <td className="py-3 sm:py-4 text-[13px] sm:text-sm text-gray-300">{trip.distance_km} km</td>
+                                        <td className="py-3 sm:py-4 text-[13px] sm:text-sm text-gray-300">₱{parseFloat(trip.fuel_cost || 0).toLocaleString()}</td>
+                                        <td className="py-3 sm:py-4">
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
                                                 {trip.vehicle_label || 'N/A'}
                                             </span>
                                         </td>
-                                        <td className="py-4 text-sm text-gray-400">{formatDate(trip.created_at)}</td>
-                                        <td className="py-4 text-right">
-                                            <div className="flex justify-end space-x-2">
+                                        <td className="py-3 sm:py-4 text-[13px] sm:text-sm text-gray-400 whitespace-nowrap">{formatDate(trip.created_at)}</td>
+                                        <td className="py-3 sm:py-4 text-right">
+                                            <div className="flex justify-end space-x-1 sm:space-x-2">
                                                 {/* Edit button removed */}
                                                 <button
                                                     onClick={() => handleDelete(trip)}

@@ -122,7 +122,7 @@ const FuelHistoryManagement = () => {
         <>
             <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
                 <CardHeader>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 sm:gap-4 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-700/60 -mx-2 px-2 pb-1">
                         <div>
                             <CardTitle className="text-gray-200 flex items-center space-x-2">
                                 <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +130,7 @@ const FuelHistoryManagement = () => {
                                 </svg>
                                 <span>Fuel History Management</span>
                                 <span className="text-sm font-normal text-gray-400">({filteredFuelHistory.length} entries{filterUserName ? ' for user' : ''})</span>
-                                <div className="relative ml-3">
+                                <div className="relative ml-3 mr-3 sm:mr-4">
                                     <button type="button" onClick={()=>setShowDateFilter(o=>!o)} className="px-3 py-1.5 bg-gray-700/60 hover:bg-gray-700 border border-gray-600 rounded-lg text-xs text-gray-200 flex items-center space-x-1 transition-colors">
                                         <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                         <span>Date Filter</span>
@@ -164,7 +164,7 @@ const FuelHistoryManagement = () => {
                             )}
                         </div>
                         
-                        <form onSubmit={handleSearch} className="flex space-x-2">
+                        <form onSubmit={handleSearch} className="flex flex-nowrap space-x-2">
                             <input
                                 type="text"
                                 placeholder="Search fuel entries..."
@@ -200,62 +200,62 @@ const FuelHistoryManagement = () => {
                     )}
 
                     <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table className="w-full min-w-[720px] sm:min-w-[860px] md:min-w-[1000px]">
                             <thead>
                                 <tr className="border-b border-gray-700">
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Vehicle</th>
-                                    {!filterUserId && <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">User</th>}
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Fuel Details</th>
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Cost</th>
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Station</th>
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Date</th>
-                                    <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Actions</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Vehicle</th>
+                                    {!filterUserId && <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">User</th>}
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Fuel Details</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Cost</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Station</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Date</th>
+                                    <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">
                                 {filteredFuelHistory.map((entry) => (
                                     <tr key={entry.id} className="hover:bg-gray-700/30 transition-colors">
-                                        <td className="py-4">
-                                            <div className="flex items-center space-x-3">
+                                        <td className="py-3 sm:py-4">
+                                            <div className="flex items-center space-x-2 sm:space-x-3">
                                                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white">
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                                     </svg>
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-200">{entry.vehicle_name || 'N/A'}</p>
-                                                    <p className="text-xs text-gray-400">{entry.odometer_km} {entry.distance_unit || 'km'}</p>
+                                                <div className="min-w-0">
+                                                    <p className="text-[13px] sm:text-sm font-medium text-gray-200 truncate" title={entry.vehicle_name || 'N/A'}>{entry.vehicle_name || 'N/A'}</p>
+                                                    <p className="text-[12px] sm:text-xs text-gray-400 truncate">{entry.odometer_km} {entry.distance_unit || 'km'}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         {!filterUserId && (
-                                            <td className="py-4">
+                                            <td className="py-3 sm:py-4">
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
                                                     User #{entry.user_id}
                                                 </span>
                                             </td>
                                         )}
-                                        <td className="py-4">
-                                            <div className="text-sm text-gray-300">
+                                        <td className="py-3 sm:py-4">
+                                            <div className="text-[13px] sm:text-sm text-gray-300">
                                                 <p>{entry.liters} {entry.fuel_unit || 'L'}</p>
                                                 <p className="text-xs text-gray-400">{entry.fuel_type}</p>
                                             </div>
                                         </td>
-                                        <td className="py-4">
-                                            <div className="text-sm text-gray-300">
+                                        <td className="py-3 sm:py-4">
+                                            <div className="text-[13px] sm:text-sm text-gray-300">
                                                 <p>{entry.currency || '₱'}{parseFloat(entry.total_cost || 0).toLocaleString()}</p>
                                                 <p className="text-xs text-gray-400">@{entry.currency || '₱'}{parseFloat(entry.price_per_liter || 0).toFixed(2)}/L</p>
                                             </div>
                                         </td>
-                                        <td className="py-4">
+                                        <td className="py-3 sm:py-4">
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">
                                                 {entry.station || 'N/A'}
                                             </span>
                                         </td>
                                         {/* User column moved earlier */}
-                                        <td className="py-4 text-sm text-gray-400">{formatDate(entry.date)}</td>
-                                        <td className="py-4 text-right">
-                                            <div className="flex justify-end space-x-2">
+                                        <td className="py-3 sm:py-4 text-[13px] sm:text-sm text-gray-400 whitespace-nowrap">{formatDate(entry.date)}</td>
+                                        <td className="py-3 sm:py-4 text-right">
+                                            <div className="flex justify-end space-x-1 sm:space-x-2">
                                                 {/* Edit button removed */}
                                                 <button
                                                     onClick={() => handleDelete(entry.id)}

@@ -822,10 +822,10 @@ const RefuelHistoryPage = () => {
 
       {/* Edit Modal */}
       {editModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-2 xs:p-3 sm:p-4 md:pl-24 lg:pl-0">
+          <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-[95vw] sm:max-w-3xl lg:max-w-4xl max-h-[92vh] overflow-y-auto border border-gray-700/40">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-teal-500/10 to-indigo-500/10 px-6 py-4 border-b border-gray-700/50">
+            <div className="bg-gradient-to-r from-teal-500/10 to-indigo-500/10 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-700/50 sticky top-0 z-10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-teal-500/20 rounded-lg flex items-center justify-center">
@@ -874,8 +874,8 @@ const RefuelHistoryPage = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                 {/* Row 1: Vehicle Name - Date - Fuel Type */}
                 {/* Vehicle Name */}
                 <div className="lg:col-span-2">
@@ -1146,10 +1146,10 @@ const RefuelHistoryPage = () => {
 
       {/* Add Entry Modal */}
       {addModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-2 xs:p-3 sm:p-4 md:pl-24 lg:pl-0">
+          <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-[95vw] sm:max-w-3xl lg:max-w-4xl max-h-[92vh] overflow-y-auto border border-gray-700/40">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-teal-500/10 to-indigo-500/10 px-6 py-4 border-b border-gray-700/50">
+            <div className="bg-gradient-to-r from-teal-500/10 to-indigo-500/10 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-700/50 sticky top-0 z-10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-teal-500/20 rounded-lg flex items-center justify-center">
@@ -1198,8 +1198,8 @@ const RefuelHistoryPage = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                 {/* Row 1: Vehicle Name (Full Width) */}
                 <div className="lg:col-span-2">
                   <label className="block text-sm font-medium text-gray-300 mb-2">

@@ -107,9 +107,11 @@ const StatisticsPage = () => {
         <div className="relative min-h-screen w-full bg-gray-900 text-white overflow-x-hidden">
             <SidePanel />
             <Header />
-            <div className={`pt-20 md:pt-20 px-4 md:px-0 pb-10 flex flex-col xl:flex-row gap-4 md:gap-6 max-w-[1920px] mx-auto transition-all duration-300 ${
-                sidebarOpen ? 'md:pl-64' : 'md:pl-20'
+            <div className={`pt-20 w-full transition-all duration-300 ${
+                sidebarOpen ? 'pl-0 md:pl-64' : 'pl-0 md:pl-20'
             }`}>
+                {/* Centered content wrapper for balanced gutters (mirrors FuelHistory) */}
+                <div className="px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 max-w-[1700px] 2xl:max-w-[1800px] mx-auto">
                 {/* Main Content Area */}
                 <div className="flex-1 flex flex-col gap-4 md:gap-6 xl:pr-6">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -132,7 +134,7 @@ const StatisticsPage = () => {
                             {/* Left Side: Main Content */}
                             <div className="flex-1 order-2 xl:order-1">
                                 {/* Overall Trends Section */}
-                                <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                                <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 sm:p-5 md:p-6 mb-4 md:mb-6">
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                                         <div>
                                             <h2 className="text-base md:text-lg font-medium text-white">Overall Trends</h2>
@@ -245,7 +247,7 @@ const StatisticsPage = () => {
                                 {/* Monthly Charts Section */}
                                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
                                     {/* Monthly Fuel Consumption */}
-                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 md:p-6">
+                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 sm:p-5 md:p-6">
                                         <div className="mb-4">
                                             <h3 className="text-base md:text-lg font-medium text-white">Fuel Consumed Per Month</h3>
                                             <p className="text-xs md:text-sm text-gray-400">
@@ -296,7 +298,7 @@ const StatisticsPage = () => {
                                     </div>
 
                                     {/* Monthly Fuel Cost */}
-                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 md:p-6">
+                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 sm:p-5 md:p-6">
                                         <div className="mb-4">
                                             <h3 className="text-base md:text-lg font-medium text-white">Total Spent (₱) on Fuel Per Month</h3>
                                             <p className="text-xs md:text-sm text-gray-400">Monthly fuel expenditure in Philippine pesos</p>
@@ -368,7 +370,7 @@ const StatisticsPage = () => {
                                 </div>
 
                                 {/* Most Frequent Routes Table */}
-                                <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 md:p-6">
+                                <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 sm:p-5 md:p-6">
                                     <div className="mb-4">
                                         <h3 className="text-base md:text-lg font-medium text-white">Most Frequent Routes</h3>
                                         <p className="text-xs md:text-sm text-gray-400">Top routes by trip count</p>
@@ -420,7 +422,7 @@ const StatisticsPage = () => {
                                     </div>
 
                                     {/* Key Metrics Section */}
-                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 md:p-6">
+                                    <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 sm:p-5 md:p-6">
                                         <div className="mb-4">
                                             <h3 className="text-base md:text-lg font-medium text-white">Key Metrics</h3>
                                             <p className="text-xs md:text-sm text-gray-400">Overview of your statistics</p>
@@ -451,6 +453,7 @@ const StatisticsPage = () => {
                             </div>
                         </div>
                     )}
+                </div>
                 </div>
             </div>
         </div>

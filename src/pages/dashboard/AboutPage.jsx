@@ -239,27 +239,29 @@ export default function AboutPage() {
 
                 {/* Leadership / Team Section */}
                 <div className="mt-12 py-10 sm:mt-16 sm:py-14">
-                    <div className="mx-auto grid max-w-5xl gap-y-10 gap-x-12 sm:gap-x-20 md:gap-x-28 px-3 sm:px-6 md:px-8 lg:px-0 md:grid-cols-3 items-start">
-                        <div className="max-w-sm md:max-w-md">
-                            <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold tracking-tight text-white mb-3 text-left whitespace-nowrap">
+                    {/* Responsive layout: stack on mobile/tablet, 3-column only on large screens */}
+                    {/* Added responsive left padding/margin to visually center content on medium widths */}
+                    <div className="mx-auto grid max-w-5xl gap-y-10 gap-x-12 sm:gap-x-16 md:gap-x-20 lg:gap-x-28 px-3 sm:px-6 md:px-8 md:pl-14 lg:px-0 lg:grid-cols-3 items-start">
+                        <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
+                            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-3xl font-semibold tracking-tight text-white mb-4 lg:mb-3 leading-snug">
                                 Meet our Developers
                             </h2>
-                            <p className="text-sm sm:text-base md:text-lg text-gray-400 text-left">
+                            <p className="text-sm sm:text-base md:text-lg text-gray-400 text-center lg:text-left max-w-prose mx-auto lg:mx-0">
                                 We’re a small team of students who built Filltrip to make fuel tracking and trip planning easier.
                             </p>
                         </div>
-                        <ul role="list" className="grid gap-x-12 gap-y-8 sm:grid-cols-2 md:col-span-2">
+                        <ul role="list" className="mt-2 lg:mt-0 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:col-span-2">
                             {people.map((person) => (
-                                <li key={person.name}>
-                                    <div className="flex items-center gap-x-3 md:gap-x-4 w-full">
+                                <li key={person.name} className="">
+                                    <div className="flex items-center gap-x-3 md:gap-x-4 w-full p-1.5 rounded-lg hover:bg-gray-800/40 transition-colors">
                                         <img
                                             alt={person.name}
                                             src={person.imageUrl}
                                             className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full outline-1 -outline-offset-1 outline-white/10 object-cover flex-shrink-0"
                                         />
-                                        <div className="min-w-[180px] sm:min-w-[220px] md:min-w-[260px] max-w-full">
-                                            <h3 className="text-sm sm:text-base md:text-lg font-semibold tracking-tight text-white whitespace-normal break-words">{person.name}</h3>
-                                            <p className="mt-1 text-xs sm:text-sm md:text-base font-normal text-indigo-400 whitespace-normal break-words">{person.role}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-sm sm:text-base md:text-lg font-semibold tracking-tight text-white break-words">{person.name}</h3>
+                                            <p className="mt-0.5 text-xs sm:text-sm md:text-base font-normal text-indigo-400 break-words">{person.role}</p>
                                         </div>
                                     </div>
                                 </li>

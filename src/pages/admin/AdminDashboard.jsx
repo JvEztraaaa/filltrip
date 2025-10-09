@@ -93,7 +93,8 @@ const DashboardContent = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <AdminHeader title="Dashboard" />
       
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0 md:ml-20'} p-6`}>
+  {/* On mobile (<md) sidebar should overlay and NOT push content; only shift at md+ */}
+  <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0 md:ml-20'} p-6`}>
         {error && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-300">
             {error}
@@ -151,13 +152,17 @@ const AdminDashboardMain = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <AdminSidePanel />
+      {/* Mobile overlay backdrop when sidebar is open (visual only) */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/40 md:hidden z-50 pointer-events-none" />
+      )}
       
       <Routes>
         <Route path="/" element={<DashboardContent />} />
         <Route path="/users" element={
           <div className="min-h-screen">
             <AdminHeader title="Users Management" />
-            <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0 md:ml-20'} p-6`}>
+            <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0 md:ml-20'} p-4 sm:p-6`}>
               <UsersManagement />
             </div>
           </div>
@@ -165,7 +170,7 @@ const AdminDashboardMain = () => {
         <Route path="/trips" element={
           <div className="min-h-screen">
             <AdminHeader title="Trips Management" />
-            <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0 md:ml-20'} p-6`}>
+            <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0 md:ml-20'} p-4 sm:p-6`}>
               <TripsManagement />
             </div>
           </div>
@@ -173,7 +178,7 @@ const AdminDashboardMain = () => {
         <Route path="/saved-places" element={
           <div className="min-h-screen">
             <AdminHeader title="Saved Places Management" />
-            <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0 md:ml-20'} p-6`}>
+            <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0 md:ml-20'} p-4 sm:p-6`}>
               <SavedPlacesManagement />
             </div>
           </div>
@@ -181,7 +186,7 @@ const AdminDashboardMain = () => {
         <Route path="/fuel-history" element={
           <div className="min-h-screen">
             <AdminHeader title="Fuel History Management" />
-            <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0 md:ml-20'} p-6`}>
+            <div className={`transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0 md:ml-20'} p-4 sm:p-6`}>
               <FuelHistoryManagement />
             </div>
           </div>

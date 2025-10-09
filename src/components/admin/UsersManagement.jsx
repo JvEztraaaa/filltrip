@@ -149,7 +149,8 @@ const UsersManagement = () => {
         <>
             <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-sm">
                 <CardHeader>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                    {/* Horizontal scroll wrapper ensures header tools fit on constrained tablet widths */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 sm:gap-4 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-700/60 -mx-2 px-2 pb-1">
                         <div>
                             <div className="flex items-center space-x-3 relative">
                                 <CardTitle className="text-gray-200 flex items-center space-x-2">
@@ -159,7 +160,7 @@ const UsersManagement = () => {
                                     <span>Users Management</span>
                                     <span className="text-sm font-normal text-gray-400">({filteredUsers.length} users)</span>
                                 </CardTitle>
-                                <div className="relative">
+                                <div className="relative mr-3 sm:mr-4">
                                     <button
                                         type="button"
                                         onClick={() => setShowDateFilter(o => !o)}
@@ -221,7 +222,7 @@ const UsersManagement = () => {
                             </div>
                         </div>
                         
-                        <form onSubmit={handleSearch} className="flex space-x-2">
+                        <form onSubmit={handleSearch} className="flex flex-nowrap space-x-2">
                             <input
                                 type="text"
                                 placeholder="Search users..."
@@ -257,22 +258,22 @@ const UsersManagement = () => {
                     )}
 
                     <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table className="w-full min-w-[720px] sm:min-w-[860px] md:min-w-[1000px]">
                             <thead>
                                 <tr className="border-b border-gray-700">
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">User</th>
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Email</th>
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Role</th>
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Created</th>
-                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-3">View</th>
-                                    <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wide py-3">Actions</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">User</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Email</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Role</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Created</th>
+                                    <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">View</th>
+                                    <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wide py-2 sm:py-3 whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">
                                 {filteredUsers.map((user) => (
                                     <tr key={user.id} className="hover:bg-gray-700/30 transition-colors">
-                                        <td className="py-4">
-                                            <div className="flex items-center space-x-3">
+                                        <td className="py-3 sm:py-4">
+                                            <div className="flex items-center space-x-2 sm:space-x-3">
                                                 <div className="flex-shrink-0">
                                                     <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
                                                         <span className="text-white font-medium text-sm">
@@ -280,19 +281,19 @@ const UsersManagement = () => {
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <div className="text-sm font-medium text-gray-200">
+                                                <div className="min-w-0">
+                                                    <div className="text-[13px] sm:text-sm font-medium text-gray-200 truncate" title={user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.username}>
                                                         {user.first_name && user.last_name 
                                                             ? `${user.first_name} ${user.last_name}`
                                                             : user.username
                                                         }
                                                     </div>
-                                                    <div className="text-sm text-gray-400">@{user.username}</div>
+                                                    <div className="text-[12px] sm:text-sm text-gray-400 truncate" title={`@${user.username}`}>@{user.username}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-4 text-sm text-gray-200">{user.email}</td>
-                                        <td className="py-4">
+                                        <td className="py-3 sm:py-4 text-[13px] sm:text-sm text-gray-200 truncate" title={user.email}>{user.email}</td>
+                                        <td className="py-3 sm:py-4">
                                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                                 user.role === 'admin' 
                                                     ? 'bg-purple-500/20 text-purple-300' 
@@ -301,9 +302,9 @@ const UsersManagement = () => {
                                                 {user.role}
                                             </span>
                                         </td>
-                                        <td className="py-4 text-sm text-gray-400">{formatDate(user.created_at)}</td>
-                                        <td className="py-4 text-sm">
-                                            <div className="flex flex-col space-y-1">
+                                        <td className="py-3 sm:py-4 text-[13px] sm:text-sm text-gray-400 whitespace-nowrap">{formatDate(user.created_at)}</td>
+                                        <td className="py-3 sm:py-4 text-[12px] sm:text-sm">
+                                            <div className="flex flex-col sm:flex-col gap-1">
                                                 <button
                                                     onClick={() => handleViewUserTrips(user)}
                                                     className="text-blue-400 hover:text-blue-300 text-left transition-colors cursor-pointer text-xs"
@@ -324,8 +325,8 @@ const UsersManagement = () => {
                                                 </button>
                                             </div>
                                         </td>
-                                        <td className="py-4 text-right">
-                                            <div className="flex justify-end space-x-2">
+                                        <td className="py-3 sm:py-4 text-right">
+                                            <div className="flex justify-end space-x-1 sm:space-x-2">
                                                 <button
                                                     onClick={() => handleEdit(user)}
                                                     className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-colors"
