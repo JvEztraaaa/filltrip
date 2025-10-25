@@ -1,7 +1,6 @@
 # 🚗 FillTrip: Fuel Cost Calculator 
 
-FillTrip is a web application designed to help users plan trips, find optimal routes, and calculate travel distances and fuel costs.  
-It features user authentication for personalized sessions and an admin dashboard for management.
+FillTrip is a web and mobile-based fuel cost calculator and management system that helps users estimate travel expenses, record trips, and track fuel consumption using real-time map data and vehicle efficiency. It simplifies trip planning and promotes smarter, more efficient fuel usage for everyday drivers and transport workers.
 
 ## 💻 User Preview
 
