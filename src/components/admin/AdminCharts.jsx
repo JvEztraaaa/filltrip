@@ -42,14 +42,12 @@ export const UserGrowthChart = ({ data = [], loading = false }) => {
             return [];
         }
 
-        // Backend now only returns days with registrations, so we just need to format the data
         const formattedData = data.map(item => {
             // Ensure we have a valid date string
             const dateStr = item.date;
             console.log(`Processing date: ${dateStr}, newUsers: ${item.newUsers}`);
             
-            // Parse the date (format should be YYYY-MM-DD from backend)
-            const dateObj = new Date(dateStr + 'T12:00:00'); // Add noon time to avoid timezone issues
+            const dateObj = new Date(dateStr + 'T12:00:00');
             
             console.log(`Date object created:`, dateObj);
             
